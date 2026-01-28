@@ -1,0 +1,77 @@
+.flow-container {
+    background-color: #f8f9fa;
+}
+
+.custom-node {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    min-width: 180px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+    cursor: pointer;
+    
+    &:hover {
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+        border-color: #3b82f6;
+    }
+}
+
+.node-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1f2937;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 4px;
+}
+
+.node-type {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.node-context {
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.success-node { border-left: 4px solid #10b981; }
+.fail-node { border-left: 4px solid #ef4444; }
+.neutral-node { border-left: 4px solid #6366f1; }
+.selector-node { border-left: 4px solid #3b82f6; }
+.source-node { border-left: 4px solid #10b981; }
+.restart-node { border-left: 4px solid #f97316; }
+.fragment-node { border-left: 4px solid #a855f7; }
+.mapping-node { border-left: 4px solid #4f46e5; }
+
+.f-minimap {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 10;
+    width: 150px;
+    height: 120px;
+    background-color: #ffffff !important; 
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.f-minimap-node {
+    fill: #e5e7eb !important;
+}
+
+.f-minimap-node.active {
+        fill: #3b82f6 !important;
+}
+
+.f-minimap-view {
+    fill: rgba(59, 130, 246, 0.1) !important; 
+    stroke: #3b82f6 !important;
+    stroke-width: 1px;
+}

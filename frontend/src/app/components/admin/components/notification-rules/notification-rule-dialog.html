@@ -1,0 +1,125 @@
+<form [formGroup]="ruleForm" class="p-fluid">
+    <div class="field grid">
+        <label for="local_table_name" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Target Sync
+            Table</label>
+        <div class="col-12 md:col-9">
+            <p-select id="local_table_name" formControlName="local_table_name" [options]="uniqueTables"
+                (onChange)="onRuleTableChange()" placeholder="Select Table" [editable]="true" styleClass="w-full"
+                appendTo="body"></p-select>
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Filtering (Optional)</label>
+        <div class="col-12 md:col-9">
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <label for="user_column" class="block text-sm mb-1">Target User Column</label>
+                    <p-select id="user_column" formControlName="user_column" [options]="tableColumns" [showClear]="true"
+                        placeholder="Select Column" styleClass="w-full" appendTo="body"></p-select>
+                </div>
+                <div class="flex-1">
+                    <label for="target_role" class="block text-sm mb-1">Target Role</label>
+                    <p-select id="target_role" formControlName="target_role" [options]="roles" optionLabel="label"
+                        optionValue="value" placeholder="Select Role" styleClass="w-full" appendTo="body"></p-select>
+                </div>
+            </div>
+            <small class="block text-gray-500 mt-1">Group by user column OR send to role</small>
+        </div>
+    </div>
+
+    <!-- Condition Builder -->
+    <div class="field grid">
+        <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Condition</label>
+        <div class="col-12 md:col-9">
+            <div class="surface-ground p-3 border-round border-1 surface-border" [formGroup]="ruleConditionForm">
+
+                <!-- 1. Operation & Column -->
+                <div class="flex gap-2 mb-2">
+                    <div class="field flex-1 mb-0">
+                        <label class="text-sm">Operation</label>
+                        <p-select formControlName="operation" [options]="operations" optionLabel="label"
+                            optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+                    </div>
+                    <div class="field flex-1 mb-0">
+                        <label class="text-sm">Column</label>
+                        <p-select formControlName="column" [options]="['*'].concat(tableColumns)" [editable]="true"
+                            appendTo="body" styleClass="w-full"></p-select>
+                    </div>
+                </div>
+
+                <!-- 2. SQL Filter -->
+                <div class="field mb-2">
+                    <label class="text-sm">Filter (SQL WHERE)</label>
+                    <input type="text" pInputText formControlName="condition" placeholder="e.g. status='FAILED'"
+                        class="w-full" />
+                </div>
+
+                <!-- 3. Threshold -->
+                <div class="flex gap-2 align-items-end">
+                    <span class="mb-2 font-bold">IF Result</span>
+                    <div class="field flex-1 mb-0">
+                        <p-select formControlName="threshold_operator" [options]="operators" optionLabel="label"
+                            optionValue="value" appendTo="body" styleClass="w-full"></p-select>
+                    </div>
+                    <div class="field flex-1 mb-0">
+                        <input type="text" pInputText formControlName="threshold_value" placeholder="Threshold (e.g. 0)"
+                            class="w-full" />
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="title_template" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Title Template</label>
+        <div class="col-12 md:col-9">
+            <input id="title_template" type="text" pInputText formControlName="title_template" class="w-full" />
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="message_template" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Message Template</label>
+        <div class="col-12 md:col-9">
+            <textarea id="message_template" rows="2" pTextarea formControlName="message_template"
+                class="w-full"></textarea>
+            <small class="block mt-1">Use {{"{{value}}"}} for actual value</small>
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="action_type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Configuration</label>
+        <div class="col-12 md:col-9">
+            <div class="flex gap-3">
+                <div class="flex-1">
+                    <label for="action_type" class="block text-sm mb-1">Notification Type</label>
+                    <p-select id="action_type" formControlName="action_type" [options]="actionTypes" optionLabel="label"
+                        optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+                </div>
+                <div class="flex-1">
+                    <label for="schedule_type" class="block text-sm mb-1">Schedule Type</label>
+                    <p-select id="schedule_type" formControlName="schedule_type" [options]="scheduleTypes"
+                        optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ruleForm.get('schedule_type')?.value !== 'EVENT') {
+    <div class="field grid">
+        <label for="schedule_config" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Schedule
+            Config</label>
+        <div class="col-12 md:col-9">
+            <input id="schedule_config" type="text" pInputText formControlName="schedule_config"
+                placeholder="*/5 * * * * or 60" class="w-full" />
+        </div>
+    </div>
+    }
+
+    <div class="flex justify-content-end gap-2 mt-4">
+        <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Save" (click)="save()" [loading]="loading"
+            [disabled]="ruleForm.invalid || ruleConditionForm.invalid"></p-button>
+    </div>
+</form>

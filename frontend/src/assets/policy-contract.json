@@ -1,0 +1,27 @@
+{
+    "items": [
+        {
+            "id": "2WX7CGwCcD2ZoYoL",
+            "name": "Default",
+            "coreAttributes": [
+                {
+                    "name": "subject"
+                }
+            ],
+            "extendedAttributes": [
+                {
+                    "name": "uid"
+                },
+                {
+                    "name": "mail"
+                },
+                {
+                    "name": "sn"
+                },
+                {
+                    "name": "cn"
+                }
+            ]
+        }
+    ]
+}

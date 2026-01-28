@@ -1,0 +1,150 @@
+{
+    "items": [
+        {
+            "id": "item_001_id",
+            "name": "Federated_Identity_Profile",
+            "coreAttributes": [
+                {
+                    "name": "subject"
+                }
+            ],
+            "extendedAttributes": [
+                {
+                    "name": "firstname"
+                },
+                {
+                    "name": "Email"
+                },
+                {
+                    "name": "lastname"
+                }
+            ]
+        },
+        {
+            "id": "item_002_id",
+            "name": "Claims_Mapper_Core",
+            "coreAttributes": [
+                {
+                    "name": "subject"
+                }
+            ],
+            "extendedAttributes": [
+                {
+                    "name": "accountStatus"
+                },
+                {
+                    "name": "uid"
+                },
+                {
+                    "name": "hwFederatedIDP"
+                },
+                {
+                    "name": "firstname"
+                },
+                {
+                    "name": "IDP"
+                },
+                {
+                    "name": "usertype"
+                },
+                {
+                    "name": "groups"
+                },
+                {
+                    "name": "authenticatedIDP"
+                },
+                {
+                    "name": "email"
+                },
+                {
+                    "name": "lastname"
+                }
+            ]
+        },
+        {
+            "id": "item_003_id",
+            "name": "Standard_Security_Policy",
+            "coreAttributes": [
+                {
+                    "name": "subject"
+                }
+            ],
+            "extendedAttributes": [
+                {
+                    "name": "firstname"
+                },
+                {
+                    "name": "Group_Based_Authz"
+                },
+                {
+                    "name": "risklevel"
+                },
+                {
+                    "name": "Group_Based_MFA"
+                },
+                {
+                    "name": "usertype"
+                },
+                {
+                    "name": "groups"
+                },
+                {
+                    "name": "lastname"
+                },
+                {
+                    "name": "uid"
+                },
+                {
+                    "name": "hwtype"
+                },
+                {
+                    "name": "upn"
+                },
+                {
+                    "name": "email_validated"
+                },
+                {
+                    "name": "IDP"
+                },
+                {
+                    "name": "fed-ID_verified"
+                },
+                {
+                    "name": "riskscore"
+                },
+                {
+                    "name": "authenticatedIDP"
+                },
+                {
+                    "name": "email"
+                }
+            ]
+        },
+        {
+            "id": "item_004_id",
+            "name": "User_Identification_Contract",
+            "coreAttributes": [
+                {
+                    "name": "subject"
+                }
+            ],
+            "extendedAttributes": [
+                {
+                    "name": "uid"
+                },
+                {
+                    "name": "upn"
+                },
+                {
+                    "name": "hwtype"
+                },
+                {
+                    "name": "usertype"
+                },
+                {
+                    "name": "email"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,262 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormsModule, FormControl } from '@angular/forms';
+import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { TagModule } from 'primeng/tag';
+import { MessageService } from 'primeng/api';
+import { DashboardService, WidgetDefinition } from '../../../../services/dashboard.service';
+import { SourceService } from '../../../../services/source.service';
+
+@Component({
+    selector: 'app-widget-dialog',
+    standalone: true,
+    imports: [
+        CommonModule, ReactiveFormsModule, FormsModule,
+        ButtonModule, InputTextModule, TextareaModule, SelectModule, MultiSelectModule, TagModule
+    ],
+    templateUrl: './widget-dialog.html',
+    styles: [`
+    .field { margin-bottom: 1rem; }
+  `]
+})
+export class WidgetDialogComponent implements OnInit {
+    private fb = inject(FormBuilder);
+    private dashboardService = inject(DashboardService);
+    private sourceService = inject(SourceService);
+    private messageService = inject(MessageService);
+    public ref = inject(DynamicDialogRef);
+    public config = inject(DynamicDialogConfig);
+
+    widgetForm!: FormGroup;
+    loading = false;
+    isEditing = false;
+    uniqueTables: string[] = [];
+    tableColumns: string[] = [];
+    widgetData: WidgetDefinition | undefined;
+
+    statusColors = [
+        { label: 'Green', value: 'success' },
+        { label: 'Red', value: 'warn' },
+        { label: 'Blue', value: 'primary' },
+        { label: 'Orange', value: 'accent' }
+    ];
+
+    widgetTypes = [
+        { label: 'Table', value: 'TABLE' },
+        { label: 'Card (Metric)', value: 'CARD' },
+        { label: 'Status Grid', value: 'STATUS_GRID' },
+        { label: 'Multi Metric', value: 'MULTI_METRIC' }
+    ];
+
+    operations = [
+        { label: 'Count', value: 'COUNT' },
+        { label: 'Sum', value: 'SUM' },
+        { label: 'Avg', value: 'AVG' },
+        { label: 'Min', value: 'MIN' },
+        { label: 'Max', value: 'MAX' }
+    ];
+
+    constructor() { }
+
+    ngOnInit() {
+        this.initForm();
+        this.loadTables();
+    }
+
+    initForm() {
+        this.widgetData = this.config.data?.widget;
+        this.isEditing = !!this.widgetData;
+
+        this.widgetForm = this.fb.group({
+            title: ['', Validators.required],
+            type: ['TABLE', Validators.required],
+            data_source_table: [''],
+            user_column: [''],
+            global_filter: [''], // New
+            // TABLE specific
+            selectedColumns: [[]],
+            // STATUS_GRID specific
+            statusLabelColumn: [''],
+            statusValueColumn: [''],
+            statusRules: this.fb.array([]),
+            // MULTI_METRIC specific
+            metrics: this.fb.array([])
+        });
+
+        // Initialize statusRules with one empty rule if creating new
+        if (!this.isEditing) {
+            this.addStatusRule();
+        }
+
+        if (this.isEditing && this.widgetData) {
+            this.widgetForm.patchValue(this.widgetData);
+            this.restoreConfigForEdit(this.widgetData);
+        }
+    }
+
+    get metrics(): FormArray {
+        return this.widgetForm.get('metrics') as FormArray;
+    }
+
+    get statusRules(): FormArray {
+        return this.widgetForm.get('statusRules') as FormArray;
+    }
+
+    addMetric() {
+        if (this.metrics.length >= 4) return;
+        this.metrics.push(this.fb.group({
+            label: ['', Validators.required],
+            operation: ['COUNT', Validators.required],
+            column: ['*', Validators.required],
+            condition: ['']
+        }));
+    }
+
+    removeMetric(index: number) {
+        this.metrics.removeAt(index);
+    }
+
+    addStatusRule() {
+        this.statusRules.push(this.fb.group({
+            value: [''],
+            color: ['success']
+        }));
+    }
+
+    removeStatusRule(index: number) {
+        this.statusRules.removeAt(index);
+    }
+
+    loadTables() {
+        this.sourceService.getSyncDefs().subscribe({
+            next: (data) => {
+                this.uniqueTables = [...new Set(data.map(d => d.target_table_name))];
+            }
+        });
+    }
+
+    onTableChange() {
+        const tableName = this.widgetForm.get('data_source_table')?.value;
+        if (tableName) {
+            this.sourceService.getTableSchema(tableName).subscribe(cols => {
+                this.tableColumns = cols;
+            });
+        }
+    }
+
+    restoreConfigForEdit(w: WidgetDefinition) {
+        if (w.data_source_table) {
+            this.sourceService.getTableSchema(w.data_source_table).subscribe(cols => {
+                this.tableColumns = cols;
+
+                // Restore Configs
+                if (w.query_config) {
+                    try {
+                        const c = JSON.parse(w.query_config);
+
+                        if (c.global_filter) {
+                            this.widgetForm.patchValue({ global_filter: c.global_filter });
+                        }
+
+                        if (w.type === 'TABLE' && c.columns) {
+                            this.widgetForm.patchValue({ selectedColumns: c.columns });
+                        }
+
+                        if (w.type === 'STATUS_GRID') {
+                            this.widgetForm.patchValue({
+                                statusLabelColumn: c.labelColumn,
+                                statusValueColumn: c.statusColumn
+                            });
+                            if (c.rules && Array.isArray(c.rules)) {
+                                this.statusRules.clear();
+                                c.rules.forEach((r: any) => {
+                                    this.statusRules.push(this.fb.group({
+                                        value: [r.value],
+                                        color: [r.color]
+                                    }));
+                                });
+                            }
+                        }
+
+                        if (w.type === 'MULTI_METRIC' && c.metrics && Array.isArray(c.metrics)) {
+                            c.metrics.forEach((m: any) => {
+                                this.metrics.push(this.fb.group({
+                                    label: [m.label || '', Validators.required],
+                                    operation: [m.operation || 'COUNT', Validators.required],
+                                    column: [m.column || '*', Validators.required],
+                                    condition: [m.condition || '']
+                                }));
+                            });
+                        }
+
+                    } catch (e) { console.error(e); }
+                }
+            });
+        }
+    }
+
+    save() {
+        if (this.widgetForm.invalid) return;
+        const formVal = this.widgetForm.getRawValue();
+        this.loading = true;
+
+        // Compute query_config
+        let queryConfig: any = {
+            global_filter: formVal.global_filter // Common Config
+        };
+
+        if (formVal.type === 'TABLE' && formVal.selectedColumns?.length > 0) {
+            queryConfig.columns = formVal.selectedColumns;
+        } else if (formVal.type === 'STATUS_GRID') {
+            queryConfig.labelColumn = formVal.statusLabelColumn;
+            queryConfig.statusColumn = formVal.statusValueColumn;
+            queryConfig.rules = formVal.statusRules;
+        } else if (formVal.type === 'MULTI_METRIC') {
+            queryConfig.metrics = formVal.metrics;
+        }
+
+        const payload = {
+            ...formVal,
+            query_config: JSON.stringify(queryConfig)
+        };
+        // Remove temporary form fields from payload
+        delete payload.selectedColumns;
+        delete payload.statusLabelColumn;
+        delete payload.statusValueColumn;
+        delete payload.statusRules;
+        delete payload.metrics;
+        delete payload.global_filter;
+
+
+        if (this.isEditing) {
+            this.dashboardService.updateWidget(this.widgetData!.id!, payload).subscribe({
+                next: () => this.ref.close(true),
+                error: (err) => {
+                    this.loading = false;
+                    this.showMsg('error', 'Error: ' + err.message);
+                }
+            });
+        } else {
+            this.dashboardService.createWidget(payload).subscribe({
+                next: () => this.ref.close(true),
+                error: (err) => {
+                    this.loading = false;
+                    this.showMsg('error', 'Error: ' + err.message);
+                }
+            });
+        }
+    }
+
+    cancel() {
+        this.ref.close();
+    }
+
+    showMsg(severity: string, summary: string) {
+        this.messageService.add({ severity, summary, detail: summary });
+    }
+}

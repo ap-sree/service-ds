@@ -1,0 +1,115 @@
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.tab-content {
+    padding: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    mat-form-field {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+.full-width {
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    margin-top: 16px;
+    margin-bottom: 32px;
+}
+
+/* Responsive Split Layout */
+.split-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    /* Allow wrapping */
+}
+
+.edit-panel {
+    flex: 0 0 400px;
+}
+
+.list-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    mat-card-content {
+        overflow-y: auto;
+        max-height: calc(100vh - 220px);
+        /* Adjust based on header/tabs height */
+    }
+}
+
+/* Tablet/Mobile Breakpoint */
+@media (max-width: 900px) {
+    .split-layout {
+        flex-direction: column;
+    }
+
+    .edit-panel {
+        flex: 1;
+        width: 100%;
+        /* Full width on mobile */
+    }
+
+    .list-panel {
+        width: 100%;
+        margin-top: 20px;
+    }
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+/* List Item Styles */
+.list-item {
+    border-bottom: 1px solid #eee;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    .item-details {
+        flex: 1;
+        padding-right: 10px;
+    }
+
+    .item-title {
+        font-size: 1.1em;
+        font-weight: 500;
+    }
+
+    .item-subtitle {
+        color: #666;
+        font-size: 0.9em;
+        margin-top: 4px;
+        line-height: 1.4;
+    }
+
+    .item-actions {
+        display: flex;
+        gap: 8px;
+        /* Consistent gap for buttons */
+    }
+}

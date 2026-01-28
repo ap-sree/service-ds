@@ -1,0 +1,125 @@
+.dashboard-container {
+    padding: 20px;
+}
+
+.widgets-grid {
+    display: grid;
+    /* Hybrid Layout: 6 columns allows for both 3-item rows and 2-item rows */
+    grid-template-columns: repeat(6, 1fr);
+    gap: 24px;
+}
+
+.widget-wrapper {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    position: relative;
+    /* Ensure absolute children work */
+}
+
+/* Edit Header - Fix Flex Overflow */
+::ng-deep .edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex-wrap: nowrap;
+    background-color: #f5f5f5 !important;
+    /* Force Grey BG */
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px 12px;
+    /* Explicit padding */
+    margin-bottom: 0;
+
+    .edit-title {
+        flex: 1;
+        min-width: 0;
+        /* Allow title to shrink below content size */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #333 !important;
+        /* Force Black */
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .edit-controls {
+        flex-shrink: 0;
+        /* Do not shrink buttons */
+        display: flex;
+        align-items: center;
+
+        button {
+            /* Compact buttons in edit mode */
+            transform: scale(0.9);
+        }
+    }
+}
+
+/* Dynamic Sizing based on Type */
+.widget-wrapper.type-card {
+    /* 6 / 1 = 6 items per row */
+    grid-column: span 1;
+    height: 140px;
+}
+
+.widget-wrapper.type-table {
+    /* 6 / 3 = 2 items per row */
+    grid-column: span 3;
+    height: 400px;
+}
+
+.widget-wrapper.type-grid {
+    /* 6 / 3 = 2 items per row */
+    grid-column: span 3;
+    height: 400px;
+}
+
+.widget-wrapper.type-multi-metric {
+    /* Full Width */
+    grid-column: span 3;
+    height: 400px;
+    /* Slightly taller than card */
+}
+
+/* Tablet: 2 Columns Standard */
+@media (max-width: 1200px) {
+    .widgets-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .widget-wrapper.type-card {
+        grid-column: span 1;
+    }
+
+    .widget-wrapper.type-table {
+        grid-column: span 2;
+    }
+
+    /* Keep tables full width on tablet */
+    .widget-wrapper.type-grid,
+    .widget-wrapper.type-multi-metric {
+        grid-column: span 2;
+    }
+}
+
+/* Mobile: 1 Column */
+@media (max-width: 800px) {
+    .widgets-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tables take full width usually */
+.full-width {
+    flex-basis: 100%;
+}
+
+.empty-state {
+    text-align: center;
+    margin-top: 50px;
+    color: #666;
+}

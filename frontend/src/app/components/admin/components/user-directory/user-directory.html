@@ -1,0 +1,59 @@
+<div class="px-5 py-3 md:px-6 md:py-4">
+    <p-confirmDialog></p-confirmDialog>
+
+    <div class="split-layout">
+        <h2 class="text-2xl font-bold mb-4">User Directory</h2>
+
+        <div class="flex justify-content-between align-items-center mb-3">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search" />
+                <input type="text" pInputText (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                    placeholder="Search..." />
+            </p-iconfield>
+
+            <p-button label="Create User" icon="pi pi-plus" (click)="openDialog()"></p-button>
+        </div>
+
+        <p-card header="User Directory" styleClass="p-0">
+            <p-table #dt [value]="dataSource" [rows]="5" [paginator]="true" [globalFilterFields]="['username', 'role']"
+                [rowHover]="true" dataKey="id"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [showCurrentPageReport]="true">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="username">Username <p-sortIcon field="username"></p-sortIcon></th>
+                        <th pSortableColumn="role">Role <p-sortIcon field="role"></p-sortIcon></th>
+                        <th>Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-user>
+                    <tr>
+                        <td class="font-bold">{{user.username}}</td>
+                        <td><p-tag [value]="user.role"
+                                [severity]="user.role === 'ADMIN' ? 'danger' : 'success'"></p-tag>
+                        </td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" (click)="openDialog(user)"
+                                    pTooltip="Edit"></p-button>
+
+                                <p-button icon="pi pi-refresh" [rounded]="true" [text]="true" severity="help"
+                                    (click)="resetUserLayout($event, user.username)" pTooltip="Reset Layout"></p-button>
+
+                                <p-button *ngIf="user.username !== 'admin' && user.username !== currentUserId"
+                                    icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                    (click)="deleteUser($event, user.username)" pTooltip="Delete"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="3" class="text-center p-4">No users found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+</div>

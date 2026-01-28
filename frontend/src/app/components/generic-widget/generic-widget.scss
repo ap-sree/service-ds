@@ -1,0 +1,394 @@
+:host {
+    display: block;
+    height: 100%;
+    /* Ensure host respects grid cell limits */
+    overflow: hidden;
+    min-height: 0;
+    /* Critical for flex nesting */
+}
+
+/* Fix PrimeNG Card Height/Flex Structure */
+:host ::ng-deep .p-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+:host ::ng-deep .p-card .p-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    /* Removing default padding to handle it manually */
+    height: 100%;
+    border-radius: inherit;
+}
+
+
+/* Fix PrimeNG Table Scroll in Widget */
+:host ::ng-deep .widget-card p-table {
+    flex: 1;
+    display: flex;
+    /* Ensure host behaves as flex container */
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    /* Critical for scrolling */
+}
+
+:host ::ng-deep .widget-card .p-datatable-wrapper {
+    flex: 1;
+    min-height: 0;
+}
+
+
+/* Fix flex layout for PrimeNG 18+ table body and rows if needed */
+:host ::ng-deep .widget-card .p-datatable-tbody {
+    display: table-row-group;
+}
+
+
+:host ::ng-deep .p-card .p-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+
+/* Glassmorphism Card Logic */
+/* Glassmorphism Card Logic */
+.widget-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    /* Soft Glass Effect */
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* Clean Look - No Border */
+    border: none;
+    /* Uniform colored top border */
+    border-top: 4px solid var(--p-primary-color, #2196F3);
+
+    /* Color Variants - Backgrounds or Text usage if needed, but Border is now uniform */
+    .loading-placeholder {
+        min-height: 100px;
+    }
+
+    /* Adjust Header/Text for Cards */
+    &.type-card {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        color: #333;
+        /* Dark text */
+
+        mat-card-header {
+            background: transparent;
+            border-bottom: none;
+            padding: 8px 16px 0 16px;
+            /* Flex layout to fit actions */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            mat-card-title {
+                color: #424242;
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin: 0;
+                /* Allow title to shrink */
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                line-height: 1.2;
+            }
+        }
+
+        .metric-container {
+            background: transparent;
+            padding: 0 16px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100%;
+        }
+
+        .metric-label {
+            display: block;
+            margin-top: 4px;
+            color: #757575;
+            font-size: 0.9rem;
+        }
+
+        .loading-container {
+            color: #666;
+        }
+    }
+}
+
+mat-card-header {
+    background: #3f51b5;
+    /* Primary Color */
+    border-bottom: none;
+    padding: 12px 16px;
+
+    mat-card-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+}
+
+mat-card-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: relative;
+    padding: 0;
+    position: relative;
+    background: transparent;
+    /* Allow parent gradient/color to show through */
+
+    /* Ensure content matches rounded corners */
+    border-radius: inherit;
+}
+
+/* Ensure Tables have white bg (since card is transparent now) */
+.table-container,
+.grid-container,
+.no-data {
+    background: white;
+}
+
+/* --- Table Styles --- */
+.table-container {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
+
+    /* Custom Scrollbar */
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+    }
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f5f5f5;
+        /* Solid Grey Header */
+        color: #616161;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 2px solid #e0e0e0;
+        /* Darker header border */
+    }
+
+    td {
+        padding: 12px 16px;
+        color: #1a1a1a;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #e0e0e0;
+        /* Increased visibility from #eee */
+    }
+
+    tr:hover td {
+        background-color: #f5f5f5;
+        /* Clean hover */
+    }
+}
+
+.no-data {
+    padding: 40px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    background: white;
+}
+
+/* --- Metric Card Styles --- */
+.metric-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    /* Default background for non-vibrant (fail-safe) */
+    background: white;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+
+/* --- Status Grid Styles --- */
+.grid-container {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    background: white;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px;
+    border-radius: 12px;
+    background: #fafafa;
+    border: 1px solid #eee;
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: scale(1.05);
+        background: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        z-index: 1;
+    }
+
+    .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-bottom: 8px;
+    }
+
+    .status-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 2px;
+        word-break: break-word;
+    }
+
+    .status-val {
+        font-size: 0.7rem;
+        color: #888;
+    }
+}
+
+/* Status Colors */
+.bg-success {
+    background-color: #4caf50;
+    box-shadow: 0 0 4px rgba(76, 175, 80, 0.4);
+}
+
+.bg-warn {
+    background-color: #f44336;
+    box-shadow: 0 0 4px rgba(244, 67, 54, 0.4);
+}
+
+.bg-primary {
+    background-color: #2196f3;
+    box-shadow: 0 0 4px rgba(33, 150, 243, 0.4);
+}
+
+.bg-accent {
+    background-color: #ff9800;
+    box-shadow: 0 0 4px rgba(255, 152, 0, 0.4);
+}
+
+.loading-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* --- Multi Metric Styles --- */
+.multi-metric-container {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 16px;
+    background: white;
+    gap: 16px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    /* Optional separator border except last */
+    border-right: 1px solid #eee;
+
+    &:last-child {
+        border-right: none;
+    }
+}
+
+.metric-val {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    /* Responsive Dynamic Font */
+    /* Slightly smaller than single card */
+    font-weight: 700;
+    color: #333;
+    /* Use primary color or dynamic? For now dark grey for readability */
+    /* Or replicate gradient text */
+    background: linear-gradient(135deg, #3f51b5, #5c6bc0);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.metric-lbl {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.error {
+    color: #d32f2f;
+    padding: 16px;
+    text-align: center;
+    background: rgba(211, 47, 47, 0.05);
+    border-left: 4px solid #d32f2f;
+    margin: 16px;
+}

@@ -1,0 +1,22 @@
+<div class="element-palette">
+    <h3 class="text-lg font-semibold mb-3">Form Elements</h3>
+
+    <div cdkDropList [id]="paletteListId" [cdkDropListData]="elements" [cdkDropListConnectedTo]="['canvas-drop-list']"
+        cdkDropListSortingDisabled class="elements-list flex flex-column gap-2">
+
+        <div *ngFor="let element of elements" cdkDrag [cdkDragData]="element"
+            class="element-item p-3 surface-card border-1 surface-border border-round cursor-move flex align-items-center gap-2 hover:bg-blue-50 hover:text-primary transition-colors text-700"
+            pTooltip="Drag to canvas" tooltipPosition="right">
+
+            <i [class]="element.icon" class="text-xl text-primary"></i>
+            <span class="font-medium">{{ element.label }}</span>
+
+            <!-- Custom drag preview -->
+            <div *cdkDragPreview
+                class="drag-preview p-3 surface-card border-1 surface-border border-round flex align-items-center gap-2 shadow-4">
+                <i [class]="element.icon" class="text-xl"></i>
+                <span>{{ element.label }}</span>
+            </div>
+        </div>
+    </div>
+</div>

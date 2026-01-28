@@ -1,0 +1,25 @@
+/* Login Styles handled by PrimeFlex classes in template */
+.login-container {
+    background: var(--surface-ground);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.full-width {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
+mat-card-title {
+    margin-bottom: 20px;
+}

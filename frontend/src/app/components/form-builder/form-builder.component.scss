@@ -1,0 +1,25 @@
+.form-builder-wrapper {
+    height: calc(100vh - 100px);
+    /* Adjust for header */
+    display: flex;
+    flex-direction: column;
+}
+
+.builder-layout {
+    flex: 1;
+    min-height: 0;
+    /* Important for scrolling */
+}
+
+.card {
+    height: 100%;
+    padding: 1rem;
+    overflow-y: auto;
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 6px;
+}
+
+.surface-ground {
+    background-color: var(--surface-ground);
+}

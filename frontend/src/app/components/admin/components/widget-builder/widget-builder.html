@@ -1,0 +1,59 @@
+<div class="px-5 py-3 md:px-6 md:py-4">
+    <p-confirmDialog></p-confirmDialog>
+
+    <div class="split-layout">
+        <h2 class="text-2xl font-bold mb-4">Widget Builder</h2>
+
+        <div class="flex justify-content-between align-items-center mb-3">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search" />
+                <input type="text" pInputText (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                    placeholder="Search..." />
+            </p-iconfield>
+
+            <p-button label="Create Widget" icon="pi pi-plus" (click)="openDialog()"></p-button>
+        </div>
+
+        <p-card header="Dashboard Widgets" styleClass="p-0">
+            <p-table #dt [value]="dataSource" [rows]="5" [paginator]="true"
+                [globalFilterFields]="['title', 'type', 'data_source_table', 'id']" [rowHover]="true" dataKey="id"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [showCurrentPageReport]="true">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
+                        <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+                        <th pSortableColumn="data_source_table">Data Source <p-sortIcon
+                                field="data_source_table"></p-sortIcon></th>
+                        <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+                        <th>Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-widget>
+                    <tr>
+                        <td class="font-bold">{{widget.title}}</td>
+                        <td><p-tag [value]="widget.type"
+                                [severity]="widget.type === 'TABLE' ? 'info' : (widget.type === 'CARD' ? 'success' : 'warn')"></p-tag>
+                        </td>
+                        <td>{{widget.data_source_table || '-'}}</td>
+                        <td class="text-sm text-gray-500">{{widget.id}}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                                    (click)="openDialog(widget)" pTooltip="Edit"></p-button>
+                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                    (click)="deleteWidget($event, widget.id!)" pTooltip="Delete"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="5" class="text-center p-4">No widgets found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+</div>

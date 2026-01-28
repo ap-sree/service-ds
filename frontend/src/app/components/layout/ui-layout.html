@@ -1,0 +1,97 @@
+<div class="layout-wrapper font-family-sans">
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-left flex align-items-center gap-3">
+            <!-- Mobile Toggle (Visible only on small screens) -->
+            <p-button icon="pi pi-bars" styleClass="md:hidden" [text]="true" [rounded]="true"
+                (click)="toggleMobileMenu()"></p-button>
+
+            <a routerLink="/" class="logo-link no-underline flex align-items-center gap-2">
+                <i class="pi pi-th-large text-xl text-900"></i>
+                <span class="brand-text">Service Dashboard</span>
+            </a>
+        </div>
+
+        <div class="topbar-right flex align-items-center gap-2">
+            @if (currentUser) {
+            <div class="user-profile flex align-items-center gap-2 cursor-pointer p-2 border-round hover:surface-100"
+                (click)="optionsMenu.toggle($event)">
+                <span
+                    class="w-2rem h-2rem border-circle surface-200 flex align-items-center justify-content-center text-600 font-bold">
+                    {{ currentUser.username.charAt(0).toUpperCase() }}
+                </span>
+            </div>
+            <p-menu #optionsMenu [popup]="true" [model]="userMenuItems"></p-menu>
+            }
+        </div>
+    </div>
+
+    <!-- Layout Body -->
+    <div class="layout-body">
+        <!-- Sidebar (Desktop: Static, Mobile: Drawer/Overlay) -->
+        <div class="sidebar-container" [class.mobile-visible]="mobileMenuVisible">
+            <div class="sidebar-content">
+
+                <!-- Navigation Group: Main -->
+                <div class="nav-group">
+                    <a pRipple routerLink="/dashboard" routerLinkActive="active-item"
+                        [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+                        <i class="pi pi-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="separator"></div>
+
+                <!-- Navigation Group: Utilities -->
+                <div class="nav-group">
+                    <div class="nav-header">Utilities</div>
+
+                    <a pRipple routerLink="/form-builder" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-file-edit"></i>
+                        <span>Form Builder</span>
+                    </a>
+                    <a pRipple routerLink="/policy-visualizer" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-sitemap"></i>
+                        <span>Policy Visualizer</span>
+                    </a>
+                    <a pRipple routerLink="/policy-visualizer-v2" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-share-alt"></i>
+                        <span>Policy Visualizer V2</span>
+                    </a>
+                </div>
+
+                @if (isAdmin) {
+                <div class="separator"></div>
+                <div class="nav-group">
+                    <div class="nav-header">Administration</div>
+
+                    <a pRipple routerLink="/admin/data-sources" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-database"></i>
+                        <span>Data Sources</span>
+                    </a>
+                    <a pRipple routerLink="/admin/sync-jobs" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-sync"></i>
+                        <span>Sync Jobs</span>
+                    </a>
+                    <a pRipple routerLink="/admin/widgets" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-th-large"></i>
+                        <span>Widgets</span>
+                    </a>
+                    <a pRipple routerLink="/admin/users" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-users"></i>
+                        <span>Users</span>
+                    </a>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-container">
+                <ng-content></ng-content>
+            </div>
+        </div>
+    </div>
+</div>

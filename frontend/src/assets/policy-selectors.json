@@ -1,0 +1,37 @@
+{
+    "items": [
+        {
+            "id": "CHKDisable",
+            "name": "CHKDisable",
+            "pluginDescriptorRef": {
+                "id": "com.pingidentity.pf.selectors.ExtendedPropertyAuthnSelector",
+                "location": "https://localhost:9999/pf-admin-api/v1/authenticationSelectors/descriptors/com.pingidentity.pf.selectors.ExtendedPropertyAuthnSelector"
+            },
+            "configuration": {
+                "tables": [],
+                "fields": [
+                    {
+                        "name": "Extended Property",
+                        "value": "Disable"
+                    },
+                    {
+                        "name": "Case-Sensitive Matching",
+                        "value": "false"
+                    },
+                    {
+                        "name": "Enable 'No Match' Result Value",
+                        "value": "true"
+                    }
+                ]
+            },
+            "lastModified": "2026-01-27T13:02:34.895Z",
+            "attributeContract": {
+                "extendedAttributes": [
+                    {
+                        "name": "Yes"
+                    }
+                ]
+            }
+        }
+    ]
+}

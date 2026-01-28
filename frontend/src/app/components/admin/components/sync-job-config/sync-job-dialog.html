@@ -1,0 +1,162 @@
+<form [formGroup]="syncFormGroup" class="p-fluid">
+    <div class="field grid">
+        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Source</label>
+        <div class="col-12 md:col-9">
+            <p-select id="source" formControlName="source_id" [options]="sources" optionLabel="name" optionValue="id"
+                (onChange)="onSyncSourceChange()" placeholder="Select a Source" styleClass="w-full"
+                appendTo="body"></p-select>
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="table" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Local Table Name</label>
+        <div class="col-12 md:col-9">
+            <input id="table" type="text" pInputText formControlName="target_table_name" placeholder="sync_tickets"
+                class="w-full" />
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="mode" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Mode</label>
+        <div class="col-12 md:col-9">
+            <p-select id="mode" formControlName="sync_mode" [options]="modeOptions" optionLabel="label"
+                optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+    </div>
+
+    @if (syncFormGroup.get('sync_mode')?.value !== 'MANUAL') {
+    <div class="field grid">
+        <label for="schedule" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Schedule Config</label>
+        <div class="col-12 md:col-9">
+            <input id="schedule" type="text" pInputText formControlName="schedule_config"
+                placeholder="Cron (e.g. 0 * * * *)" class="w-full" />
+        </div>
+    </div>
+    }
+    @if (syncFormGroup.get('source_id')?.value) {
+    <div class="field grid">
+        <label for="query" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Query / Command</label>
+        <div class="col-12 md:col-9">
+            <textarea id="query" pTextarea formControlName="fetch_query" [autoResize]="true"
+                [placeholder]="syncQueryHint" class="w-full"></textarea>
+            <div class="flex justify-content-end mt-1">
+                <p-button label="Fetch Preview" icon="pi pi-cloud-download" (click)="fetchPreview()" [text]="true"
+                    size="small"></p-button>
+            </div>
+        </div>
+    </div>
+    }
+    <!-- Visual Mapping Table -->
+    @if (mappingRows.length > 0 || syncFormGroup.get('fetch_query')?.value) {
+    <div class="field grid">
+        <label class="col-12 font-bold mb-2">Field Mapping</label>
+        <div class="col-12">
+            <p-table [value]="mappingRows.controls" styleClass="p-datatable-sm" [tableStyle]="{'min-width': '100%'}">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 40%">Target Column (Local)</th>
+                        <th style="width: 40%">Source Path (Remote)</th>
+                        <th style="width: 10%"></th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-control let-i="rowIndex">
+                    <tr [formGroup]="control">
+                        <td>
+                            <input pInputText formControlName="target_col" placeholder="e.g. name"
+                                class="w-full text-sm" />
+                        </td>
+                        <td>
+                            <!-- Editable Dropdown for Source Path -->
+                            <p-select formControlName="source_path" [options]="availablePaths" [editable]="true"
+                                placeholder="Select or type..." appendTo="body" styleClass="w-full text-sm"></p-select>
+                        </td>
+                        <td class="text-right">
+                            <p-button icon="pi pi-trash" (click)="removeMappingRow(i)" severity="danger" [text]="true"
+                                size="small"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="footer">
+                    <tr>
+                        <td colspan="3">
+                            <p-button label="Add Field" icon="pi pi-plus" (click)="addMappingRow()" [text]="true"
+                                size="small"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+    }
+
+    <!-- Sync Strategy (Moved after Mapping) -->
+    <div class="field grid">
+        <label for="strategy" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Strategy</label>
+        <div class="col-12 md:col-9">
+            <p-select id="strategy" formControlName="sync_strategy" [options]="strategyOptions" optionLabel="label"
+                optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+    </div>
+
+    @if (syncFormGroup.get('sync_strategy')?.value === 'APPEND') {
+    <div class="field grid">
+        <label for="pk" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Primary Key</label>
+        <div class="col-12 md:col-9">
+            <!-- Dropdown based on Mapped Target Columns -->
+            <p-select id="pk" formControlName="primary_key" [options]="targetColumnOptions" optionLabel="label"
+                optionValue="value" placeholder="Select Primary Key Column" styleClass="w-full"
+                [disabled]="targetColumnOptions.length === 0" appendTo="body"></p-select>
+
+            @if (targetColumnOptions.length === 0) {
+            <small class="block mt-1">Add fields to mapping map first.</small>
+            }
+            @if (targetColumnOptions.length > 0) {
+            <small class="block mt-1">Unique column to identify records for update.</small>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- Live Preview Table -->
+    @if (previewRows.length > 0) {
+    <div class="field grid">
+        <div class="col-12 flex justify-content-between align-items-center mb-2">
+            <span class="font-bold text-primary">Preview (First 5 Rows)</span>
+            <p-button icon="pi pi-refresh" label="Refresh Preview" (click)="updatePreview()" [text]="true" size="small"
+                severity="info"></p-button>
+        </div>
+        <div class="col-12 overflow-x-auto">
+            <table class="w-full border-1 surface-border border-round text-sm" style="border-collapse: collapse;">
+                <thead class="surface-100 font-bold">
+                    <tr>
+                        @for (col of mappingRows.controls; track $index) {
+                        <th class="p-2 border-bottom-1 surface-border text-left">
+                            {{ col.value.target_col || '(Empty)' }}
+                        </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (row of previewRows; track $index) {
+                    <tr class="hover:surface-50">
+                        @for (col of mappingRows.controls; track $index) {
+                        <td class="p-2 border-bottom-1 surface-border">
+                            <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis"
+                                style="max-width: 150px;" [title]="row[col.value.target_col]">
+                                {{ row[col.value.target_col] }}
+                            </div>
+                        </td>
+                        }
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    }
+
+    <div class="flex justify-content-end gap-2 mt-4">
+        <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="syncFormGroup.invalid"></p-button>
+    </div>
+</form>

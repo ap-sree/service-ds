@@ -1,0 +1,174 @@
+{
+    "items": [
+        {
+            "id": "HTMLLogin-FG",
+            "name": "HTMLLogin-FG",
+            "rootNode": {
+                "action": {
+                    "type": "AUTHN_SOURCE",
+                    "authenticationSource": {
+                        "type": "IDP_ADAPTER",
+                        "sourceRef": {
+                            "id": "HTMLLogin",
+                            "location": "https://localhost:9999/pf-admin-api/v1/idp/adapters/HTMLLogin"
+                        }
+                    },
+                    "inputUserIdMapping": {
+                        "source": {
+                            "type": "INPUTS",
+                            "id": "Inputs"
+                        },
+                        "value": "subject"
+                    },
+                    "userIdAuthenticated": false
+                },
+                "children": [
+                    {
+                        "action": {
+                            "type": "DONE",
+                            "context": "Fail"
+                        }
+                    },
+                    {
+                        "action": {
+                            "type": "APC_MAPPING",
+                            "context": "Success",
+                            "authenticationPolicyContractRef": {
+                                "id": "2WX7CGwCcD2ZoYoL",
+                                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+                            },
+                            "attributeMapping": {
+                                "attributeSources": [],
+                                "attributeContractFulfillment": {
+                                    "uid": {
+                                        "source": {
+                                            "type": "ADAPTER",
+                                            "id": "HTMLLogin"
+                                        },
+                                        "value": "uid"
+                                    },
+                                    "mail": {
+                                        "source": {
+                                            "type": "ADAPTER",
+                                            "id": "HTMLLogin"
+                                        },
+                                        "value": "mail"
+                                    },
+                                    "subject": {
+                                        "source": {
+                                            "type": "INPUTS",
+                                            "id": "inputs"
+                                        },
+                                        "value": "subject"
+                                    },
+                                    "cn": {
+                                        "source": {
+                                            "type": "ADAPTER",
+                                            "id": "HTMLLogin"
+                                        },
+                                        "value": "cn"
+                                    },
+                                    "sn": {
+                                        "source": {
+                                            "type": "ADAPTER",
+                                            "id": "HTMLLogin"
+                                        },
+                                        "value": "sn"
+                                    }
+                                },
+                                "issuanceCriteria": {
+                                    "conditionalCriteria": []
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "inputs": {
+                "id": "2WX7CGwCcD2ZoYoL",
+                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+            },
+            "outputs": {
+                "id": "2WX7CGwCcD2ZoYoL",
+                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+            }
+        },
+        {
+            "id": "IDFirst-FG",
+            "name": "IDFirst-FG",
+            "rootNode": {
+                "action": {
+                    "type": "AUTHN_SOURCE",
+                    "authenticationSource": {
+                        "type": "IDP_ADAPTER",
+                        "sourceRef": {
+                            "id": "IDFirst",
+                            "location": "https://localhost:9999/pf-admin-api/v1/idp/adapters/IDFirst"
+                        }
+                    }
+                },
+                "children": [
+                    {
+                        "action": {
+                            "type": "DONE",
+                            "context": "Fail"
+                        }
+                    },
+                    {
+                        "action": {
+                            "type": "APC_MAPPING",
+                            "context": "Success",
+                            "authenticationPolicyContractRef": {
+                                "id": "2WX7CGwCcD2ZoYoL",
+                                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+                            },
+                            "attributeMapping": {
+                                "attributeSources": [],
+                                "attributeContractFulfillment": {
+                                    "uid": {
+                                        "source": {
+                                            "type": "NO_MAPPING"
+                                        }
+                                    },
+                                    "mail": {
+                                        "source": {
+                                            "type": "NO_MAPPING"
+                                        }
+                                    },
+                                    "subject": {
+                                        "source": {
+                                            "type": "ADAPTER",
+                                            "id": "IDFirst"
+                                        },
+                                        "value": "subject"
+                                    },
+                                    "cn": {
+                                        "source": {
+                                            "type": "NO_MAPPING"
+                                        }
+                                    },
+                                    "sn": {
+                                        "source": {
+                                            "type": "NO_MAPPING"
+                                        }
+                                    }
+                                },
+                                "issuanceCriteria": {
+                                    "conditionalCriteria": []
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "inputs": {
+                "id": "2WX7CGwCcD2ZoYoL",
+                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+            },
+            "outputs": {
+                "id": "2WX7CGwCcD2ZoYoL",
+                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+            }
+        }
+    ]
+}

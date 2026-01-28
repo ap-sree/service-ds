@@ -1,0 +1,111 @@
+<div class="px-5 py-3 md:px-6 md:py-4">
+    <p-confirmDialog></p-confirmDialog>
+
+    <div class="toolbar d-flex justify-end gap-4 align-center p-10 surface-card border-round mb-3">
+        <!-- Refresh Interval Selector -->
+        @if (!isEditing) {
+        <div class="d-flex align-center gap-4">
+            <i class="pi pi-clock text-600"></i>
+            <p-select [options]="refreshOptions" optionLabel="label" optionValue="value" [(ngModel)]="refreshInterval"
+                (onChange)="onIntervalChange($event.value)" placeholder="Auto-Refresh" class="w-140"></p-select>
+            <p-button icon="pi pi-refresh" (click)="refreshData()" [rounded]="true" [text]="true" size="small"
+                pTooltip="Refresh Now"></p-button>
+        </div>
+        }
+
+        @if (isEditing) {
+        <div class="d-flex gap-4 align-center spacer">
+            <strong class="text-900">Editing Layout</strong>
+
+            <!-- Add Widget -->
+            <p-select [options]="allWidgets" optionLabel="title" placeholder="Add Widget"
+                (onChange)="addToDash($event.value)" class="w-15rem">
+                <ng-template let-item pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <span [class]="'badge badge-' + item.type">{{item.type}}</span>
+                        <div>{{item.title}}</div>
+                    </div>
+                </ng-template>
+            </p-select>
+
+            <span class="spacer"></span>
+        </div>
+        }
+
+        <!-- Actions -->
+        @if (!isEditing) {
+        <p-button label="Customize Dashboard" icon="pi pi-pencil" (click)="toggleEdit()"></p-button>
+        }
+        @if (isEditing) {
+        <p-button label="Save My Layout" icon="pi pi-save" (click)="saveLayout()" severity="success"></p-button>
+
+        @if (username === 'admin') {
+        <p-button label="Save as Global" icon="pi pi-globe" (click)="saveGlobalLayout()" severity="warn"
+            [outlined]="true"></p-button>
+        }
+        <p-button label="Reset" icon="pi pi-refresh" (click)="resetLayout($event)" severity="danger"
+            [outlined]="true"></p-button>
+        <p-button label="Cancel" (click)="toggleEdit()" [text]="true" severity="secondary"></p-button>
+        }
+    </div>
+
+    <!-- Cards Section -->
+    <div class="widgets-grid mb-16">
+        @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
+        @if (widget.type === 'CARD') {
+        <div class="widget-wrapper widget-shadow" [class.editing]="isEditing"
+            [class.type-card]="widget.type === 'CARD'">
+
+            <app-generic-widget [widgetDef]="widget" [isEditing]="isEditing">
+                @if (isEditing) {
+                <div header-actions class="flex gap-1">
+                    <p-button icon="pi pi-arrow-up" (click)="moveUp(i)" [disabled]="i === 0" [rounded]="true"
+                        [text]="true" size="small"></p-button>
+                    <p-button icon="pi pi-arrow-down" (click)="moveDown(i)"
+                        [disabled]="i === displayedWidgets.length - 1" [rounded]="true" [text]="true"
+                        size="small"></p-button>
+                    <p-button icon="pi pi-times" (click)="removeFromDash(i)" [rounded]="true" [text]="true"
+                        severity="danger" size="small"></p-button>
+                </div>
+                }
+            </app-generic-widget>
+        </div>
+        }
+        }
+    </div>
+
+    <!-- Main Section -->
+    <div class="widgets-grid">
+        @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
+        @if (widget.type !== 'CARD') {
+        <div class="widget-wrapper widget-shadow" [class.editing]="isEditing"
+            [class.type-table]="widget.type === 'TABLE'" [class.type-grid]="widget.type === 'STATUS_GRID'"
+            [class.type-multi-metric]="widget.type === 'MULTI_METRIC'">
+
+            <app-generic-widget [widgetDef]="widget" [isEditing]="isEditing">
+                @if (isEditing) {
+                <div header-actions class="flex gap-1">
+                    <p-button icon="pi pi-arrow-up" (click)="moveUp(i)" [disabled]="i === 0" [rounded]="true"
+                        [text]="true" size="small"></p-button>
+                    <p-button icon="pi pi-arrow-down" (click)="moveDown(i)"
+                        [disabled]="i === displayedWidgets.length - 1" [rounded]="true" [text]="true"
+                        size="small"></p-button>
+                    <p-button icon="pi pi-times" (click)="removeFromDash(i)" [rounded]="true" [text]="true"
+                        severity="danger" size="small"></p-button>
+                </div>
+                }
+            </app-generic-widget>
+        </div>
+        }
+        }
+    </div>
+
+    @if (displayedWidgets.length === 0) {
+    <div class="empty-state text-center p-5 surface-card border-round">
+        <div class="text-xl font-medium text-900 mb-2">No widgets on dashboard.</div>
+        @if (!isEditing) {
+        <p class="text-600">Click "Customize Dashboard" to add widgets.</p>
+        }
+    </div>
+    }
+</div>

@@ -1,0 +1,55 @@
+<div class="flow-container h-full w-full">
+    <f-flow fDraggable fZoom [fFlowId]="flowId">
+        <f-canvas>
+            <!-- Connections (Staggered Render) -->
+            <f-connection *ngFor="let con of visibleConnections" [fOutputId]="con.source" [fInputId]="con.target"
+                [fType]="'segment'" [fBehavior]="'floating'">
+                <svg viewBox="0 0 700 700" fMarker [type]="eMarkerType.END" [height]="5" [width]="5" [refX]="5"
+                    [refY]="2.5">
+                    <path d="M0,0 L5,2.5 0,5Z" stroke="none" fill="#666"></path>
+                </svg>
+                <!-- Label on the connection -->
+                <div *ngIf="con.label" class="connection-label bg-white text-xs p-1 border-round border-1 border-200">
+                    {{ con.label }}
+                </div>
+            </f-connection>
+
+            <!-- Nodes -->
+            <div *ngFor="let node of visibleNodes" fNode [fNodePosition]="{ x: node.position.x, y: node.position.y }"
+                fNodeOutput [fOutputId]="node.id" fOutputConnectableSide="right" fNodeInput [fInputId]="node.id"
+                fInputConnectableSide="left" class="absolute" style="width: 250px;">
+
+                <div [class]="'custom-node ' + (node.data?.colorClass || 'neutral-node')">
+                    <div class="node-header flex align-items-center justify-content-between">
+                        <span class="node-type">{{ node.data?.subLabel || node.type }}</span>
+                        <i *ngIf="node.data?.icon" [class]="'text-700 pi ' + node.data?.icon"></i>
+                    </div>
+                    <div class="font-bold mb-1 text-overflow-ellipsis overflow-hidden white-space-nowrap"
+                        [title]="node.label">
+                        {{ node.label }}
+                    </div>
+                    <div class="node-context" *ngIf="node.context">
+                        <span class="text-400">Context: </span>{{ node.context }}
+                    </div>
+
+                    <!-- Details Button -->
+                    <div *ngIf="node.data && (node.data.attributeRules || node.data.fragmentMapping || node.data.selectorConfig)"
+                        class="mt-2 flex justify-content-end">
+                        <button pButton icon="pi pi-cog"
+                            class="p-button-rounded p-button-text p-button-sm h-2rem w-2rem"
+                            (click)="onNodeClick(node.data, $event)" pTooltip="View Details"></button>
+                    </div>
+
+                    <!-- Fragment Structure Button -->
+                    <div *ngIf="node.data?.fragmentStructure" class="mt-2 flex justify-content-end">
+                        <button pButton icon="pi pi-sitemap"
+                            class="p-button-rounded p-button-text p-button-sm h-2rem w-2rem p-button-secondary"
+                            (click)="onStructureClick(node.data, $event)" pTooltip="View Structure"></button>
+                    </div>
+                </div>
+            </div>
+        </f-canvas>
+        <f-minimap [fMinSize]="1000"></f-minimap>
+        <f-selection-area></f-selection-area>
+    </f-flow>
+</div>

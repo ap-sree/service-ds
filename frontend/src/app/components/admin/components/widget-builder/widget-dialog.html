@@ -1,0 +1,171 @@
+<form [formGroup]="widgetForm" class="p-fluid">
+    <div class="field grid">
+        <label for="title" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Title</label>
+        <div class="col-12 md:col-9">
+            <input id="title" type="text" pInputText formControlName="title" placeholder="My Widget" class="w-full" />
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Type</label>
+        <div class="col-12 md:col-9">
+            <p-select id="type" formControlName="type" [options]="widgetTypes" optionLabel="label" optionValue="value"
+                placeholder="Select Type" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Data Source (Table)</label>
+        <div class="col-12 md:col-9">
+            <p-select id="source" formControlName="data_source_table" [options]="uniqueTables"
+                (onChange)="onTableChange()" placeholder="Select Source" appendTo="body" styleClass="w-full"></p-select>
+        </div>
+    </div>
+
+
+    <!-- Global Filter (New) -->
+    @if (widgetForm.get('data_source_table')?.value) {
+    <div class="field grid">
+        <label for="global_filter" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Global Filter
+            (SQL)</label>
+        <div class="col-12 md:col-9">
+            <input id="global_filter" type="text" pInputText formControlName="global_filter"
+                placeholder="e.g. status='active' AND created_at > -2d" class="w-full" />
+            <small class="block mt-1 text-500">Filter data for <strong>this</strong> widget (SQL WHERE). Supports: >
+                -2d, = 0d (today), -1m (month)</small>
+
+            @if (tableColumns.length > 0) {
+            <div class="flex flex-wrap gap-2 mt-2">
+                <span class="text-sm font-bold align-self-center">Fields:</span>
+                @for (col of tableColumns; track col) {
+                <p-tag [value]="col" styleClass="cursor-pointer"
+                    (click)="widgetForm.get('global_filter')?.setValue((widgetForm.get('global_filter')?.value || '') + ' ' + col)"></p-tag>
+                }
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="user_column" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Filter by User
+            Column</label>
+        <div class="col-12 md:col-9">
+            <p-select id="user_column" formControlName="user_column" [options]="tableColumns" [showClear]="true"
+                placeholder="Select Column" styleClass="w-full" appendTo="body"></p-select>
+
+            @if (tableColumns.length === 0) {
+            <small class="text-red-500 block mt-1">No columns found. Run Sync first?</small>
+            } @else {
+            <small class="block mt-1">Shows only rows where this column matches username.</small>
+            }
+        </div>
+    </div>
+    }
+
+    <!-- Column Selector (Only for TABLE) -->
+    @if (widgetForm.get('type')?.value === 'TABLE' && tableColumns.length > 0) {
+    <div class="field grid">
+        <label for="columns" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Display Columns</label>
+        <div class="col-12 md:col-9">
+            <p-multiSelect id="columns" [options]="tableColumns" formControlName="selectedColumns"
+                placeholder="Select Columns" display="chip" styleClass="w-full" appendTo="body"></p-multiSelect>
+        </div>
+    </div>
+    }
+
+    <!-- Status Grid Config -->
+    @if (widgetForm.get('type')?.value === 'STATUS_GRID') {
+    <div>
+        <p class="font-bold mb-2">Grid Configuration</p>
+        <div class="flex gap-4">
+            <div class="field flex-1">
+                <label>Label Column</label>
+                <p-select [options]="tableColumns" formControlName="statusLabelColumn" appendTo="body"
+                    styleClass="w-full"></p-select>
+            </div>
+            <div class="field flex-1">
+                <label>Status Column</label>
+                <p-select [options]="tableColumns" formControlName="statusValueColumn" appendTo="body"
+                    styleClass="w-full"></p-select>
+            </div>
+        </div>
+
+        <div formArrayName="statusRules">
+            @for (rule of statusRules.controls; track $index) {
+            <div [formGroupName]="$index" class="flex gap-2 align-items-center mb-2">
+                <div class="flex-grow-1">
+                    <label class="block mb-1">Value</label>
+                    <input type="text" pInputText formControlName="value" placeholder="e.g. Running" />
+                </div>
+                <div class="w-10rem">
+                    <label class="block mb-1">Color</label>
+                    <p-select [options]="statusColors" optionLabel="label" optionValue="value" formControlName="color"
+                        appendTo="body" styleClass="w-full"></p-select>
+                </div>
+                <div class="mt-4">
+                    <p-button icon="pi pi-minus" (click)="removeStatusRule($index)" [rounded]="true" severity="danger"
+                        [text]="true"></p-button>
+                </div>
+            </div>
+            }
+        </div>
+        <p-button label="Add Rule" icon="pi pi-plus" (click)="addStatusRule()" [text]="true" size="small"></p-button>
+    </div>
+    }
+
+    <!-- Multi Metric Config -->
+    @if (widgetForm.get('type')?.value === 'MULTI_METRIC') {
+    <div>
+        <p class="font-bold mb-2">Metrics Configuration (Max 4)</p>
+
+        <!-- Headers -->
+        <div class="flex gap-2 mb-2 px-1">
+            <div class="w-3 font-bold text-sm">Label</div>
+            <div class="w-2 font-bold text-sm">Op</div>
+            <div class="w-3 font-bold text-sm">Column</div>
+            <div class="w-3 font-bold text-sm">Filter (SQL)</div>
+            <div class="w-1"></div>
+        </div>
+
+        <div formArrayName="metrics">
+            @for (metric of metrics.controls; track $index) {
+            <div [formGroupName]="$index" class="flex gap-2 align-items-center mb-2 px-1">
+
+                <div class="w-3">
+                    <input type="text" pInputText formControlName="label" placeholder="Total X" class="w-full" />
+                </div>
+
+                <div class="w-2">
+                    <p-select formControlName="operation" [options]="operations" optionLabel="label" optionValue="value"
+                        appendTo="body" styleClass="w-full"></p-select>
+                </div>
+
+                <div class="w-3">
+                    <p-select formControlName="column" [options]="['*'].concat(tableColumns)" [editable]="true"
+                        appendTo="body" styleClass="w-full"></p-select>
+                </div>
+
+                <div class="w-3">
+                    <input type="text" pInputText formControlName="condition" placeholder="status='Active'"
+                        class="w-full" />
+                </div>
+
+                <div class="w-1 flex justify-content-center">
+                    <p-button icon="pi pi-trash" (click)="removeMetric($index)" [rounded]="true" severity="danger"
+                        [text]="true" size="small"></p-button>
+                </div>
+            </div>
+            }
+        </div>
+
+        @if (metrics.length < 4) { <p-button label="Add Metric" icon="pi pi-plus" (click)="addMetric()" [text]="true"
+            size="small" class="mt-2"></p-button>
+            }
+    </div>
+    }
+
+    <div class="flex justify-content-end gap-2 mt-4">
+        <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="widgetForm.invalid"></p-button>
+    </div>
+</form>

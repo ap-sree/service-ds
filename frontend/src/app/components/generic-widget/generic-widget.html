@@ -1,0 +1,105 @@
+<p-card
+    [styleClass]="'widget-card h-full flex flex-column type-' + (widgetDef.type | lowercase) + ' ' + (cardColorClass ? cardColorClass : '')">
+    <div class="flex flex-column h-full">
+        <!-- Manual Header for Custom Control -->
+        @if (widgetDef.type !== 'CARD' || isEditing) {
+        <div class="px-3 pt-3 pb-2 font-bold text-lg text-900 flex justify-content-between align-items-center">
+            <span>{{ widgetDef.title }}</span>
+            <ng-content select="[header-actions]"></ng-content>
+        </div>
+        }
+
+        <div class="flex-grow-1 flex flex-column relative px-3 pb-3"> <!-- Content Area -->
+
+            @if (loading) {
+            <div class="flex justify-content-center align-items-center flex-grow-1 loading-placeholder">
+                <p-progressSpinner styleClass="w-2rem h-2rem" strokeWidth="4"></p-progressSpinner>
+            </div>
+            }
+
+            @if (error) {
+            <div class="text-red-500 font-medium p-3">{{ error }}</div>
+            }
+
+            @if (!loading && !error) {
+
+            <!-- TABLE VIEW -->
+            @if (widgetDef.type === 'TABLE') {
+            <div class="h-full w-full overflow-hidden flex flex-column">
+                <p-table [value]="data" [scrollable]="true" scrollHeight="400px">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            @for (col of displayedColumns; track col) {
+                            <th class="py-2 text-sm bg-gray-50 white-space-nowrap">{{ col | titlecase }}</th>
+                            }
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr>
+                            @for (col of displayedColumns; track col) {
+                            <td class="py-2 text-sm">{{ rowData[col] }}</td>
+                            }
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td [attr.colspan]="displayedColumns.length" class="text-center p-3 text-sm">No Data Found
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+            }
+
+            <!-- CARD (METRIC) VIEW -->
+            @if (widgetDef.type === 'CARD') {
+            <div class="flex flex-column align-items-center justify-content-center flex-grow-1">
+                <div class="text-5xl font-bold mb-1 line-height-2">{{ cardValue }}</div>
+                <div class="text-base text-700 opacity-90">{{ widgetDef.title }} Count</div>
+            </div>
+            }
+
+            <!-- STATUS GRID VIEW -->
+            @if (widgetDef.type === 'STATUS_GRID') {
+            <div class="grid grid-nogutter w-full overflow-y-auto max-h-15rem">
+                @for (item of statusGridItems; track item.label) {
+                <div class="col-12 md:col-6 lg:col-4 p-1">
+                    <div
+                        class="flex align-items-center justify-content-between p-2 border-1 surface-border border-round surface-0 h-full">
+                        <div class="flex align-items-center gap-2 overflow-hidden">
+                            <span class="w-1rem h-1rem border-circle flex-shrink-0"
+                                [ngClass]="getBadgeClass(item.color)"></span>
+                            <span
+                                class="text-900 font-medium text-sm white-space-nowrap overflow-hidden text-overflow-ellipsis">{{
+                                item.label }}</span>
+                        </div>
+                        <span class="font-bold text-700 text-sm ml-2">{{ item.status }}</span>
+                    </div>
+                </div>
+                }
+                @if (statusGridItems.length === 0) {
+                <div class="text-center p-3 text-500 w-full">No Items</div>
+                }
+            </div>
+            }
+
+            <!-- MULTI METRIC VIEW -->
+            @if (widgetDef.type === 'MULTI_METRIC') {
+            <div class="flex flex-row flex-wrap gap-3 align-items-center justify-content-center h-full">
+                @for (item of multiMetricItems; track item.label) {
+                <div
+                    class="p-3 border-1 surface-border border-round flex flex-column align-items-center justify-content-center surface-0 shadow-1 flex-grow-1 min-w-100">
+                    <div class="text-3xl font-bold text-900 mb-1">{{ item.value }}</div>
+                    <div class="text-xs text-500 uppercase font-semibold text-center">{{ item.label }}</div>
+                </div>
+                }
+                @if (multiMetricItems.length === 0) {
+                <div class="text-center p-3 text-500">No Metrics</div>
+                }
+            </div>
+            }
+
+            }
+        </div>
+    </div>
+</p-card>

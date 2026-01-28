@@ -1,0 +1,44 @@
+<div class="form-builder-wrapper">
+    <p-toast position="bottom-right"></p-toast>
+    <p-confirmDialog></p-confirmDialog>
+
+    <p-toolbar styleClass="mb-2">
+        <div class="p-toolbar-group-start">
+            <span class="font-bold text-xl mr-2">Form Builder</span>
+        </div>
+        <div class="p-toolbar-group-end flex align-items-center gap-2">
+            <p-button [label]="(isPreviewMode$ | async) ? 'Edit Mode' : 'Preview'"
+                [icon]="(isPreviewMode$ | async) ? 'pi pi-pencil' : 'pi pi-eye'" (onClick)="togglePreview()"
+                [outlined]="true"></p-button>
+            <p-button label="Load Sample" icon="pi pi-folder-open" (onClick)="loadSample()" [text]="true"
+                severity="secondary"></p-button>
+
+            <div class="flex gap-1">
+                <p-button label="JSON" icon="pi pi-code" (onClick)="exportJSON()" severity="secondary"
+                    [outlined]="true"></p-button>
+                <p-button label="HTML" icon="pi pi-file" (onClick)="exportHTML()" severity="secondary"
+                    [outlined]="true"></p-button>
+            </div>
+
+            <p-button label="Clear" icon="pi pi-trash" (onClick)="clearForm()" severity="danger"
+                [text]="true"></p-button>
+        </div>
+    </p-toolbar>
+
+    <div class="builder-layout flex h-full gap-2">
+        <!-- Left: Palette -->
+        <div class="palette-panel card w-3">
+            <app-element-palette></app-element-palette>
+        </div>
+
+        <!-- Center: Canvas -->
+        <div class="canvas-panel card flex-grow-1 overflow-auto surface-ground border-round">
+            <app-canvas></app-canvas>
+        </div>
+
+        <!-- Right: Properties -->
+        <div class="properties-panel card w-3" *ngIf="selectedElement$ | async">
+            <app-properties-panel></app-properties-panel>
+        </div>
+    </div>
+</div>

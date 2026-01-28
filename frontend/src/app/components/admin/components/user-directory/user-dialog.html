@@ -1,0 +1,24 @@
+<form [formGroup]="userForm" class="p-fluid">
+    <div class="field grid">
+        <label for="username" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Username</label>
+        <div class="col-12 md:col-9">
+            <input id="username" type="text" pInputText formControlName="username" placeholder="john.doe"
+                class="w-full" />
+        </div>
+    </div>
+
+    <div class="field grid">
+        <label for="role" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Role</label>
+        <div class="col-12 md:col-9">
+            <p-select id="role" formControlName="role" [options]="roles" optionLabel="label" optionValue="value"
+                placeholder="Select Role" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+    </div>
+
+
+
+    <div class="flex justify-content-end gap-2 mt-4">
+        <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="userForm.invalid"></p-button>
+    </div>
+</form>

@@ -1,0 +1,248 @@
+{
+    "failIfNoSelection": false,
+    "authnSelectionTrees": [
+        {
+            "rootNode": {
+                "action": {
+                    "type": "AUTHN_SELECTOR",
+                    "authenticationSelectorRef": {
+                        "id": "CHKDisable",
+                        "location": "https://localhost:9999/pf-admin-api/v1/authenticationSelectors/CHKDisable"
+                    }
+                },
+                "children": [
+                    {
+                        "action": {
+                            "type": "AUTHN_SOURCE",
+                            "context": "Yes",
+                            "authenticationSource": {
+                                "type": "IDP_ADAPTER",
+                                "sourceRef": {
+                                    "id": "LoginDisable",
+                                    "location": "https://localhost:9999/pf-admin-api/v1/idp/adapters/LoginDisable"
+                                }
+                            }
+                        },
+                        "children": [
+                            {
+                                "action": {
+                                    "type": "DONE",
+                                    "context": "Fail"
+                                }
+                            },
+                            {
+                                "action": {
+                                    "type": "DONE",
+                                    "context": "Success"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "action": {
+                            "type": "CONTINUE",
+                            "context": "No Match"
+                        }
+                    }
+                ]
+            },
+            "id": "CheckDisable",
+            "name": "CheckDisable",
+            "enabled": true,
+            "handleFailuresLocally": false
+        },
+        {
+            "rootNode": {
+                "action": {
+                    "type": "FRAGMENT",
+                    "fragment": {
+                        "id": "IDFirst-FG",
+                        "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicies/fragments/IDFirst-FG"
+                    },
+                    "attributeRules": {
+                        "items": [
+                            {
+                                "attributeSource": {
+                                    "type": "FRAGMENT",
+                                    "id": "IDFirst-FG"
+                                },
+                                "attributeName": "subject",
+                                "condition": "EQUALS",
+                                "expectedValue": "ABC",
+                                "result": "ABC"
+                            }
+                        ],
+                        "fallbackToSuccess": true
+                    },
+                    "fragmentMapping": {
+                        "attributeSources": [],
+                        "attributeContractFulfillment": {
+                            "uid": {
+                                "source": {
+                                    "type": "NO_MAPPING"
+                                }
+                            },
+                            "mail": {
+                                "source": {
+                                    "type": "NO_MAPPING"
+                                }
+                            },
+                            "subject": {
+                                "source": {
+                                    "type": "NO_MAPPING"
+                                }
+                            },
+                            "cn": {
+                                "source": {
+                                    "type": "NO_MAPPING"
+                                }
+                            },
+                            "sn": {
+                                "source": {
+                                    "type": "NO_MAPPING"
+                                }
+                            }
+                        },
+                        "issuanceCriteria": {
+                            "conditionalCriteria": []
+                        }
+                    }
+                },
+                "children": [
+                    {
+                        "action": {
+                            "type": "RESTART",
+                            "context": "Fail"
+                        }
+                    },
+                    {
+                        "action": {
+                            "type": "DONE",
+                            "context": "ABC"
+                        }
+                    },
+                    {
+                        "action": {
+                            "type": "FRAGMENT",
+                            "context": "Success",
+                            "fragment": {
+                                "id": "HTMLLogin-FG",
+                                "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicies/fragments/HTMLLogin-FG"
+                            },
+                            "fragmentMapping": {
+                                "attributeSources": [],
+                                "attributeContractFulfillment": {
+                                    "uid": {
+                                        "source": {
+                                            "type": "FRAGMENT",
+                                            "id": "IDFirst-FG"
+                                        },
+                                        "value": "uid"
+                                    },
+                                    "mail": {
+                                        "source": {
+                                            "type": "FRAGMENT",
+                                            "id": "IDFirst-FG"
+                                        },
+                                        "value": "mail"
+                                    },
+                                    "subject": {
+                                        "source": {
+                                            "type": "FRAGMENT",
+                                            "id": "IDFirst-FG"
+                                        },
+                                        "value": "subject"
+                                    },
+                                    "cn": {
+                                        "source": {
+                                            "type": "FRAGMENT",
+                                            "id": "IDFirst-FG"
+                                        },
+                                        "value": "cn"
+                                    },
+                                    "sn": {
+                                        "source": {
+                                            "type": "FRAGMENT",
+                                            "id": "IDFirst-FG"
+                                        },
+                                        "value": "sn"
+                                    }
+                                },
+                                "issuanceCriteria": {
+                                    "conditionalCriteria": []
+                                }
+                            }
+                        },
+                        "children": [
+                            {
+                                "action": {
+                                    "type": "DONE",
+                                    "context": "Fail"
+                                }
+                            },
+                            {
+                                "action": {
+                                    "type": "APC_MAPPING",
+                                    "context": "Success",
+                                    "authenticationPolicyContractRef": {
+                                        "id": "2WX7CGwCcD2ZoYoL",
+                                        "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicyContracts/2WX7CGwCcD2ZoYoL"
+                                    },
+                                    "attributeMapping": {
+                                        "attributeSources": [],
+                                        "attributeContractFulfillment": {
+                                            "uid": {
+                                                "source": {
+                                                    "type": "FRAGMENT",
+                                                    "id": "HTMLLogin-FG"
+                                                },
+                                                "value": "uid"
+                                            },
+                                            "mail": {
+                                                "source": {
+                                                    "type": "FRAGMENT",
+                                                    "id": "HTMLLogin-FG"
+                                                },
+                                                "value": "mail"
+                                            },
+                                            "subject": {
+                                                "source": {
+                                                    "type": "FRAGMENT",
+                                                    "id": "HTMLLogin-FG"
+                                                },
+                                                "value": "subject"
+                                            },
+                                            "cn": {
+                                                "source": {
+                                                    "type": "FRAGMENT",
+                                                    "id": "HTMLLogin-FG"
+                                                },
+                                                "value": "cn"
+                                            },
+                                            "sn": {
+                                                "source": {
+                                                    "type": "FRAGMENT",
+                                                    "id": "HTMLLogin-FG"
+                                                },
+                                                "value": "sn"
+                                            }
+                                        },
+                                        "issuanceCriteria": {
+                                            "conditionalCriteria": []
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "id": "Standard",
+            "name": "Standard",
+            "enabled": true,
+            "handleFailuresLocally": false
+        }
+    ],
+    "defaultAuthenticationSources": [],
+    "trackedHttpParameters": []
+}
