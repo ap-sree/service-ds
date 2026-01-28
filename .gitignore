@@ -41,3 +41,22 @@ Thumbs.db
 
 # Angular
 .angular/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+npm-debug.log
+yarn-error.log
