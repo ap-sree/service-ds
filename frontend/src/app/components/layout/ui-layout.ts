@@ -6,8 +6,8 @@ import { RippleModule } from 'primeng/ripple';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
-import { AuthService } from '../../services/auth.service';
-import { SessionNotificationService } from '../../services/session-notification.service';
+import { AuthService } from '../../services/auth';
+import { SessionNotificationService } from '../../services/session-notification';
 
 @Component({
     selector: 'app-ui-layout',

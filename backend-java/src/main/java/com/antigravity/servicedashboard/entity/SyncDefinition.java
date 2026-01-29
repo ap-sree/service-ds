@@ -17,7 +17,8 @@ public class SyncDefinition {
     @Column(name = "target_table_name", nullable = false)
     private String targetTableName;
 
-    @Column(name = "fetch_query", nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "fetch_query", nullable = false)
     private String fetchQuery;
 
     @Column(name = "sync_mode", nullable = false)
@@ -26,7 +27,8 @@ public class SyncDefinition {
     @Column(name = "schedule_config")
     private String scheduleConfig;
 
-    @Column(name = "field_mapping", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "field_mapping")
     private String fieldMapping; // JSON
 
     @Column(name = "last_run_at")

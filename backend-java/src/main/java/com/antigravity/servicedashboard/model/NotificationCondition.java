@@ -7,19 +7,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationCondition {
 
-    @JsonProperty(AppConstants.KEY_OPERATION)
     private String operation;
 
-    @JsonProperty(AppConstants.KEY_COLUMN)
     private String column;
 
-    @JsonProperty(AppConstants.KEY_CONDITION)
     private String condition;
 
-    @JsonProperty(AppConstants.KEY_THRESHOLD_OP)
     private String thresholdOperator;
 
-    @JsonProperty(AppConstants.KEY_THRESHOLD_VAL)
     private Double thresholdValue;
 
     // Getters and Setters

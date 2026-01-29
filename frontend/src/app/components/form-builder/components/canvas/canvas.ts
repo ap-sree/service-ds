@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { CdkDrag, CdkDropList, CdkDragDrop, CdkDragHandle, CdkDragPlaceholder } from '@angular/cdk/drag-drop';
-import { FormBuilderService } from '../../../../services/form-builder.service';
-import { FormSchema, ElementType, FormElement } from '../../../../models/form-builder.model';
-import { FormElementComponent } from '../form-element/form-element.component';
+import { FormBuilderService } from '../../../../services/form-builder';
+import { FormSchema, ElementType, FormElement } from '../../../../models/form-builder';
+import { FormElementComponent } from '../form-element/form-element';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-canvas',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, CdkDrag, CdkDropList, CdkDragHandle, CdkDragPlaceholder, FormElementComponent],
-    templateUrl: './canvas.component.html',
-    styleUrls: ['./canvas.component.scss']
+    templateUrl: './canvas.html',
+    styleUrls: ['./canvas.scss']
 })
 export class CanvasComponent implements OnInit, OnDestroy {
     private formBuilderService = inject(FormBuilderService);

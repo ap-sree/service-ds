@@ -9,7 +9,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DataSourceDialogComponent } from './data-source-dialog';
-import { SourceService, DataSource } from '../../../../services/source.service';
+import { SourceService } from '../../../../services/source';
+import { DataSource } from '../../../../models/sync';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';

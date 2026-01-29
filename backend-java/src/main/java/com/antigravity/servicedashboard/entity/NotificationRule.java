@@ -13,7 +13,8 @@ public class NotificationRule {
     @Column(name = "local_table_name", nullable = false)
     private String localTableName;
 
-    @Column(name = "condition_json", nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "condition_json", nullable = false)
     @Convert(converter = com.antigravity.servicedashboard.converter.NotificationConditionConverter.class)
     private com.antigravity.servicedashboard.model.NotificationCondition condition;
 

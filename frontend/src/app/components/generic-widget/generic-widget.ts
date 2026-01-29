@@ -6,8 +6,8 @@ import { TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
-import { DashboardService, WidgetDefinition, WidgetDataResponse } from '../../services/dashboard.service';
-import { AuthService } from '../../services/auth.service';
+import { DashboardService, WidgetDefinition, WidgetDataResponse } from '../../services/dashboard';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-generic-widget',
@@ -93,7 +93,23 @@ export class GenericWidgetComponent implements OnInit {
     else if (lowerType === 'table') {
       this.data = res.items || [];
       if (this.data.length > 0) {
-        this.displayedColumns = Object.keys(this.data[0]).filter(k => !k.startsWith('_'));
+        // Check for User-Defined Columns in Query Config
+        let config = this.widgetDef.queryConfig;
+        if (typeof config === 'string') {
+          try {
+            config = JSON.parse(config);
+          } catch (e) {
+            config = {};
+          }
+        }
+
+        if (config && Array.isArray(config.columns) && config.columns.length > 0) {
+          // Use configured columns
+          this.displayedColumns = config.columns;
+        } else {
+          // Auto-detect columns (excluding hidden ones)
+          this.displayedColumns = Object.keys(this.data[0]).filter(k => !k.startsWith('_'));
+        }
       }
     }
     else if (lowerType === 'grid' || lowerType === 'status_grid') {

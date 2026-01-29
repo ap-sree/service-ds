@@ -1,6 +1,7 @@
+
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormsModule } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -9,8 +10,8 @@ import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
-import { DashboardService, WidgetDefinition } from '../../../../services/dashboard.service';
-import { SourceService } from '../../../../services/source.service';
+import { DashboardService, WidgetDefinition } from '../../../../services/dashboard';
+import { SourceService } from '../../../../services/source';
 
 @Component({
     selector: 'app-widget-dialog',
@@ -21,14 +22,14 @@ import { SourceService } from '../../../../services/source.service';
     ],
     templateUrl: './widget-dialog.html',
     styles: [`
-    .field { margin-bottom: 1rem; }
-  `]
+    .field { margin - bottom: 1rem; }
+`]
 })
 export class WidgetDialogComponent implements OnInit {
     private fb = inject(FormBuilder);
     private dashboardService = inject(DashboardService);
-    private sourceService = inject(SourceService);
-    private messageService = inject(MessageService);
+    private readonly sourceService = inject(SourceService);
+    private readonly messageService = inject(MessageService);
     public ref = inject(DynamicDialogRef);
     public config = inject(DynamicDialogConfig);
 
@@ -75,9 +76,9 @@ export class WidgetDialogComponent implements OnInit {
         this.widgetForm = this.fb.group({
             title: ['', Validators.required],
             type: ['TABLE', Validators.required],
-            data_source_table: [''],
-            user_column: [''],
-            global_filter: [''], // New
+            dataSourceTable: [''],
+            userColumn: [''],
+            globalFilter: [''], // New
             // TABLE specific
             selectedColumns: [[]],
             // STATUS_GRID specific
@@ -135,13 +136,13 @@ export class WidgetDialogComponent implements OnInit {
     loadTables() {
         this.sourceService.getSyncDefs().subscribe({
             next: (data) => {
-                this.uniqueTables = [...new Set(data.map(d => d.target_table_name))];
+                this.uniqueTables = [...new Set(data.map(d => d.targetTableName))];
             }
         });
     }
 
     onTableChange() {
-        const tableName = this.widgetForm.get('data_source_table')?.value;
+        const tableName = this.widgetForm.get('dataSourceTable')?.value;
         if (tableName) {
             this.sourceService.getTableSchema(tableName).subscribe(cols => {
                 this.tableColumns = cols;
@@ -150,17 +151,17 @@ export class WidgetDialogComponent implements OnInit {
     }
 
     restoreConfigForEdit(w: WidgetDefinition) {
-        if (w.data_source_table) {
-            this.sourceService.getTableSchema(w.data_source_table).subscribe(cols => {
+        if (w.dataSourceTable) {
+            this.sourceService.getTableSchema(w.dataSourceTable).subscribe(cols => {
                 this.tableColumns = cols;
 
                 // Restore Configs
-                if (w.query_config) {
+                if (w.queryConfig) {
                     try {
-                        const c = JSON.parse(w.query_config);
+                        const c = typeof w.queryConfig === 'string' ? JSON.parse(w.queryConfig) : w.queryConfig;
 
-                        if (c.global_filter) {
-                            this.widgetForm.patchValue({ global_filter: c.global_filter });
+                        if (c.globalFilter) {
+                            this.widgetForm.patchValue({ globalFilter: c.globalFilter });
                         }
 
                         if (w.type === 'TABLE' && c.columns) {
@@ -207,7 +208,7 @@ export class WidgetDialogComponent implements OnInit {
 
         // Compute query_config
         let queryConfig: any = {
-            global_filter: formVal.global_filter // Common Config
+            globalFilter: formVal.globalFilter // Common Config
         };
 
         if (formVal.type === 'TABLE' && formVal.selectedColumns?.length > 0) {
@@ -222,7 +223,7 @@ export class WidgetDialogComponent implements OnInit {
 
         const payload = {
             ...formVal,
-            query_config: JSON.stringify(queryConfig)
+            queryConfig: JSON.stringify(queryConfig)
         };
         // Remove temporary form fields from payload
         delete payload.selectedColumns;
@@ -230,7 +231,7 @@ export class WidgetDialogComponent implements OnInit {
         delete payload.statusValueColumn;
         delete payload.statusRules;
         delete payload.metrics;
-        delete payload.global_filter;
+        delete payload.globalFilter;
 
 
         if (this.isEditing) {

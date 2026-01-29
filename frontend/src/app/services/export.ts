@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { FormSchema } from '../models/form-builder.model';
+import { FormSchema, FormElement } from '../models/form-builder';
 
 @Injectable({
     providedIn: 'root'
@@ -16,12 +16,12 @@ export class ExportService {
 
     downloadFile(content: string, filename: string, type: string): void {
         const blob = new Blob([content], { type });
-        const url = window.URL.createObjectURL(blob);
+        const url = globalThis.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
         link.click();
-        window.URL.revokeObjectURL(url);
+        globalThis.URL.revokeObjectURL(url);
     }
 
     private generateHTML(schema: FormSchema): string {
@@ -37,7 +37,7 @@ export class ExportService {
     <div class="container mt-5">
         <h1>${schema.name}</h1>
         <form>
-            ${schema.elements.map(el => this.renderElement(el)).join('\n')}
+            ${schema.elements.map((el: FormElement) => this.renderElement(el)).join('\n')}
         </form>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

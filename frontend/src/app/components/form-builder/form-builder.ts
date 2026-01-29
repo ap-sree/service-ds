@@ -1,16 +1,16 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { take } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
-import { FormBuilderService } from '../../services/form-builder.service';
-import { ExportService } from '../../services/export.service';
+import { FormBuilderService } from '../../services/form-builder';
+import { ExportService } from '../../services/export';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ElementPaletteComponent } from './components/element-palette/element-palette.component';
-import { CanvasComponent } from './components/canvas/canvas.component';
-import { PropertiesPanelComponent } from './components/properties-panel/properties-panel.component';
+import { ElementPaletteComponent } from './components/element-palette/element-palette';
+import { CanvasComponent } from './components/canvas/canvas';
+import { PropertiesPanelComponent } from './components/properties-panel/properties-panel';
 
 @Component({
     selector: 'app-form-builder',
@@ -26,21 +26,19 @@ import { PropertiesPanelComponent } from './components/properties-panel/properti
         PropertiesPanelComponent
     ],
     providers: [MessageService, ConfirmationService],
-    templateUrl: './form-builder.component.html',
-    styleUrls: ['./form-builder.component.scss']
+    templateUrl: './form-builder.html',
+    styleUrls: ['./form-builder.scss']
 })
-export class FormBuilderComponent implements OnInit {
-    private formBuilderService = inject(FormBuilderService);
+export class FormBuilderComponent {
+    private readonly formBuilderService = inject(FormBuilderService);
     isPreviewMode$ = this.formBuilderService.getPreviewMode();
     selectedElement$ = this.formBuilderService.getSelectedElement();
 
     constructor(
-        private exportService: ExportService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private readonly exportService: ExportService,
+        private readonly messageService: MessageService,
+        private readonly confirmationService: ConfirmationService
     ) { }
-
-    ngOnInit(): void { }
 
     togglePreview(): void {
         this.formBuilderService.togglePreviewMode();

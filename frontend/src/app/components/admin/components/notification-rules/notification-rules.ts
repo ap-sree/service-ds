@@ -10,7 +10,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NotificationRuleDialogComponent } from './notification-rule-dialog';
-import { NotificationRuleService, NotificationRule } from '../../../../services/notification-rule.service';
+import { NotificationRuleService } from '../../../../services/notification-rule';
+import { NotificationRule, NotificationCondition } from '../../../../models/notification';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -89,17 +90,13 @@ export class NotificationRulesComponent implements OnInit {
         this.messageService.add({ severity, summary, detail: summary });
     }
 
-    formatCondition(jsonStr: string): string {
-        try {
-            const c = JSON.parse(jsonStr);
-            const op = c.operation || 'COUNT';
-            const col = c.column || '*';
-            const thOp = c.threshold_operator || '>';
-            const thVal = c.threshold_value || '0';
-            const cond = c.condition ? ` WHERE ${c.condition}` : '';
-            return `${op}(${col}) ${thOp} ${thVal}${cond}`;
-        } catch (e) {
-            return jsonStr; // Fallback to raw if parse fails
-        }
+    formatCondition(c: NotificationCondition): string {
+        if (!c) return '';
+        const op = c.operation || 'COUNT';
+        const col = c.column || '*';
+        const thOp = c.thresholdOperator || '>';
+        const thVal = c.thresholdValue || 0;
+        const cond = c.condition ? ` WHERE ${c.condition}` : '';
+        return `${op}(${col}) ${thOp} ${thVal}${cond}`;
     }
 }

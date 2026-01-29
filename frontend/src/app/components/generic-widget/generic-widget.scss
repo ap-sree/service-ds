@@ -29,11 +29,9 @@
 :host ::ng-deep .widget-card p-table {
     flex: 1;
     display: flex;
-    /* Ensure host behaves as flex container */
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
-    /* Critical for scrolling */
 }
 
 :host ::ng-deep .widget-card .p-datatable-wrapper {

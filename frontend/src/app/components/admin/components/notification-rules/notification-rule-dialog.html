@@ -1,9 +1,9 @@
 <form [formGroup]="ruleForm" class="p-fluid">
     <div class="field grid">
-        <label for="local_table_name" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Target Sync
+        <label for="localTableName" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Target Sync
             Table</label>
         <div class="col-12 md:col-9">
-            <p-select id="local_table_name" formControlName="local_table_name" [options]="uniqueTables"
+            <p-select id="localTableName" formControlName="localTableName" [options]="uniqueTables"
                 (onChange)="onRuleTableChange()" placeholder="Select Table" [editable]="true" styleClass="w-full"
                 appendTo="body"></p-select>
         </div>
@@ -14,13 +14,13 @@
         <div class="col-12 md:col-9">
             <div class="flex gap-3">
                 <div class="flex-1">
-                    <label for="user_column" class="block text-sm mb-1">Target User Column</label>
-                    <p-select id="user_column" formControlName="user_column" [options]="tableColumns" [showClear]="true"
+                    <label for="userColumn" class="block text-sm mb-1">Target User Column</label>
+                    <p-select id="userColumn" formControlName="userColumn" [options]="tableColumns" [showClear]="true"
                         placeholder="Select Column" styleClass="w-full" appendTo="body"></p-select>
                 </div>
                 <div class="flex-1">
-                    <label for="target_role" class="block text-sm mb-1">Target Role</label>
-                    <p-select id="target_role" formControlName="target_role" [options]="roles" optionLabel="label"
+                    <label for="targetRole" class="block text-sm mb-1">Target Role</label>
+                    <p-select id="targetRole" formControlName="targetRole" [options]="roles" optionLabel="label"
                         optionValue="value" placeholder="Select Role" styleClass="w-full" appendTo="body"></p-select>
                 </div>
             </div>
@@ -59,11 +59,11 @@
                 <div class="flex gap-2 align-items-end">
                     <span class="mb-2 font-bold">IF Result</span>
                     <div class="field flex-1 mb-0">
-                        <p-select formControlName="threshold_operator" [options]="operators" optionLabel="label"
+                        <p-select formControlName="thresholdOperator" [options]="operators" optionLabel="label"
                             optionValue="value" appendTo="body" styleClass="w-full"></p-select>
                     </div>
                     <div class="field flex-1 mb-0">
-                        <input type="text" pInputText formControlName="threshold_value" placeholder="Threshold (e.g. 0)"
+                        <input type="text" pInputText formControlName="thresholdValue" placeholder="Threshold (e.g. 0)"
                             class="w-full" />
                     </div>
                 </div>
@@ -73,45 +73,45 @@
     </div>
 
     <div class="field grid">
-        <label for="title_template" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Title Template</label>
+        <label for="titleTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Title Template</label>
         <div class="col-12 md:col-9">
-            <input id="title_template" type="text" pInputText formControlName="title_template" class="w-full" />
+            <input id="titleTemplate" type="text" pInputText formControlName="titleTemplate" class="w-full" />
         </div>
     </div>
 
     <div class="field grid">
-        <label for="message_template" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Message Template</label>
+        <label for="messageTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Message Template</label>
         <div class="col-12 md:col-9">
-            <textarea id="message_template" rows="2" pTextarea formControlName="message_template"
+            <textarea id="messageTemplate" rows="2" pTextarea formControlName="messageTemplate"
                 class="w-full"></textarea>
             <small class="block mt-1">Use {{"{{value}}"}} for actual value</small>
         </div>
     </div>
 
     <div class="field grid">
-        <label for="action_type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Configuration</label>
+        <label for="actionType" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Configuration</label>
         <div class="col-12 md:col-9">
             <div class="flex gap-3">
                 <div class="flex-1">
-                    <label for="action_type" class="block text-sm mb-1">Notification Type</label>
-                    <p-select id="action_type" formControlName="action_type" [options]="actionTypes" optionLabel="label"
+                    <label for="actionType" class="block text-sm mb-1">Notification Type</label>
+                    <p-select id="actionType" formControlName="actionType" [options]="actionTypes" optionLabel="label"
                         optionValue="value" styleClass="w-full" appendTo="body"></p-select>
                 </div>
                 <div class="flex-1">
-                    <label for="schedule_type" class="block text-sm mb-1">Schedule Type</label>
-                    <p-select id="schedule_type" formControlName="schedule_type" [options]="scheduleTypes"
+                    <label for="scheduleType" class="block text-sm mb-1">Schedule Type</label>
+                    <p-select id="scheduleType" formControlName="scheduleType" [options]="scheduleTypes"
                         optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
                 </div>
             </div>
         </div>
     </div>
 
-    @if (ruleForm.get('schedule_type')?.value !== 'EVENT') {
+    @if (ruleForm.get('scheduleType')?.value !== 'EVENT') {
     <div class="field grid">
-        <label for="schedule_config" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Schedule
+        <label for="scheduleConfig" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Schedule
             Config</label>
         <div class="col-12 md:col-9">
-            <input id="schedule_config" type="text" pInputText formControlName="schedule_config"
+            <input id="scheduleConfig" type="text" pInputText formControlName="scheduleConfig"
                 placeholder="*/5 * * * * or 60" class="w-full" />
         </div>
     </div>

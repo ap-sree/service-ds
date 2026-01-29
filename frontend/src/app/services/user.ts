@@ -2,18 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-export interface UserPreferences {
-    widgetIds?: number[];
-    theme?: string;
-}
-
-export interface User {
-    id?: string | number; // Alphanumeric ID support
-    username: string;
-    role: 'ADMIN' | 'USER';
-    preferences?: UserPreferences;
-}
+import { User, UserPreferences } from '../models/user';
 
 @Injectable({
     providedIn: 'root'

@@ -26,18 +26,24 @@
             <!-- TABLE VIEW -->
             @if (widgetDef.type === 'TABLE') {
             <div class="h-full w-full overflow-hidden flex flex-column">
-                <p-table [value]="data" [scrollable]="true" scrollHeight="400px">
+                <p-table [value]="data" [scrollable]="true" scrollHeight="400px"
+                    [tableStyle]="{'table-layout': 'fixed', 'width': '100%'}">
                     <ng-template pTemplate="header">
                         <tr>
                             @for (col of displayedColumns; track col) {
-                            <th class="py-2 text-sm bg-gray-50 white-space-nowrap">{{ col | titlecase }}</th>
+                            <th class="py-2 text-sm bg-gray-50" [style.width.%]="100 / displayedColumns.length">
+                                {{ col | titlecase }}
+                            </th>
                             }
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-rowData>
                         <tr>
                             @for (col of displayedColumns; track col) {
-                            <td class="py-2 text-sm">{{ rowData[col] }}</td>
+                            <td class="py-2 text-sm" [style.width.%]="100 / displayedColumns.length"
+                                style="word-wrap: break-word; white-space: normal;">
+                                {{ rowData[col] }}
+                            </td>
                             }
                         </tr>
                     </ng-template>

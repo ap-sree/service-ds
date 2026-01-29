@@ -9,7 +9,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { SyncJobDialogComponent } from './sync-job-dialog';
-import { SourceService, SyncDefinition } from '../../../../services/source.service';
+import { SourceService } from '../../../../services/source';
+import { SyncDefinition } from '../../../../models/sync';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -62,7 +63,7 @@ export class SyncJobConfigComponent implements OnInit {
             closeOnEscape: true,
             data: {
                 job,
-                existingTables: this.dataSource.map(d => d.target_table_name)
+                existingTables: this.dataSource.map(d => d.targetTableName)
             }
         });
 

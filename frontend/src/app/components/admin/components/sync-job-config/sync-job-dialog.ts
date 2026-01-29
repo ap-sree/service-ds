@@ -8,7 +8,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { MessageService } from 'primeng/api';
-import { SourceService, SyncDefinition, DataSource } from '../../../../services/source.service';
+import { SourceService } from '../../../../services/source';
+import { SyncDefinition, DataSource } from '../../../../models/sync';
 
 @Component({
     selector: 'app-sync-job-dialog',
@@ -62,19 +63,19 @@ export class SyncJobDialogComponent implements OnInit {
         this.isEditing = !!this.syncData;
 
         this.syncFormGroup = this.fb.group({
-            source_id: [null, Validators.required],
-            target_table_name: ['sync_', Validators.required],
-            fetch_query: [''],
-            sync_mode: ['MANUAL', Validators.required],
-            schedule_config: [''],
-            sync_strategy: ['RELOAD', Validators.required],
-            primary_key: [''],
+            sourceId: [null, Validators.required],
+            targetTableName: ['sync_', Validators.required],
+            fetchQuery: [''],
+            syncMode: ['MANUAL', Validators.required],
+            scheduleConfig: [''],
+            syncStrategy: ['RELOAD', Validators.required],
+            primaryKey: [''],
             mappingRows: this.fb.array([]) // Visual Mapping
         });
 
         // Dynamic Validator for Primary Key based on Strategy
-        this.syncFormGroup.get('sync_strategy')?.valueChanges.subscribe(val => {
-            const pkControl = this.syncFormGroup.get('primary_key');
+        this.syncFormGroup.get('syncStrategy')?.valueChanges.subscribe(val => {
+            const pkControl = this.syncFormGroup.get('primaryKey');
             if (val === 'APPEND') {
                 pkControl?.setValidators(Validators.required);
             } else {
@@ -90,24 +91,24 @@ export class SyncJobDialogComponent implements OnInit {
 
         if (this.isEditing && this.syncData) {
             this.syncFormGroup.patchValue({
-                source_id: this.syncData.source_id,
-                target_table_name: this.syncData.target_table_name,
-                fetch_query: this.syncData.fetch_query,
-                sync_mode: this.syncData.sync_mode,
-                schedule_config: this.syncData.schedule_config,
-                sync_strategy: (this.syncData as any).sync_strategy || 'RELOAD',
-                primary_key: (this.syncData as any).primary_key
+                sourceId: this.syncData.sourceId,
+                targetTableName: this.syncData.targetTableName,
+                fetchQuery: this.syncData.fetchQuery,
+                syncMode: this.syncData.syncMode,
+                scheduleConfig: this.syncData.scheduleConfig,
+                syncStrategy: (this.syncData as any).syncStrategy || 'RELOAD',
+                primaryKey: (this.syncData as any).primaryKey
             });
 
             // Trigger validator check
-            const strategy = (this.syncData as any).sync_strategy || 'RELOAD';
-            if (strategy === 'APPEND') this.syncFormGroup.get('primary_key')?.setValidators(Validators.required);
-            this.syncFormGroup.get('primary_key')?.updateValueAndValidity();
+            const strategy = (this.syncData as any).syncStrategy || 'RELOAD';
+            if (strategy === 'APPEND') this.syncFormGroup.get('primaryKey')?.setValidators(Validators.required);
+            this.syncFormGroup.get('primaryKey')?.updateValueAndValidity();
 
             // Load existing mapping into FormArray
-            if (this.syncData.field_mapping) {
+            if (this.syncData.fieldMapping) {
                 try {
-                    const mapConfig = JSON.parse(this.syncData.field_mapping);
+                    const mapConfig = JSON.parse(this.syncData.fieldMapping);
                     Object.keys(mapConfig).forEach(target => {
                         this.addMappingRow(target, mapConfig[target]);
                     });
@@ -157,7 +158,7 @@ export class SyncJobDialogComponent implements OnInit {
     }
 
     onSyncSourceChange() {
-        const sourceId = this.syncFormGroup.get('source_id')?.value;
+        const sourceId = this.syncFormGroup.get('sourceId')?.value;
         const selectedSource = this.sources.find(s => s.id === sourceId);
 
         if (selectedSource) {
@@ -172,8 +173,8 @@ export class SyncJobDialogComponent implements OnInit {
     }
 
     fetchPreview() {
-        const sourceId = this.syncFormGroup.get('source_id')?.value;
-        const query = this.syncFormGroup.get('fetch_query')?.value;
+        const sourceId = this.syncFormGroup.get('sourceId')?.value;
+        const query = this.syncFormGroup.get('fetchQuery')?.value;
 
         if (!sourceId) {
             this.showMsg('warn', 'Select a Source first');
@@ -281,7 +282,7 @@ export class SyncJobDialogComponent implements OnInit {
 
         // Check for duplicate table name
         const existingTables = this.config.data?.existingTables || [];
-        const currentTable = formVal.target_table_name;
+        const currentTable = formVal.targetTableName;
 
         // If creating, check if exists. If editing, check if exists and is not self (though target_table_name usually shouldn't change, if it does, it must be unique)
         // Actually, if editing, we might want to prevent renaming to an existing one.
@@ -301,7 +302,7 @@ export class SyncJobDialogComponent implements OnInit {
         // Construct payload
         const payload = {
             ...formVal,
-            field_mapping: JSON.stringify(mappingJson)
+            fieldMapping: JSON.stringify(mappingJson)
         };
         // Remove mappingRows from payload to be safe (though backend ignores extras usually)
         delete (payload as any).mappingRows;

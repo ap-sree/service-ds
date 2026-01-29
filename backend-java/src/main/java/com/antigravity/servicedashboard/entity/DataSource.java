@@ -16,7 +16,8 @@ public class DataSource {
     @Column(nullable = false)
     private String type; // SQL_SERVER, REST_API, LOCAL_COMMAND
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(nullable = false)
     private String config; // JSON
 
     // Getters and Setters

@@ -5,8 +5,8 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 
-import { AuthService } from './services/auth.service';
-import { SessionNotificationService } from './services/session-notification.service';
+import { AuthService } from './services/auth';
+import { SessionNotificationService } from './services/session-notification';
 import { UiLayoutComponent } from './components/layout/ui-layout';
 
 @Component({
@@ -25,9 +25,9 @@ import { UiLayoutComponent } from './components/layout/ui-layout';
 export class AppComponent implements OnInit, OnDestroy {
   title = 'service-dashboard';
 
-  private authService = inject(AuthService);
-  private sessionNotifService = inject(SessionNotificationService);
-  private messageService = inject(MessageService);
+  private readonly authService = inject(AuthService);
+  private readonly sessionNotifService = inject(SessionNotificationService);
+  private readonly messageService = inject(MessageService);
 
   currentUser = this.authService.currentUser;
 
@@ -61,8 +61,8 @@ export class AppComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'info', summary: notification.title, detail: notification.body });
       }
     } else if (type === 'OS_NOTIFY') {
-      if ((window as any).electronAPI) {
-        (window as any).electronAPI.sendNotification(notification.title, notification.body);
+      if ((globalThis as any).electronAPI) {
+        (globalThis as any).electronAPI.sendNotification(notification.title, notification.body);
       } else {
         this.messageService.add({ severity: 'info', summary: `[OS Alert] ${notification.title}`, detail: notification.body });
       }

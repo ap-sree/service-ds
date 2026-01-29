@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { FormElement, FormSchema, ElementType } from '../models/form-builder.model';
+import { FormElement, FormSchema, ElementType } from '../models/form-builder';
 
 @Injectable({
     providedIn: 'root'
@@ -63,7 +63,7 @@ export class FormBuilderService {
 
     updateElement(elementId: string, updates: Partial<FormElement>): void {
         const currentSchema = this.formSchema$.value;
-        const elements = currentSchema.elements.map(el =>
+        const elements = currentSchema.elements.map((el: FormElement) =>
             el.id === elementId ? { ...el, ...updates } : el
         );
 
@@ -72,7 +72,7 @@ export class FormBuilderService {
 
     deleteElement(elementId: string): void {
         const currentSchema = this.formSchema$.value;
-        const elements = currentSchema.elements.filter(el => el.id !== elementId);
+        const elements = currentSchema.elements.filter((el: FormElement) => el.id !== elementId);
 
         this.updateFormSchema({ ...currentSchema, elements });
 

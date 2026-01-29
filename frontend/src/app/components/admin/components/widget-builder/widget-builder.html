@@ -16,7 +16,7 @@
 
         <p-card header="Dashboard Widgets" styleClass="p-0">
             <p-table #dt [value]="dataSource" [rows]="5" [paginator]="true"
-                [globalFilterFields]="['title', 'type', 'data_source_table', 'id']" [rowHover]="true" dataKey="id"
+                [globalFilterFields]="['title', 'type', 'dataSourceTable', 'id']" [rowHover]="true" dataKey="id"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                 [showCurrentPageReport]="true">
 
@@ -24,8 +24,8 @@
                     <tr>
                         <th pSortableColumn="title">Title <p-sortIcon field="title"></p-sortIcon></th>
                         <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
-                        <th pSortableColumn="data_source_table">Data Source <p-sortIcon
-                                field="data_source_table"></p-sortIcon></th>
+                        <th pSortableColumn="dataSourceTable">Data Source <p-sortIcon
+                                field="dataSourceTable"></p-sortIcon></th>
                         <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
                         <th>Actions</th>
                     </tr>
@@ -36,7 +36,7 @@
                         <td><p-tag [value]="widget.type"
                                 [severity]="widget.type === 'TABLE' ? 'info' : (widget.type === 'CARD' ? 'success' : 'warn')"></p-tag>
                         </td>
-                        <td>{{widget.data_source_table || '-'}}</td>
+                        <td>{{widget.dataSourceTable || '-'}}</td>
                         <td class="text-sm text-gray-500">{{widget.id}}</td>
                         <td>
                             <div class="flex gap-2">

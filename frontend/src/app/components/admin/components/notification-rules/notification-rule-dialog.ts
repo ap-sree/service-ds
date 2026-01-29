@@ -7,8 +7,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
-import { NotificationRuleService, NotificationRule } from '../../../../services/notification-rule.service';
-import { SourceService } from '../../../../services/source.service';
+import { NotificationRuleService } from '../../../../services/notification-rule';
+import { NotificationRule } from '../../../../models/notification';
+import { SourceService } from '../../../../services/source';
 
 @Component({
     selector: 'app-notification-rule-dialog',
@@ -84,15 +85,15 @@ export class NotificationRuleDialogComponent implements OnInit {
         this.isEditing = !!this.ruleData;
 
         this.ruleForm = this.fb.group({
-            local_table_name: ['', Validators.required],
-            user_column: [''],
-            target_role: [''],
-            condition_json: [''],
-            action_type: ['TOAST', Validators.required],
-            title_template: ['Service Alert', Validators.required],
-            message_template: ['Alert: Value is {{value}}', Validators.required],
-            schedule_type: ['EVENT', Validators.required],
-            schedule_config: ['']
+            localTableName: ['', Validators.required],
+            userColumn: [''],
+            targetRole: [''],
+            // condition is separate form group
+            actionType: ['TOAST', Validators.required],
+            titleTemplate: ['Service Alert', Validators.required],
+            messageTemplate: ['Alert: Value is {{value}}', Validators.required],
+            scheduleType: ['EVENT', Validators.required],
+            scheduleConfig: ['']
         });
 
         // New Multi-Metric Style Condition
@@ -100,43 +101,19 @@ export class NotificationRuleDialogComponent implements OnInit {
             operation: ['COUNT', Validators.required],
             column: ['*', Validators.required],
             condition: [''], // SQL Filter
-            threshold_operator: ['>', Validators.required],
-            threshold_value: ['0', Validators.required]
+            thresholdOperator: ['>', Validators.required],
+            thresholdValue: ['0', Validators.required]
         });
 
         if (this.isEditing && this.ruleData) {
             this.ruleForm.patchValue(this.ruleData);
             this.onRuleTableChange();
 
-            try {
-                if (this.ruleData.condition_json) {
-                    const cond = JSON.parse(this.ruleData.condition_json);
-
-                    // Backward Compatibility Migration (Field/Op/Val -> New Structure)
-                    if (cond.field && !cond.operation) {
-                        if (cond.field === 'count') {
-                            this.ruleConditionForm.patchValue({
-                                operation: 'COUNT', column: '*', condition: '',
-                                threshold_operator: cond.operator, threshold_value: cond.value
-                            });
-                        } else {
-                            // Convert old "Field=Val" to "COUNT WHERE Field=Val > 0" ?
-                            // Actually old logic was: SELECT COUNT(*) WHERE field op val. And trigger if result > 0.
-                            // So: Op=COUNT, Col=*, Filter="field op val", ThreshOp='>', ThreshVal=0
-                            this.ruleConditionForm.patchValue({
-                                operation: 'COUNT',
-                                column: '*',
-                                condition: `${cond.field} ${cond.operator} '${cond.value}'`,
-                                threshold_operator: '>',
-                                threshold_value: '0'
-                            });
-                        }
-                    } else {
-                        // Standard Load
-                        this.ruleConditionForm.patchValue(cond);
-                    }
-                }
-            } catch (e) { }
+            if (this.ruleData.condition) {
+                // If it's already an object (new model)
+                const cond = this.ruleData.condition;
+                this.ruleConditionForm.patchValue(cond);
+            }
         }
     }
 
@@ -144,13 +121,13 @@ export class NotificationRuleDialogComponent implements OnInit {
     loadTables() {
         this.sourceService.getSyncDefs().subscribe({
             next: (data) => {
-                this.uniqueTables = [...new Set(data.map(d => d.target_table_name))];
+                this.uniqueTables = [...new Set(data.map(d => d.targetTableName))];
             }
         });
     }
 
     onRuleTableChange() {
-        const table = this.ruleForm.get('local_table_name')?.value;
+        const table = this.ruleForm.get('localTableName')?.value;
         if (table) {
             this.sourceService.getTableSchema(table).subscribe(cols => this.tableColumns = cols);
         }
@@ -162,7 +139,8 @@ export class NotificationRuleDialogComponent implements OnInit {
 
         const ruleVal = this.ruleForm.getRawValue();
         const conditionVal = this.ruleConditionForm.getRawValue();
-        ruleVal.condition_json = JSON.stringify(conditionVal);
+        // Send condition object directly
+        ruleVal.condition = conditionVal;
 
         if (this.isEditing) {
             this.notificationRuleService.updateRule(this.ruleData!.id!, ruleVal).subscribe({

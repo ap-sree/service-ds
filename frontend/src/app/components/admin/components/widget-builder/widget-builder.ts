@@ -9,7 +9,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { WidgetDialogComponent } from './widget-dialog';
-import { DashboardService, WidgetDefinition } from '../../../../services/dashboard.service';
+import { DashboardService, WidgetDefinition } from '../../../../services/dashboard';
 
 import { TagModule } from 'primeng/tag';
 

@@ -9,7 +9,7 @@ export const routes: Routes = [
     { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
     {
         path: 'form-builder',
-        loadComponent: () => import('./components/form-builder/form-builder.component').then(m => m.FormBuilderComponent),
+        loadComponent: () => import('./components/form-builder/form-builder').then(m => m.FormBuilderComponent),
         canActivate: [authGuard]
     },
     {

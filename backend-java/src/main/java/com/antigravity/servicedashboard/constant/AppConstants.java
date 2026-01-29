@@ -27,15 +27,15 @@ public class AppConstants {
     public static final String CONFIG_STATUS_COLUMN = "statusColumn";
     public static final String CONFIG_RULES = "rules";
     public static final String CONFIG_METRICS = "metrics";
-    public static final String CONFIG_GLOBAL_FILTER = "global_filter";
+    public static final String CONFIG_GLOBAL_FILTER = "globalFilter";
 
     // Other Keys
     public static final String KEY_OPERATION = "operation";
     public static final String KEY_COLUMN = "column";
     public static final String KEY_CONDITION = "condition";
     public static final String KEY_VALUE = "value";
-    public static final String KEY_THRESHOLD_OP = "threshold_operator";
-    public static final String KEY_THRESHOLD_VAL = "threshold_value";
+    public static final String KEY_THRESHOLD_OP = "thresholdOperator";
+    public static final String KEY_THRESHOLD_VAL = "thresholdValue";
     public static final String KEY_FIELD = "field";
 
     public static final String KEY_COLOR = "color";

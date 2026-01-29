@@ -7,10 +7,10 @@ export interface WidgetDefinition {
     id?: number;
     title: string;
     type: 'CARD' | 'TABLE' | 'GRID' | 'STATUS_GRID' | 'MULTI_METRIC';
-    data_source_table: string;
-    refresh_interval?: number;
-    query_config?: any; // JSON Object (Backend sends raw JSON)
-    user_column?: string;
+    dataSourceTable: string;
+    refreshInterval?: number;
+    queryConfig?: any; // JSON Object (Backend sends raw JSON)
+    userColumn?: string;
     settings?: string; // JSON -> { "order": 1 }
 }
 

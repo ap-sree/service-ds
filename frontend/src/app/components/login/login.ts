@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../services/auth';
+import { SessionNotificationService } from '../../services/session-notification';
 
 import { CheckboxModule } from 'primeng/checkbox';
 

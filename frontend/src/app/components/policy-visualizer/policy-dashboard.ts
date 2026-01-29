@@ -8,7 +8,7 @@ import { ListboxModule } from 'primeng/listbox';
 import { FormsModule } from '@angular/forms';
 import { SplitterModule } from 'primeng/splitter';
 
-import { PolicyVisualizerService } from '../../services/policy-visualizer.service';
+import { PolicyVisualizerService } from '../../services/policy-visualizer';
 import { PolicyVisualizerComponent } from './policy-visualizer';
 
 @Component({
@@ -45,7 +45,7 @@ export class PolicyDashboardComponent implements OnInit {
 
     constructor(public policyService: PolicyVisualizerService) {
         // Main list subscription
-        this.policyService.policies$.subscribe(items => {
+        this.policyService.policies$.subscribe((items: any[]) => {
             // If we are loading selectors for the visualizer background, we don't want to replace the main list IF we are on policies tab. 
             // But the service currently uses a shared subject.
             // We will refactor service to separate them.
@@ -73,12 +73,12 @@ export class PolicyDashboardComponent implements OnInit {
             }
         });
 
-        this.policyService.selectors$.subscribe(selectors => {
+        this.policyService.selectors$.subscribe((selectors: any[]) => {
             this.selectors = selectors;
         });
 
         // Subscribe to fragments separately
-        this.policyService.fragments$.subscribe(fragments => {
+        this.policyService.fragments$.subscribe((fragments: any[]) => {
             this.fragments = fragments;
         });
     }

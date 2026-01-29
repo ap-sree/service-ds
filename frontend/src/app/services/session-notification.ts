@@ -1,7 +1,9 @@
+
 import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { AuthService } from './auth.service';
+import { AuthService } from './auth';
+
 import { environment } from '../../environments/environment';
 
 export interface AppNotification {
@@ -16,10 +18,10 @@ export interface AppNotification {
     providedIn: 'root'
 })
 export class SessionNotificationService implements OnDestroy {
-    private http = inject(HttpClient);
-    private authService = inject(AuthService);
+    private readonly http = inject(HttpClient);
+    private readonly authService = inject(AuthService);
 
-    private apiUrl = environment.apiUrl;
+    private readonly apiUrl = environment.apiUrl;
     private pollInterval: any;
 
     // Reactive list of notifications for the session

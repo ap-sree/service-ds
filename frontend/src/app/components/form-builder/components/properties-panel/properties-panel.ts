@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { FormBuilderService } from '../../../../services/form-builder.service';
-import { FormElement } from '../../../../models/form-builder.model';
+import { FormBuilderService } from '../../../../services/form-builder';
+import { FormElement } from '../../../../models/form-builder';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
@@ -15,8 +15,8 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
     selector: 'app-properties-panel',
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, TextareaModule, CheckboxModule, ToggleSwitchModule],
-    templateUrl: './properties-panel.component.html',
-    styleUrls: ['./properties-panel.component.scss']
+    templateUrl: './properties-panel.html',
+    styleUrls: ['./properties-panel.scss']
 })
 export class PropertiesPanelComponent implements OnInit, OnDestroy {
     private formBuilderService = inject(FormBuilderService);

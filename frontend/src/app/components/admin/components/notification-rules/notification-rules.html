@@ -16,33 +16,32 @@
 
         <p-card header="Notification Rules" styleClass="p-0">
             <p-table #dt [value]="dataSource" [rows]="5" [paginator]="true"
-                [globalFilterFields]="['local_table_name', 'action_type', 'schedule_type']" [rowHover]="true"
-                dataKey="id" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [globalFilterFields]="['localTableName', 'actionType', 'scheduleType']" [rowHover]="true" dataKey="id"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                 [showCurrentPageReport]="true">
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th pSortableColumn="local_table_name">Target Table <p-sortIcon
-                                field="local_table_name"></p-sortIcon></th>
-                        <th pSortableColumn="condition_json">Condition <p-sortIcon field="condition_json"></p-sortIcon>
-                        </th>
-                        <th pSortableColumn="action_type">Action <p-sortIcon field="action_type"></p-sortIcon></th>
-                        <th pSortableColumn="schedule_type">Schedule <p-sortIcon field="schedule_type"></p-sortIcon>
+                        <th pSortableColumn="localTableName">Target Table <p-sortIcon
+                                field="localTableName"></p-sortIcon></th>
+                        <th>Condition</th>
+                        <th pSortableColumn="actionType">Action <p-sortIcon field="actionType"></p-sortIcon></th>
+                        <th pSortableColumn="scheduleType">Schedule <p-sortIcon field="scheduleType"></p-sortIcon>
                         </th>
                         <th>Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-rule>
                     <tr>
-                        <td class="font-bold">{{rule.local_table_name}}</td>
-                        <td><code class="code-badge">{{formatCondition(rule.condition_json)}}</code></td>
-                        <td><p-tag [value]="rule.action_type"
-                                [severity]="rule.action_type === 'TOAST' ? 'info' : (rule.action_type === 'EMAIL' ? 'warn' : 'danger')"></p-tag>
+                        <td class="font-bold">{{rule.localTableName}}</td>
+                        <td><code class="code-badge">{{formatCondition(rule.condition)}}</code></td>
+                        <td><p-tag [value]="rule.actionType"
+                                [severity]="rule.actionType === 'TOAST' ? 'info' : (rule.actionType === 'EMAIL' ? 'warn' : 'danger')"></p-tag>
                         </td>
                         <td>
-                            {{rule.schedule_type}}
-                            @if (rule.schedule_type !== 'EVENT') {
-                            <span class="text-gray-500 text-sm">({{rule.schedule_config}})</span>
+                            {{rule.scheduleType}}
+                            @if (rule.scheduleType !== 'EVENT') {
+                            <span class="text-gray-500 text-sm">({{rule.scheduleConfig}})</span>
                             }
                         </td>
                         <td>

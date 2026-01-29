@@ -8,7 +8,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageService } from 'primeng/api';
-import { SourceService, DataSource } from '../../../../services/source.service';
+import { SourceService } from '../../../../services/source';
+import { DataSource } from '../../../../models/sync';
 
 @Component({
     selector: 'app-data-source-dialog',

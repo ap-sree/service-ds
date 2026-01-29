@@ -16,37 +16,37 @@
 
         <p-card header="Scheduled Sync Jobs" styleClass="p-0">
             <p-table #dt [value]="dataSource" [rows]="5" [paginator]="true"
-                [globalFilterFields]="['target_table_name', 'sync_mode', 'last_status']" [rowHover]="true" dataKey="id"
+                [globalFilterFields]="['targetTableName', 'syncMode', 'lastStatus']" [rowHover]="true" dataKey="id"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
                 [showCurrentPageReport]="true">
 
                 <ng-template pTemplate="header">
                     <tr>
-                        <th pSortableColumn="target_table_name">Target Table <p-sortIcon
-                                field="target_table_name"></p-sortIcon>
+                        <th pSortableColumn="targetTableName">Target Table <p-sortIcon
+                                field="targetTableName"></p-sortIcon>
                         </th>
-                        <th pSortableColumn="sync_mode">Mode <p-sortIcon field="sync_mode"></p-sortIcon></th>
-                        <th pSortableColumn="last_status">Last Status <p-sortIcon field="last_status"></p-sortIcon></th>
-                        <th pSortableColumn="last_run_at">Last Run <p-sortIcon field="last_run_at"></p-sortIcon></th>
+                        <th pSortableColumn="syncMode">Mode <p-sortIcon field="syncMode"></p-sortIcon></th>
+                        <th pSortableColumn="lastStatus">Last Status <p-sortIcon field="lastStatus"></p-sortIcon></th>
+                        <th pSortableColumn="lastRunAt">Last Run <p-sortIcon field="lastRunAt"></p-sortIcon></th>
                         <th>Actions</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-job>
                     <tr>
-                        <td class="font-bold">{{job.target_table_name}}</td>
+                        <td class="font-bold">{{job.targetTableName}}</td>
                         <td>
-                            {{job.sync_mode}}
-                            @if (job.schedule_config && job.sync_mode !== 'MANUAL') {
-                            <span class="text-gray-500 text-sm">({{job.schedule_config}})</span>
+                            {{job.syncMode}}
+                            @if (job.scheduleConfig && job.syncMode !== 'MANUAL') {
+                            <span class="text-gray-500 text-sm">({{job.scheduleConfig}})</span>
                             }
                         </td>
                         <td>
                             <span class="font-bold"
-                                [ngClass]="{'text-green-500': job.last_status === 'SUCCESS', 'text-red-500': job.last_status && job.last_status !== 'SUCCESS', 'text-orange-500': !job.last_status}">
-                                {{job.last_status || 'Pending'}}
+                                [ngClass]="{'text-green-500': job.lastStatus === 'SUCCESS', 'text-red-500': job.lastStatus && job.lastStatus !== 'SUCCESS', 'text-orange-500': !job.lastStatus}">
+                                {{job.lastStatus || 'Pending'}}
                             </span>
                         </td>
-                        <td class="text-sm text-gray-500">{{job.last_run_at | date:'short'}}</td>
+                        <td class="text-sm text-gray-500">{{job.lastRunAt | date:'short'}}</td>
                         <td>
                             <div class="flex gap-2">
                                 <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="help"

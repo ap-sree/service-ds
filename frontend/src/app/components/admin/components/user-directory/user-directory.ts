@@ -8,10 +8,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { UserDialogComponent } from './user-dialog';
-import { UserService, User } from '../../../../services/user.service';
-import { AuthService } from '../../../../services/auth.service';
+import { UserService } from '../../../../services/user';
+import { User } from '../../../../models/user';
+import { AuthService } from '../../../../services/auth';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -31,11 +32,11 @@ import { InputIconModule } from 'primeng/inputicon';
   `]
 })
 export class UserDirectoryComponent implements OnInit {
-    private userService = inject(UserService);
-    private authService = inject(AuthService);
-    private messageService = inject(MessageService);
-    private dialogService = inject(DialogService);
-    private confirmationService = inject(ConfirmationService);
+    private readonly userService = inject(UserService);
+    private readonly authService = inject(AuthService);
+    private readonly messageService = inject(MessageService);
+    private readonly dialogService = inject(DialogService);
+    private readonly confirmationService = inject(ConfirmationService);
 
     dataSource: User[] = [];
     currentUserId: string | null = null;

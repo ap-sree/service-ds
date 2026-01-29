@@ -1,15 +1,15 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CdkDrag, CdkDropList, CdkDragPreview } from '@angular/cdk/drag-drop';
-import { ElementType, DraggedElement } from '../../../../models/form-builder.model';
+import { ElementType, DraggedElement } from '../../../../models/form-builder';
 import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'app-element-palette',
     standalone: true,
     imports: [CommonModule, CdkDrag, CdkDropList, CdkDragPreview, TooltipModule],
-    templateUrl: './element-palette.component.html',
-    styleUrls: ['./element-palette.component.scss']
+    templateUrl: './element-palette.html',
+    styleUrls: ['./element-palette.scss']
 })
 export class ElementPaletteComponent {
     paletteListId = 'element-palette-list';

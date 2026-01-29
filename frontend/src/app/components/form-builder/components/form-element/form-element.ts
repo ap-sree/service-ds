@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
-import { FormElement } from '../../../../models/form-builder.model';
+import { FormElement } from '../../../../models/form-builder';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -26,8 +26,8 @@ import { DatePickerModule } from 'primeng/datepicker';
         SelectModule,
         DatePickerModule
     ],
-    templateUrl: './form-element.component.html',
-    styleUrls: ['./form-element.component.scss']
+    templateUrl: './form-element.html',
+    styleUrls: ['./form-element.scss']
 })
 export class FormElementComponent {
     @Input() element!: FormElement;

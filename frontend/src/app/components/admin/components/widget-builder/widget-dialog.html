@@ -17,14 +17,14 @@
     <div class="field grid">
         <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Data Source (Table)</label>
         <div class="col-12 md:col-9">
-            <p-select id="source" formControlName="data_source_table" [options]="uniqueTables"
+            <p-select id="source" formControlName="dataSourceTable" [options]="uniqueTables"
                 (onChange)="onTableChange()" placeholder="Select Source" appendTo="body" styleClass="w-full"></p-select>
         </div>
     </div>
 
 
     <!-- Global Filter (New) -->
-    @if (widgetForm.get('data_source_table')?.value) {
+    @if (widgetForm.get('dataSourceTable')?.value) {
     <div class="field grid">
         <label for="global_filter" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Global Filter
             (SQL)</label>
@@ -50,7 +50,7 @@
         <label for="user_column" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Filter by User
             Column</label>
         <div class="col-12 md:col-9">
-            <p-select id="user_column" formControlName="user_column" [options]="tableColumns" [showClear]="true"
+            <p-select id="user_column" formControlName="userColumn" [options]="tableColumns" [showClear]="true"
                 placeholder="Select Column" styleClass="w-full" appendTo="body"></p-select>
 
             @if (tableColumns.length === 0) {

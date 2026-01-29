@@ -37,7 +37,9 @@ public class TableService {
 
         String type = widget.getType().toLowerCase();
         String userColumn = widget.getUserColumn();
-        StringBuilder sql = new StringBuilder("SELECT * FROM ").append(tableName);
+
+        // Quote table name
+        StringBuilder sql = new StringBuilder("SELECT * FROM \"").append(tableName).append("\"");
         List<Object> params = new ArrayList<>();
 
         if (userId != null && userColumn != null && !userColumn.isEmpty()) {
@@ -99,13 +101,21 @@ public class TableService {
     }
 
     private Map<String, Object> fetchCardData(String baseSql, List<Object> params, WidgetDefinition widget) {
-        String countSql = baseSql.replace("SELECT *", "SELECT COUNT(*) as count");
+        String countSql = baseSql.replaceFirst("SELECT \\* FROM \"? \\w+ \"?",
+                "SELECT COUNT(*) as count FROM " + getQuotedTableName(widget.getDataSourceTable())); // Simplified
+                                                                                                     // replacement
+        // Better approach: Reconstruct query
+        countSql = "SELECT COUNT(*) as count FROM \"" + widget.getDataSourceTable() + "\"";
+        if (baseSql.contains(" WHERE ")) {
+            countSql += baseSql.substring(baseSql.indexOf(" WHERE "));
+        }
+
         try {
             Long count = jdbcTemplate.queryForObject(countSql, Long.class, params.toArray());
             return Map.of(
                     "type", AppConstants.WIDGET_TYPE_CARD,
-                    AppConstants.KEY_COUNT, count != null ? count : 0,
-                    AppConstants.KEY_LABEL, widget.getTitle());
+                    "count", count != null ? count : 0,
+                    "label", widget.getTitle());
         } catch (Exception e) {
             throw new IllegalStateException("Table not ready");
         }
@@ -127,9 +137,9 @@ public class TableService {
             List<String> selects = new ArrayList<>();
             for (int i = 0; i < metrics.size(); i++) {
                 Map<String, String> m = metrics.get(i);
-                String op = m.getOrDefault(AppConstants.KEY_OPERATION, AppConstants.OP_COUNT).toUpperCase();
-                String col = m.getOrDefault(AppConstants.KEY_COLUMN, "*");
-                String cond = m.getOrDefault(AppConstants.KEY_CONDITION, "");
+                String op = m.getOrDefault("operation", AppConstants.OP_COUNT).toUpperCase();
+                String col = m.getOrDefault("column", "*");
+                String cond = m.getOrDefault("condition", "");
 
                 if (!col.matches("^[\\w*]+$"))
                     col = "*";
@@ -148,16 +158,23 @@ public class TableService {
                 selects.add(op + "(" + target + ") as m" + i);
             }
 
-            String aggSql = baseSql.replace("SELECT *", "SELECT " + String.join(", ", selects));
-            Map<String, Object> row = jdbcTemplate.queryForMap(aggSql, params.toArray());
+            // Fix SQL Construction
+            String tableName = widget.getDataSourceTable();
+            StringBuilder aggSql = new StringBuilder("SELECT ").append(String.join(", ", selects))
+                    .append(" FROM \"").append(tableName).append("\"");
+            if (baseSql.contains(" WHERE ")) {
+                aggSql.append(baseSql.substring(baseSql.indexOf(" WHERE ")));
+            }
+
+            Map<String, Object> row = jdbcTemplate.queryForMap(aggSql.toString(), params.toArray());
 
             List<Map<String, Object>> items = new ArrayList<>();
             for (int i = 0; i < metrics.size(); i++) {
                 Map<String, String> m = metrics.get(i);
                 items.add(Map.of(
-                        AppConstants.KEY_LABEL, m.getOrDefault(AppConstants.KEY_LABEL, "Metric"),
-                        AppConstants.KEY_VALUE, row.get("m" + i),
-                        AppConstants.KEY_OPERATION, m.getOrDefault(AppConstants.KEY_OPERATION, AppConstants.OP_COUNT)));
+                        "label", m.getOrDefault("label", "Metric"),
+                        "value", row.get("m" + i),
+                        "operation", m.getOrDefault("operation", AppConstants.OP_COUNT)));
             }
             return Map.of("type", AppConstants.WIDGET_TYPE_MULTI_METRIC, KEY_ITEMS, items);
         } catch (Exception e) {
@@ -188,19 +205,19 @@ public class TableService {
 
                 if (rules != null && statusVal != null) {
                     for (Map<String, Object> rule : rules) {
-                        Object ruleVal = rule.get(AppConstants.KEY_VALUE);
+                        Object ruleVal = rule.get("value");
                         // Loose equality check (String vs Number)
                         if (String.valueOf(ruleVal).equals(String.valueOf(statusVal))) {
-                            color = (String) rule.get(AppConstants.KEY_COLOR);
+                            color = (String) rule.get("color");
                             break;
                         }
                     }
                 }
 
                 items.add(Map.of(
-                        AppConstants.KEY_LABEL, labelVal != null ? labelVal : AppConstants.DEFAULT_UNKNOWN,
+                        "label", labelVal != null ? labelVal : AppConstants.DEFAULT_UNKNOWN,
                         "status", statusVal != null ? statusVal : AppConstants.DEFAULT_STATUS,
-                        AppConstants.KEY_COLOR, color));
+                        "color", color));
             }
 
             return Map.of("type", type, KEY_ITEMS, items, "limit", limit);
@@ -213,10 +230,27 @@ public class TableService {
         if (!AppUtils.isValidTableName(tableName)) {
             throw new IllegalArgumentException("Invalid table name");
         }
-        List<Map<String, Object>> columns = jdbcTemplate.queryForList("PRAGMA table_info(" + tableName + ")");
+        // Use standard JDBC or H2 INFORMATION_SCHEMA instead of PRAGMA
+        List<Map<String, Object>> columns = jdbcTemplate.queryForList(
+                "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
+                tableName);
+        // Fallback or double check casing if empty?
+        // H2 stores quoted table names case-sensitively. Since we are fixing the app to
+        // quote,
+        // we should expect it to be passed correctly.
+        if (columns.isEmpty()) {
+            columns = jdbcTemplate.queryForList(
+                    "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
+                    tableName.toUpperCase());
+        }
+
         return columns.stream()
                 .map(row -> (String) row.get("name"))
                 .toList();
+    }
+
+    private String getQuotedTableName(String tableName) {
+        return "\"" + tableName + "\"";
     }
 
     // applyDateRegex moved to AppUtils

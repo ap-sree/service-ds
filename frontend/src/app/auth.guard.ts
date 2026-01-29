@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { AuthService } from './services/auth';
 
 export const authGuard: CanActivateFn = (route, state) => {
     const authService = inject(AuthService);
@@ -17,7 +17,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 
 export const adminGuard: CanActivateFn = (route, state) => {
     const authService = inject(AuthService);
-    const router = inject(Router);
+
 
     // Must be logged in AND have ADMIN role
     if (authService.currentUser() && authService.isAdmin()) {

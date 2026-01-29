@@ -19,7 +19,8 @@ public class WidgetDefinition {
     @Column(name = "data_source_table", nullable = false)
     private String dataSourceTable;
 
-    @Column(name = "query_config", columnDefinition = "TEXT")
+    @Column(name = "query_config")
+    @Lob
     private String queryConfig;
 
     @Column(name = "user_column")
@@ -58,7 +59,7 @@ public class WidgetDefinition {
     }
 
     @com.fasterxml.jackson.annotation.JsonRawValue
-    @com.fasterxml.jackson.annotation.JsonProperty("query_config")
+
     public String getQueryConfig() {
         return queryConfig;
     }

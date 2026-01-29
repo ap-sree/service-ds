@@ -6,7 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
-import { UserService, User } from '../../../../services/user.service';
+import { UserService } from '../../../../services/user';
+import { User } from '../../../../models/user';
 
 @Component({
     selector: 'app-user-dialog',

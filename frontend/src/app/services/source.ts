@@ -2,25 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-export interface DataSource {
-    id?: number;
-    name: string;
-    type: 'SQL_SERVER' | 'REST_API' | 'LOCAL_COMMAND' | 'LOCAL_FILE';
-    config: string; // JSON string
-}
-
-export interface SyncDefinition {
-    id?: number;
-    source_id: number;
-    target_table_name: string;
-    fetch_query: string;
-    sync_mode: 'MANUAL' | 'SCHEDULED' | 'INTERVAL';
-    schedule_config?: string;
-    field_mapping?: string;
-    last_run_at?: string;
-    last_status?: string;
-}
+import { DataSource, SyncDefinition } from '../models/sync';
 
 @Injectable({
     providedIn: 'root'
@@ -67,8 +49,8 @@ export class SourceService {
         return this.http.post(`${this.apiUrl}/sync/${id}`, {});
     }
 
-    previewData(source_id: number, fetch_query: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/preview`, { source_id, fetch_query });
+    previewData(sourceId: number, fetchQuery: string): Observable<any> {
+        return this.http.post(`${this.apiUrl}/preview`, { source_id: sourceId, fetch_query: fetchQuery });
     }
 
     // Schema

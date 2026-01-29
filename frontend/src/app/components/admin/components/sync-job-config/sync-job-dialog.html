@@ -2,7 +2,7 @@
     <div class="field grid">
         <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Source</label>
         <div class="col-12 md:col-9">
-            <p-select id="source" formControlName="source_id" [options]="sources" optionLabel="name" optionValue="id"
+            <p-select id="source" formControlName="sourceId" [options]="sources" optionLabel="name" optionValue="id"
                 (onChange)="onSyncSourceChange()" placeholder="Select a Source" styleClass="w-full"
                 appendTo="body"></p-select>
         </div>
@@ -11,7 +11,7 @@
     <div class="field grid">
         <label for="table" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Local Table Name</label>
         <div class="col-12 md:col-9">
-            <input id="table" type="text" pInputText formControlName="target_table_name" placeholder="sync_tickets"
+            <input id="table" type="text" pInputText formControlName="targetTableName" placeholder="sync_tickets"
                 class="w-full" />
         </div>
     </div>
@@ -19,25 +19,25 @@
     <div class="field grid">
         <label for="mode" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Mode</label>
         <div class="col-12 md:col-9">
-            <p-select id="mode" formControlName="sync_mode" [options]="modeOptions" optionLabel="label"
+            <p-select id="mode" formControlName="syncMode" [options]="modeOptions" optionLabel="label"
                 optionValue="value" styleClass="w-full" appendTo="body"></p-select>
         </div>
     </div>
 
-    @if (syncFormGroup.get('sync_mode')?.value !== 'MANUAL') {
+    @if (syncFormGroup.get('syncMode')?.value !== 'MANUAL') {
     <div class="field grid">
         <label for="schedule" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Schedule Config</label>
         <div class="col-12 md:col-9">
-            <input id="schedule" type="text" pInputText formControlName="schedule_config"
+            <input id="schedule" type="text" pInputText formControlName="scheduleConfig"
                 placeholder="Cron (e.g. 0 * * * *)" class="w-full" />
         </div>
     </div>
     }
-    @if (syncFormGroup.get('source_id')?.value) {
+    @if (syncFormGroup.get('sourceId')?.value) {
     <div class="field grid">
         <label for="query" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Query / Command</label>
         <div class="col-12 md:col-9">
-            <textarea id="query" pTextarea formControlName="fetch_query" [autoResize]="true"
+            <textarea id="query" pTextarea formControlName="fetchQuery" [autoResize]="true"
                 [placeholder]="syncQueryHint" class="w-full"></textarea>
             <div class="flex justify-content-end mt-1">
                 <p-button label="Fetch Preview" icon="pi pi-cloud-download" (click)="fetchPreview()" [text]="true"
@@ -47,7 +47,7 @@
     </div>
     }
     <!-- Visual Mapping Table -->
-    @if (mappingRows.length > 0 || syncFormGroup.get('fetch_query')?.value) {
+    @if (mappingRows.length > 0 || syncFormGroup.get('fetchQuery')?.value) {
     <div class="field grid">
         <label class="col-12 font-bold mb-2">Field Mapping</label>
         <div class="col-12">
@@ -93,17 +93,17 @@
     <div class="field grid">
         <label for="strategy" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Strategy</label>
         <div class="col-12 md:col-9">
-            <p-select id="strategy" formControlName="sync_strategy" [options]="strategyOptions" optionLabel="label"
+            <p-select id="strategy" formControlName="syncStrategy" [options]="strategyOptions" optionLabel="label"
                 optionValue="value" styleClass="w-full" appendTo="body"></p-select>
         </div>
     </div>
 
-    @if (syncFormGroup.get('sync_strategy')?.value === 'APPEND') {
+    @if (syncFormGroup.get('syncStrategy')?.value === 'APPEND') {
     <div class="field grid">
         <label for="pk" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Primary Key</label>
         <div class="col-12 md:col-9">
             <!-- Dropdown based on Mapped Target Columns -->
-            <p-select id="pk" formControlName="primary_key" [options]="targetColumnOptions" optionLabel="label"
+            <p-select id="pk" formControlName="primaryKey" [options]="targetColumnOptions" optionLabel="label"
                 optionValue="value" placeholder="Select Primary Key Column" styleClass="w-full"
                 [disabled]="targetColumnOptions.length === 0" appendTo="body"></p-select>
 
