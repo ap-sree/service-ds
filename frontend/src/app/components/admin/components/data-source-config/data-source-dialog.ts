@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -15,9 +15,13 @@ import { DataSource } from '../../../../models/sync';
     selector: 'app-data-source-dialog',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule,
-        ButtonModule, InputTextModule, TextareaModule, SelectModule, CheckboxModule
-    ],
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    CheckboxModule
+],
     // MessageService provided by parent or globally? DynamicDialog components share root injector usually, 
     // but safer to use what's available. If this component needs to show toast, it should use MessageService.
     templateUrl: './data-source-dialog.html',

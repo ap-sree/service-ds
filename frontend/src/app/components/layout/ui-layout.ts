@@ -1,5 +1,5 @@
 import { Component, inject, computed, Input, Output, EventEmitter, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
@@ -13,9 +13,12 @@ import { SessionNotificationService } from '../../services/session-notification'
     selector: 'app-ui-layout',
     standalone: true,
     imports: [
-        CommonModule, RouterLink, RouterLinkActive,
-        ButtonModule, RippleModule, MenuModule
-    ],
+    RouterLink,
+    RouterLinkActive,
+    ButtonModule,
+    RippleModule,
+    MenuModule
+],
     templateUrl: './ui-layout.html',
     styles: [`
     :host {

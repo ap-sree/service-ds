@@ -1,59 +1,65 @@
 <div class="properties-panel">
-    <h3 class="text-lg font-semibold mb-3">Properties</h3>
+  <h3 class="text-lg font-semibold mb-3">Properties</h3>
 
-    <div *ngIf="selectedElement$ | async as element; else noSelection" [formGroup]="propertiesForm"
-        class="flex flex-column gap-3">
+  @if (selectedElement$ | async; as element) {
+    <div [formGroup]="propertiesForm"
+      class="flex flex-column gap-3">
+      <div class="field">
+        <label for="label" class="block font-medium mb-1">Label</label>
+        <input pInputText id="label" formControlName="label" class="w-full">
+      </div>
+      <div class="field">
+        <label for="name" class="block font-medium mb-1">Field Name</label>
+        <input pInputText id="name" formControlName="name" class="w-full">
+      </div>
+      @if (!['button', 'submit', 'reset'].includes(element.type)) {
         <div class="field">
-            <label for="label" class="block font-medium mb-1">Label</label>
-            <input pInputText id="label" formControlName="label" class="w-full">
+          <label for="placeholder" class="block font-medium mb-1">Placeholder</label>
+          <input pInputText id="placeholder" formControlName="placeholder" class="w-full">
         </div>
-
-        <div class="field">
-            <label for="name" class="block font-medium mb-1">Field Name</label>
-            <input pInputText id="name" formControlName="name" class="w-full">
-        </div>
-
-        <div class="field" *ngIf="!['button', 'submit', 'reset'].includes(element.type)">
-            <label for="placeholder" class="block font-medium mb-1">Placeholder</label>
-            <input pInputText id="placeholder" formControlName="placeholder" class="w-full">
-        </div>
-
+      }
+      @if (!['button', 'submit', 'reset'].includes(element.type)) {
         <div class="field-checkbox flex align-items-center gap-2"
-            *ngIf="!['button', 'submit', 'reset'].includes(element.type)">
-            <p-toggleSwitch inputId="required" formControlName="required">
-            </p-toggleSwitch>
-            <label for="required">Required Field</label>
+          >
+          <p-toggleSwitch inputId="required" formControlName="required">
+          </p-toggleSwitch>
+          <label for="required">Required Field</label>
         </div>
-
-        <div class="field" *ngIf="['select', 'radio'].includes(element.type)">
-            <label for="options" class="block font-medium mb-1">Options (one per line)</label>
-            <textarea pTextarea id="options" rows="5" formControlName="options" class="w-full">
-      </textarea>
+      }
+      @if (['select', 'radio'].includes(element.type)) {
+        <div class="field">
+          <label for="options" class="block font-medium mb-1">Options (one per line)</label>
+          <textarea pTextarea id="options" rows="5" formControlName="options" class="w-full">
+          </textarea>
         </div>
-
-        <div class="field" *ngIf="element.type === 'textarea'">
-            <label for="rows" class="block font-medium mb-1">Rows</label>
-            <p-inputNumber id="rows" formControlName="rows" class="w-full" [showButtons]="true" [min]="1">
-            </p-inputNumber>
+      }
+      @if (element.type === 'textarea') {
+        <div class="field">
+          <label for="rows" class="block font-medium mb-1">Rows</label>
+          <p-inputNumber id="rows" formControlName="rows" class="w-full" [showButtons]="true" [min]="1">
+          </p-inputNumber>
         </div>
-
-        <div class="field" *ngIf="element.type === 'number'">
-            <label for="min" class="block font-medium mb-1">Min Value</label>
-            <p-inputNumber id="min" formControlName="min" class="w-full">
-            </p-inputNumber>
+      }
+      @if (element.type === 'number') {
+        <div class="field">
+          <label for="min" class="block font-medium mb-1">Min Value</label>
+          <p-inputNumber id="min" formControlName="min" class="w-full">
+          </p-inputNumber>
         </div>
-
-        <div class="field" *ngIf="element.type === 'number'">
-            <label for="max" class="block font-medium mb-1">Max Value</label>
-            <p-inputNumber id="max" formControlName="max" class="w-full">
-            </p-inputNumber>
+      }
+      @if (element.type === 'number') {
+        <div class="field">
+          <label for="max" class="block font-medium mb-1">Max Value</label>
+          <p-inputNumber id="max" formControlName="max" class="w-full">
+          </p-inputNumber>
         </div>
+      }
     </div>
+  } @else {
+    <div class="text-center text-500 mt-4">
+      <i class="pi pi-cog text-3xl mb-2"></i>
+      <p>Select an element to edit its properties</p>
+    </div>
+  }
 
-    <ng-template #noSelection>
-        <div class="text-center text-500 mt-4">
-            <i class="pi pi-cog text-3xl mb-2"></i>
-            <p>Select an element to edit its properties</p>
-        </div>
-    </ng-template>
 </div>

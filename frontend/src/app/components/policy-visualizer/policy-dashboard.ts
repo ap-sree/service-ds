@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FileUploadModule } from 'primeng/fileupload';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
@@ -15,16 +15,15 @@ import { PolicyVisualizerComponent } from './policy-visualizer';
     selector: 'app-policy-dashboard',
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        FileUploadModule,
-        TableModule,
-        TabsModule,
-        CardModule,
-        ListboxModule,
-        SplitterModule,
-        PolicyVisualizerComponent
-    ],
+    FormsModule,
+    FileUploadModule,
+    TableModule,
+    TabsModule,
+    CardModule,
+    ListboxModule,
+    SplitterModule,
+    PolicyVisualizerComponent
+],
     templateUrl: './policy-dashboard.html',
     styles: [`
         :host {

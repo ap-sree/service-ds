@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { FormElement } from '../../../../models/form-builder';
 import { ButtonModule } from 'primeng/button';
@@ -15,17 +15,16 @@ import { DatePickerModule } from 'primeng/datepicker';
     selector: 'app-form-element',
     standalone: true,
     imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        ButtonModule,
-        InputTextModule,
-        InputNumberModule,
-        TextareaModule,
-        CheckboxModule,
-        RadioButtonModule,
-        SelectModule,
-        DatePickerModule
-    ],
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    InputNumberModule,
+    TextareaModule,
+    CheckboxModule,
+    RadioButtonModule,
+    SelectModule,
+    DatePickerModule
+],
     templateUrl: './form-element.html',
     styleUrls: ['./form-element.scss']
 })

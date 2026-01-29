@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -19,10 +19,15 @@ import { InputIconModule } from 'primeng/inputicon';
     selector: 'app-data-source-config',
     standalone: true,
     imports: [
-        CommonModule,
-        CardModule, ButtonModule, TableModule, InputTextModule, TooltipModule, ConfirmDialogModule,
-        IconFieldModule, InputIconModule
-    ],
+    CardModule,
+    ButtonModule,
+    TableModule,
+    InputTextModule,
+    TooltipModule,
+    ConfirmDialogModule,
+    IconFieldModule,
+    InputIconModule
+],
     providers: [DialogService, ConfirmationService], // ConfirmService needed if using confirmDialog here, or use global
     templateUrl: './data-source-config.html',
     styles: [`

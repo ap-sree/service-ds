@@ -1,6 +1,6 @@
 
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, FormsModule } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -17,9 +17,15 @@ import { SourceService } from '../../../../services/source';
     selector: 'app-widget-dialog',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule, FormsModule,
-        ButtonModule, InputTextModule, TextareaModule, SelectModule, MultiSelectModule, TagModule
-    ],
+    ReactiveFormsModule,
+    FormsModule,
+    ButtonModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    MultiSelectModule,
+    TagModule
+],
     templateUrl: './widget-dialog.html',
     styles: [`
     .field { margin - bottom: 1rem; }

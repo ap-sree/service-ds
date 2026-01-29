@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -15,9 +15,13 @@ import { SyncDefinition, DataSource } from '../../../../models/sync';
     selector: 'app-sync-job-dialog',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule,
-        ButtonModule, InputTextModule, TextareaModule, SelectModule, TableModule
-    ],
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    TableModule
+],
     templateUrl: './sync-job-dialog.html',
     styles: [`
     .field { margin-bottom: 1rem; }

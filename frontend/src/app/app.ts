@@ -3,7 +3,7 @@ import { RouterOutlet } from '@angular/router';
 
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { CommonModule } from '@angular/common';
+
 
 import { AuthService } from './services/auth';
 import { SessionNotificationService } from './services/session-notification';
@@ -13,11 +13,10 @@ import { UiLayoutComponent } from './components/layout/ui-layout';
   selector: 'app-root',
   standalone: true,
   imports: [
-    CommonModule,
     RouterOutlet,
     UiLayoutComponent,
     ToastModule
-  ],
+],
   providers: [MessageService],
   templateUrl: './app.html',
   styleUrl: './app.scss'

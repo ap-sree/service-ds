@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -15,9 +15,12 @@ import { SourceService } from '../../../../services/source';
     selector: 'app-notification-rule-dialog',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule,
-        ButtonModule, InputTextModule, TextareaModule, SelectModule
-    ],
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule
+],
     templateUrl: './notification-rule-dialog.html',
     styles: [`
     .field { margin-bottom: 1rem; }

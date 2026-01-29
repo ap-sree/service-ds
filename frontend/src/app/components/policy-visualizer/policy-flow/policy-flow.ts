@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ViewEncapsulation, AfterViewInit, OnChanges, SimpleChanges, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FFlowModule, EFMarkerType, FCanvasComponent } from '@foblex/flow';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,7 @@ import { Connection, FlowNode, PolicyNodeData } from '../../../models/policy-vis
 @Component({
     selector: 'app-policy-flow',
     standalone: true,
-    imports: [CommonModule, FFlowModule, CardModule, ButtonModule, TooltipModule],
+    imports: [FFlowModule, CardModule, ButtonModule, TooltipModule],
     templateUrl: './policy-flow.html',
     styleUrls: ['./policy-flow.scss'],
     encapsulation: ViewEncapsulation.None

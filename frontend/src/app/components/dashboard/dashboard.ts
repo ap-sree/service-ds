@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ViewChildren, QueryList } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { DashboardService, WidgetDefinition } from '../../services/dashboard';
 import { AuthService } from '../../services/auth';
 import { UserService } from '../../services/user';
@@ -21,16 +21,15 @@ import { GenericWidgetComponent } from '../generic-widget/generic-widget';
     selector: 'app-dashboard',
     standalone: true,
     imports: [
-        CommonModule,
-        FormsModule,
-        GenericWidgetComponent,
-        ToolbarModule,
-        ButtonModule,
-        SelectModule,
-        ConfirmDialogModule,
-        CardModule,
-        InputNumberModule
-    ],
+    FormsModule,
+    GenericWidgetComponent,
+    ToolbarModule,
+    ButtonModule,
+    SelectModule,
+    ConfirmDialogModule,
+    CardModule,
+    InputNumberModule
+],
     providers: [ConfirmationService],
     templateUrl: './dashboard.html',
     styleUrls: ['./dashboard.scss']

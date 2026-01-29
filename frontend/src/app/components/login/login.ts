@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,7 +12,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [CommonModule, FormsModule, CardModule, InputTextModule, ButtonModule, CheckboxModule],
+    imports: [FormsModule, CardModule, InputTextModule, ButtonModule, CheckboxModule],
     templateUrl: './login.html',
     styleUrl: './login.scss'
 })

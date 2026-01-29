@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -13,9 +13,11 @@ import { User } from '../../../../models/user';
     selector: 'app-user-dialog',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule,
-        ButtonModule, InputTextModule, SelectModule
-    ],
+    ReactiveFormsModule,
+    ButtonModule,
+    InputTextModule,
+    SelectModule
+],
     templateUrl: './user-dialog.html',
     styles: [`
     .field { margin-bottom: 1rem; }

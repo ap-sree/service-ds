@@ -1,108 +1,130 @@
 <!-- Flow Diagram (Refactored to Child Component) -->
 <div class="flow-container h-full w-full relative">
-    <app-policy-flow [nodes]="nodes" [connections]="connections" [flowId]="flowId"
-        (nodeClick)="showFragmentDetails($event)" (structureClick)="showFragmentStructure($event)">
-    </app-policy-flow>
+  <app-policy-flow [nodes]="nodes" [connections]="connections" [flowId]="flowId"
+    (nodeClick)="showFragmentDetails($event)" (structureClick)="showFragmentStructure($event)">
+  </app-policy-flow>
 </div>
 
 <p-dialog [header]="selectedNodeData?.label + ' Configuration'" [(visible)]="isDialogVisible" [style]="{width: '60vw'}"
-    [modal]="true" [draggable]="false" [resizable]="false">
-    <div *ngIf="selectedNodeData">
-        <!-- Selector Configuration -->
-        <div *ngIf="selectedNodeData.selectorConfig" class="mb-4">
-            <div class="grid">
-                <div class="col-12 mb-3">
-                    <label class="block text-500 mb-1">Type</label>
-                    <span class="font-bold text-sm">{{ selectedNodeData.selectorConfig.pluginDescriptorRef?.id
-                        }}</span>
-                </div>
+  [modal]="true" [draggable]="false" [resizable]="false">
+  @if (selectedNodeData) {
+    <div>
+      <!-- Selector Configuration -->
+      @if (selectedNodeData.selectorConfig) {
+        <div class="mb-4">
+          <div class="grid">
+            <div class="col-12 mb-3">
+              <label class="block text-500 mb-1">Type</label>
+              <span class="font-bold text-sm">{{ selectedNodeData.selectorConfig.pluginDescriptorRef?.id
+              }}</span>
             </div>
-
-            <h4 class="mt-2" *ngIf="selectedNodeData.selectorConfig.configuration?.tables?.length">Configuration
-                Tables</h4>
+          </div>
+          @if (selectedNodeData.selectorConfig.configuration?.tables?.length) {
+            <h4 class="mt-2">Configuration
+            Tables</h4>
+          }
+          @if (selectedNodeData.selectorConfig.configuration?.tables?.length) {
             <p-table [value]="selectedNodeData.selectorConfig.configuration?.tables || []"
-                *ngIf="selectedNodeData.selectorConfig.configuration?.tables?.length" class="mb-4">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Value</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-row>
-                    <tr>
-                        <td>{{row.name}}</td>
-                        <td>{{row.value}}</td>
-                    </tr>
-                </ng-template>
+              class="mb-4">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>Name</th>
+                  <th>Value</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-row>
+                <tr>
+                  <td>{{row.name}}</td>
+                  <td>{{row.value}}</td>
+                </tr>
+              </ng-template>
             </p-table>
-
-            <h4 class="mt-2" *ngIf="selectedNodeData.selectorConfig.configuration?.fields?.length">Configuration
-                Fields</h4>
+          }
+          @if (selectedNodeData.selectorConfig.configuration?.fields?.length) {
+            <h4 class="mt-2">Configuration
+            Fields</h4>
+          }
+          @if (selectedNodeData.selectorConfig.configuration?.fields?.length) {
             <p-table [value]="selectedNodeData.selectorConfig.configuration?.fields || []"
-                *ngIf="selectedNodeData.selectorConfig.configuration?.fields?.length">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Value</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-row>
-                    <tr>
-                        <td>{{row.name}}</td>
-                        <td>{{row.value}}</td>
-                    </tr>
-                </ng-template>
+              >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>Name</th>
+                  <th>Value</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-row>
+                <tr>
+                  <td>{{row.name}}</td>
+                  <td>{{row.value}}</td>
+                </tr>
+              </ng-template>
             </p-table>
-
+          }
+          @if (!selectedNodeData.selectorConfig.configuration?.tables?.length && !selectedNodeData.selectorConfig.configuration?.fields?.length) {
             <div
-                *ngIf="!selectedNodeData.selectorConfig.configuration?.tables?.length && !selectedNodeData.selectorConfig.configuration?.fields?.length">
-                <pre>{{ selectedNodeData.selectorConfig | json }}</pre>
+              >
+              <pre>{{ selectedNodeData.selectorConfig | json }}</pre>
             </div>
+          }
         </div>
-
-
-        <div *ngIf="selectedNodeData.attributeRules">
-            <h4>Attribute Rules</h4>
-            <div *ngFor="let rule of selectedNodeData.attributeRules.items"
-                class="mb-3 p-3 border-1 border-200 border-round surface-50">
-                <div class="grid">
-                    <div class="col-12 font-bold">{{ rule.attributeName }}</div>
-                    <div class="col-12">
-                        <span class="text-600">Condition:</span> {{ rule.condition }}
-                        <span class="font-mono bg-blue-50 text-blue-700 px-1 border-round">{{ rule.expectedValue
-                            }}</span>
-                    </div>
+      }
+      @if (selectedNodeData.attributeRules) {
+        <div>
+          <h4>Attribute Rules</h4>
+          @for (rule of selectedNodeData.attributeRules.items; track rule) {
+            <div
+              class="mb-3 p-3 border-1 border-200 border-round surface-50">
+              <div class="grid">
+                <div class="col-12 font-bold">{{ rule.attributeName }}</div>
+                <div class="col-12">
+                  <span class="text-600">Condition:</span> {{ rule.condition }}
+                  <span class="font-mono bg-blue-50 text-blue-700 px-1 border-round">{{ rule.expectedValue
+                  }}</span>
                 </div>
+              </div>
             </div>
-            <div *ngIf="selectedNodeData.attributeRules.fallbackToSuccess"
-                class="text-green-600 flex align-items-center">
-                <i class="pi pi-check-circle mr-2"></i>Fallback to Success
+          }
+          @if (selectedNodeData.attributeRules.fallbackToSuccess) {
+            <div
+              class="text-green-600 flex align-items-center">
+              <i class="pi pi-check-circle mr-2"></i>Fallback to Success
             </div>
+          }
         </div>
-
-        <div *ngIf="selectedNodeData.fragmentMapping" class="mt-4">
-            <h4>Mapping</h4>
-            <div *ngIf="selectedNodeData.fragmentMapping.attributeContractFulfillment">
-                <h5>Contract Fulfillment</h5>
-                <div *ngFor="let item of selectedNodeData.fragmentMapping.attributeContractFulfillment | keyvalue"
-                    class="flex justify-content-between p-2 border-bottom-1 border-100">
-                    <span class="font-semibold">{{ item.key }}</span>
-                    <span class="text-600">{{ item.value.value }} ({{ item.value.source.type }})</span>
+      }
+      @if (selectedNodeData.fragmentMapping) {
+        <div class="mt-4">
+          <h4>Mapping</h4>
+          @if (selectedNodeData.fragmentMapping.attributeContractFulfillment) {
+            <div>
+              <h5>Contract Fulfillment</h5>
+              @for (item of selectedNodeData.fragmentMapping.attributeContractFulfillment | keyvalue; track item) {
+                <div
+                  class="flex justify-content-between p-2 border-bottom-1 border-100">
+                  <span class="font-semibold">{{ item.key }}</span>
+                  <span class="text-600">{{ item.value.value }} ({{ item.value.source.type }})</span>
                 </div>
+              }
             </div>
+          }
         </div>
+      }
     </div>
+  }
 </p-dialog>
 
 <!-- Fragment Structure Dialog (Recursive via Service) -->
 <p-dialog [header]="selectedFragment?.id || 'Fragment Structure'" [(visible)]="isFragmentStructureDialogVisible"
-    [style]="{width: '90vw', height: '90vh'}" [modal]="true" [draggable]="false" [resizable]="false"
-    [maximizable]="true" (onShow)="onFragmentDialogShow()" (onHide)="onFragmentDialogHide()"
-    (onMaximize)="onFragmentDialogMaximize($event)">
-    <div *ngIf="selectedFragment && isFragmentFlowVisible" class="h-full w-full overflow-hidden relative">
-        <app-policy-flow #fragmentFlow [nodes]="fragmentNodes" [connections]="fragmentConnections"
-            [flowId]="fragmentFlowId" (nodeClick)="showFragmentDetails($event)"
-            (structureClick)="showFragmentStructure($event)">
-        </app-policy-flow>
+  [style]="{width: '90vw', height: '90vh'}" [modal]="true" [draggable]="false" [resizable]="false"
+  [maximizable]="true" (onShow)="onFragmentDialogShow()" (onHide)="onFragmentDialogHide()"
+  (onMaximize)="onFragmentDialogMaximize($event)">
+  @if (selectedFragment && isFragmentFlowVisible) {
+    <div class="h-full w-full overflow-hidden relative">
+      <app-policy-flow #fragmentFlow [nodes]="fragmentNodes" [connections]="fragmentConnections"
+        [flowId]="fragmentFlowId" (nodeClick)="showFragmentDetails($event)"
+        (structureClick)="showFragmentStructure($event)">
+      </app-policy-flow>
     </div>
+  }
 </p-dialog>
