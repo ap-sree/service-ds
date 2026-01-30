@@ -6,19 +6,19 @@ import { RippleModule } from 'primeng/ripple';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../auth/auth';
 import { SessionNotificationService } from '../../services/session-notification';
 
 @Component({
     selector: 'app-ui-layout',
     standalone: true,
     imports: [
-    RouterLink,
-    RouterLinkActive,
-    ButtonModule,
-    RippleModule,
-    MenuModule
-],
+        RouterLink,
+        RouterLinkActive,
+        ButtonModule,
+        RippleModule,
+        MenuModule
+    ],
     templateUrl: './ui-layout.html',
     styles: [`
     :host {

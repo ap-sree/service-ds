@@ -1,33 +1,28 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { AuthService } from './services/auth';
+import { AuthService } from './auth/auth';
 
-export const authGuard: CanActivateFn = (route, state) => {
+export const authGuard: CanActivateFn = () => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (authService.currentUser()) {
+    if (authService.isAuthenticated) {
         return true;
     }
 
-    // Not logged in, redirect to login
-    router.navigate(['/login']);
+    // Redirect to login (AuthService keeps the logic)
+    authService.login();
     return false;
 };
 
 export const adminGuard: CanActivateFn = (route, state) => {
     const authService = inject(AuthService);
+    const router = inject(Router);
 
-
-    // Must be logged in AND have ADMIN role
-    if (authService.currentUser() && authService.isAdmin()) {
+    if (authService.isAdmin()) {
         return true;
     }
 
-    // If logged in but not admin, prevent access (stay on dashboard or go there)
-    if (authService.currentUser()) {
-        return false; // Or redirect
-    }
-
-    return authGuard(route, state);
+    router.navigate(['/dashboard']);
+    return false;
 };

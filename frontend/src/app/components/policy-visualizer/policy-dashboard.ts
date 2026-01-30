@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-
+import { FormsModule } from '@angular/forms';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { CardModule } from 'primeng/card';
 import { ListboxModule } from 'primeng/listbox';
-import { FormsModule } from '@angular/forms';
 import { SplitterModule } from 'primeng/splitter';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { BadgeModule } from 'primeng/badge';
 
 import { PolicyVisualizerService } from '../../services/policy-visualizer';
 import { PolicyVisualizerComponent } from './policy-visualizer';
@@ -15,15 +17,18 @@ import { PolicyVisualizerComponent } from './policy-visualizer';
     selector: 'app-policy-dashboard',
     standalone: true,
     imports: [
-    FormsModule,
-    FileUploadModule,
-    TableModule,
-    TabsModule,
-    CardModule,
-    ListboxModule,
-    SplitterModule,
-    PolicyVisualizerComponent
-],
+        FormsModule,
+        FileUploadModule,
+        TableModule,
+        TabsModule,
+        CardModule,
+        ListboxModule,
+        SplitterModule,
+        ButtonModule,
+        InputTextModule,
+        BadgeModule,
+        PolicyVisualizerComponent
+    ],
     templateUrl: './policy-dashboard.html',
     styles: [`
         :host {
@@ -34,30 +39,19 @@ import { PolicyVisualizerComponent } from './policy-visualizer';
 })
 export class PolicyDashboardComponent implements OnInit {
 
-    groupedPolicies: any[] = []; // Can be SelectItemGroup[] or just any[]
-    selectors: any[] = []; // Store selectors for visualizer lookup
-    fragments: any[] = []; // Store fragments for visualizer lookup
+    groupedPolicies: any[] = [];
+    selectors: any[] = [];
+    fragments: any[] = [];
     selectedPolicy: any = null;
     currentTab: string = 'policies';
     isGrouped: boolean = false;
     totalItemsCount: number = 0;
+    searchText: string = '';
 
     constructor(public policyService: PolicyVisualizerService) {
-        // Main list subscription
         this.policyService.policies$.subscribe((items: any[]) => {
-            // If we are loading selectors for the visualizer background, we don't want to replace the main list IF we are on policies tab. 
-            // But the service currently uses a shared subject.
-            // We will refactor service to separate them.
-            // For now assume this only receives policies/fragments based on tab.
-            if (this.currentTab === 'selectors') {
-                // We don't have a selectors tab anymore, so we shouldn't be here.
-                // But if we reuse this subject, we need to be careful.
-                // We'll fix the service to use a separate subject for Selectors.
-            }
-
             if (items && items.length > 0) {
                 this.processItems(items);
-                // Auto-select
                 if (!this.selectedPolicy) {
                     if (this.isGrouped && this.groupedPolicies.length > 0) {
                         this.selectedPolicy = this.groupedPolicies[0].items[0].value;
@@ -76,24 +70,27 @@ export class PolicyDashboardComponent implements OnInit {
             this.selectors = selectors;
         });
 
-        // Subscribe to fragments separately
         this.policyService.fragments$.subscribe((fragments: any[]) => {
             this.fragments = fragments;
         });
     }
 
     ngOnInit() {
-        // Default load policies
         this.loadTab('policies');
-        // Pre-load selectors for the visualizer
         this.policyService.loadSelectorsFromAsset();
-        // Pre-load fragments for the visualizer
         this.policyService.loadFragmentsFromAsset(false);
+    }
+
+    filteredPolicies() {
+        if (!this.searchText) return this.groupedPolicies;
+        return this.groupedPolicies.filter(p =>
+            p.label.toLowerCase().includes(this.searchText.toLowerCase())
+        );
     }
 
     loadTab(tab: string) {
         this.currentTab = tab;
-        this.selectedPolicy = null; // Clear selection on tab switch
+        this.selectedPolicy = null;
 
         switch (tab) {
             case 'policies':
@@ -108,23 +105,31 @@ export class PolicyDashboardComponent implements OnInit {
         }
     }
 
+    loadPolicies() {
+        this.loadTab('policies');
+    }
+
+    onSearchChange(event: any) {
+        this.searchText = event.target.value;
+    }
+
+    onSelectPolicy(policy: any) {
+        this.selectedPolicy = policy;
+    }
+
     processItems(items: any[]) {
         this.groupedPolicies = [];
         this.isGrouped = false;
         this.totalItemsCount = items.length;
 
-        // Map items based on type
         this.groupedPolicies = items.map(i => {
             let label = i.name || i.id;
-            // Fragments might have a different structure, ensure label is found
             if (!label && i.rootNode) label = 'Fragment ' + i.id;
 
-            // For selectors, we might not have name/id at root if it's just the object
             if (this.currentTab === 'selectors' && !label) {
                 label = i.instanceId || i.pluginDescriptorRef?.id || 'Selector';
             }
 
-            // Determine Icon
             let icon = 'pi pi-file';
             if (this.currentTab === 'policies') icon = 'pi pi-sitemap';
             else if (this.currentTab === 'fragments') icon = 'pi pi-bolt';
@@ -158,8 +163,6 @@ export class PolicyDashboardComponent implements OnInit {
             return action.authenticationPolicyContractRef.id;
         }
 
-        // Ensure robust access to children on the node object, not the action
-        // Use 'any' cast if necessary to bypass stale type checks or interface mismatch during compilation
         const children = node.children;
         if (children && Array.isArray(children)) {
             for (const childWrapper of children) {

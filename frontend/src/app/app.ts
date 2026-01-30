@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router } from '@angular/router';
 
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
 
-import { AuthService } from './services/auth';
+import { AuthService } from './auth/auth';
 import { SessionNotificationService } from './services/session-notification';
 import { UiLayoutComponent } from './components/layout/ui-layout';
 
@@ -16,7 +16,7 @@ import { UiLayoutComponent } from './components/layout/ui-layout';
     RouterOutlet,
     UiLayoutComponent,
     ToastModule
-],
+  ],
   providers: [MessageService],
   templateUrl: './app.html',
   styleUrl: './app.scss'
@@ -27,13 +27,25 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly sessionNotifService = inject(SessionNotificationService);
   private readonly messageService = inject(MessageService);
+  private readonly router = inject(Router);
 
   currentUser = this.authService.currentUser;
 
   constructor() { }
 
   ngOnInit() {
+    this.router.initialNavigation();
     this.sessionNotifService.startPolling();
+
+    // Sync OAuth state with App State
+    if (this.authService.isAuthenticated && !this.authService.currentUser()) {
+      const claims: any = this.authService.identityClaims;
+      // Fallback to 'sub' or 'preferred_username' or 'username' depending on IDP
+      const username = claims?.username || claims?.preferred_username || claims?.sub;
+      if (username) {
+        this.authService.syncUser(username).subscribe();
+      }
+    }
 
     // Subscribe to events
     this.sessionNotifService.notificationReceived$.subscribe(n => {

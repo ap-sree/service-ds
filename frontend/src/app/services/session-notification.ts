@@ -2,7 +2,7 @@
 import { Injectable, inject, signal, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { AuthService } from './auth';
+import { AuthService } from '../auth/auth';
 
 import { environment } from '../../environments/environment';
 

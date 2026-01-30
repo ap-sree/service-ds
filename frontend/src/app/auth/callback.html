@@ -1,0 +1,23 @@
+<div class="callback-container">
+    @if (loading) {
+    <p-progressSpinner />
+    <p>Processing login...</p>
+    }
+
+    @if (error) {
+    <div class="error-content">
+        <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: var(--red-500);"></i>
+        <h2>Authentication Failed</h2>
+        <p class="error-message">{{ errorMessage }}</p>
+        <p-button label="Login Again" icon="pi pi-sign-in" (onClick)="retryLogin()" severity="danger">
+        </p-button>
+    </div>
+    }
+
+    @if (success) {
+    <div class="success-content">
+        <i class="pi pi-check-circle" style="font-size: 3rem; color: var(--green-500);"></i>
+        <p>Login successful! Redirecting...</p>
+    </div>
+    }
+</div>

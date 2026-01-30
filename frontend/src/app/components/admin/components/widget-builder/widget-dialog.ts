@@ -17,18 +17,18 @@ import { SourceService } from '../../../../services/source';
     selector: 'app-widget-dialog',
     standalone: true,
     imports: [
-    ReactiveFormsModule,
-    FormsModule,
-    ButtonModule,
-    InputTextModule,
-    TextareaModule,
-    SelectModule,
-    MultiSelectModule,
-    TagModule
-],
+        ReactiveFormsModule,
+        FormsModule,
+        ButtonModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule,
+        MultiSelectModule,
+        TagModule
+    ],
     templateUrl: './widget-dialog.html',
     styles: [`
-    .field { margin - bottom: 1rem; }
+    .field { margin-bottom: 1rem; }
 `]
 })
 export class WidgetDialogComponent implements OnInit {

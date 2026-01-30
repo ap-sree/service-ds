@@ -12,7 +12,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { UserDialogComponent } from './user-dialog';
 import { UserService } from '../../../../services/user';
 import { User } from '../../../../models/user';
-import { AuthService } from '../../../../services/auth';
+import { AuthService } from '../../../../auth/auth';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -21,16 +21,16 @@ import { InputIconModule } from 'primeng/inputicon';
     selector: 'app-user-directory',
     standalone: true,
     imports: [
-    CardModule,
-    ButtonModule,
-    TableModule,
-    InputTextModule,
-    TooltipModule,
-    TagModule,
-    ConfirmDialogModule,
-    IconFieldModule,
-    InputIconModule
-],
+        CardModule,
+        ButtonModule,
+        TableModule,
+        InputTextModule,
+        TooltipModule,
+        TagModule,
+        ConfirmDialogModule,
+        IconFieldModule,
+        InputIconModule
+    ],
     providers: [DialogService, ConfirmationService],
     templateUrl: './user-directory.html',
     styles: [`

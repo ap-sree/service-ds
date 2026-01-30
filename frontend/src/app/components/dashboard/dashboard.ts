@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, ViewChildren, QueryList } from '@angular/core';
 
 import { DashboardService, WidgetDefinition } from '../../services/dashboard';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../auth/auth';
 import { UserService } from '../../services/user';
 
 // PrimeNG Imports
@@ -21,15 +21,15 @@ import { GenericWidgetComponent } from '../generic-widget/generic-widget';
     selector: 'app-dashboard',
     standalone: true,
     imports: [
-    FormsModule,
-    GenericWidgetComponent,
-    ToolbarModule,
-    ButtonModule,
-    SelectModule,
-    ConfirmDialogModule,
-    CardModule,
-    InputNumberModule
-],
+        FormsModule,
+        GenericWidgetComponent,
+        ToolbarModule,
+        ButtonModule,
+        SelectModule,
+        ConfirmDialogModule,
+        CardModule,
+        InputNumberModule
+    ],
     providers: [ConfirmationService],
     templateUrl: './dashboard.html',
     styleUrls: ['./dashboard.scss']
@@ -40,10 +40,6 @@ export class DashboardComponent implements OnInit {
     private userService = inject(UserService);
     private confirmationService = inject(ConfirmationService);
     private messageService = inject(MessageService);
-
-    constructor() {
-        this.userService.getGlobalPreferences().subscribe(prefs => { /* Handle preferences here */ });
-    }
 
     @ViewChildren(GenericWidgetComponent) widgetRefs!: QueryList<GenericWidgetComponent>;
 

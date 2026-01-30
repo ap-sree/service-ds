@@ -1,12 +1,14 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter, withHashLocation } from '@angular/router';
+import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { provideRouter, withHashLocation, withDisabledInitialNavigation } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideOAuthClient, OAuthService } from 'angular-oauth2-oidc';
 
 import { providePrimeNG } from 'primeng/config';
 import Material from '@primeuix/themes/material';
 import { definePreset } from '@primeuix/themes';
 import { routes } from './app.routes';
+import { authConfig } from './auth/auth.config';
 
 const BluePreset = definePreset(Material, {
   semantic: {
@@ -26,11 +28,27 @@ const BluePreset = definePreset(Material, {
   }
 });
 
+function initializeOAuth(oauthService: OAuthService): () => Promise<any> {
+  return () => {
+    oauthService.configure(authConfig);
+    return oauthService.loadDiscoveryDocument()
+      .then(() => oauthService.tryLogin())
+      .then(() => { });
+  };
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes, withHashLocation()),
+    provideRouter(routes, withHashLocation(), withDisabledInitialNavigation()),
     provideHttpClient(),
+    provideOAuthClient(),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeOAuth,
+      deps: [OAuthService],
+      multi: true
+    },
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {

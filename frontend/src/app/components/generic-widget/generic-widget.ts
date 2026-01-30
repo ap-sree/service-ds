@@ -7,7 +7,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { DashboardService, WidgetDefinition, WidgetDataResponse } from '../../services/dashboard';
-import { AuthService } from '../../services/auth';
+import { AuthService } from '../../auth/auth';
 
 @Component({
   selector: 'app-generic-widget',
