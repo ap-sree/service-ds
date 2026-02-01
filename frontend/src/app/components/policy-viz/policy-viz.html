@@ -1,0 +1,105 @@
+<div class="relative w-full h-full surface-ground overflow-hidden select-none font-sans group" #container>
+
+    <!-- Dot Grid Background -->
+    <div class="absolute top-0 left-0 w-full h-full opacity-40 pointer-events-none z-0"
+        [style.background-image]="'radial-gradient(#94a3b8 1px, transparent 1px)'" [style.background-size]="'20px 20px'"
+        [style.background-position]="backgroundPos()">
+    </div>
+
+    <!-- Canvas Layer -->
+    <div class="w-full h-full transform-origin-tl will-change-transform z-1" [style.transform]="transformStyle()">
+
+        <!-- Connections Layer (SVG) -->
+        <svg class="absolute top-0 left-0 overflow-visible pointer-events-none" [attr.width]="1" [attr.height]="1">
+            <defs>
+                <marker id="arrow-same" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                    orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#cbd5e1" />
+                </marker>
+                <marker id="arrow-modified" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                    orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+                </marker>
+                <marker id="arrow-added" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                    orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+                </marker>
+                <marker id="arrow-removed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                    orient="auto">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+                </marker>
+            </defs>
+
+            @for (link of links(); track link.id) {
+            <g class="transition-opacity transition-duration-300">
+                <!-- Main Path -->
+                <path [attr.d]="link.d" fill="none" [attr.stroke]="getLinkColor(link.status)" [attr.stroke-width]="2"
+                    [attr.marker-end]="'url(#arrow-' + link.status + ')'"
+                    [class.stroke-dasharray]="link.status === 'modified' ? '5,5' : ''"
+                    class="transition-colors transition-duration-300" />
+
+                <!-- Edge Label Background & Text -->
+                @if (link.label) {
+                <g [attr.transform]="getLabelTransform(link)">
+                    <rect x="-30" y="-10" width="60" height="20" rx="4" fill="white" fill-opacity="0.9" stroke="#e2e8f0"
+                        stroke-width="1"></rect>
+                    <text text-anchor="middle" dy="4" class="text-xs font-medium fill-slate-500 font-mono"
+                        style="font-size: 10px;">{{ link.label }}</text>
+                </g>
+                }
+            </g>
+            }
+        </svg>
+
+        <!-- Nodes Layer (HTML) -->
+        <div class="absolute top-0 left-0 w-0 h-0">
+            @for (node of nodes(); track node.id) {
+            <div class="absolute flex flex-column align-items-center justify-content-center p-0 border-round shadow-1 border-1 surface-card transition-all transition-duration-200 cursor-pointer hover:shadow-4 hover:-translate-y-1"
+                [style.transform]="'translate(' + (node.x - node.width/2) + 'px, ' + (node.y - node.height/2) + 'px)'"
+                [style.width.px]="node.width" [style.height.px]="node.height"
+                [class.border-200]="node.data.status === 'same'" [class.border-green-300]="node.data.status === 'added'"
+                [class.border-red-300]="node.data.status === 'removed'"
+                [class.border-orange-300]="node.data.status === 'modified'"
+                [class.shadow-2]="node.data.status !== 'same'" (click)="onNodeClick($event, node)">
+
+                <!-- Connection Ports -->
+                <div class="absolute -left-1 w-1rem h-1rem border-circle surface-300 border-2 border-white shadow-1 top-50 -translate-y-50"
+                    style="left: -0.5rem; top: 50%; transform: translateY(-50%)"></div>
+                <div class="absolute -right-1 w-1rem h-1rem border-circle surface-300 border-2 border-white shadow-1 top-50 -translate-y-50"
+                    style="right: -0.5rem; top: 50%; transform: translateY(-50%)"></div>
+
+                <!-- Node Content -->
+                <div class="w-full h-full flex flex-column p-2 overflow-hidden">
+                    <div
+                        class="flex align-items-center justify-content-between w-full mb-1 border-bottom-1 surface-border pb-1">
+                        <span
+                            class="text-xs font-bold uppercase text-400 white-space-nowrap overflow-hidden text-overflow-ellipsis"
+                            style="font-size: 9px; letter-spacing: 0.05em">{{ node.data.type }}</span>
+                        <!-- Status Indicator Dot -->
+                        <span class="w-1rem h-1rem border-circle" style="width: 6px; height: 6px;"
+                            [class.surface-300]="node.data.status === 'same'"
+                            [class.bg-green-400]="node.data.status === 'added'"
+                            [class.bg-red-400]="node.data.status === 'removed'"
+                            [class.bg-orange-400]="node.data.status === 'modified'"></span>
+                    </div>
+                    <div class="flex-grow-1 flex align-items-center justify-content-center text-center">
+                        <span class="text-sm font-semibold text-700 line-clamp-2 leading-tight"
+                            style="word-break: break-word;">
+                            {{ cleanName(node.data.name) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+    </div>
+
+    <!-- Controls -->
+    <div class="absolute bottom-0 right-0 flex flex-column gap-2 z-2 m-3">
+        <button (click)="resetZoom()"
+            class="p-2 surface-card border-round shadow-1 text-500 hover:text-primary hover:surface-100 border-1 surface-border transition-colors cursor-pointer flex align-items-center justify-content-center">
+            <i class="pi pi-expand text-xl"></i>
+        </button>
+    </div>
+</div>

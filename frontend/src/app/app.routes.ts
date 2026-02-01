@@ -18,6 +18,16 @@ export const routes: Routes = [
         loadComponent: () => import('./components/policy-visualizer/policy-dashboard').then(m => m.PolicyDashboardComponent),
         canActivate: [authGuard]
     },
+    {
+        path: 'policy-comparison',
+        loadComponent: () => import('./components/policy-comparison/policy-comparison').then(m => m.PolicyComparisonComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'pc-temp',
+        loadComponent: () => import('./pages/pc-temp/pc-temp').then(m => m.PcTempComponent),
+        canActivate: [authGuard]
+    },
 
     // Admin Module (Nested & Lazy Loaded)
     {

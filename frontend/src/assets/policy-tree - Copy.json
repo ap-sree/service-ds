@@ -18,7 +18,7 @@
                             "authenticationSource": {
                                 "type": "IDP_ADAPTER",
                                 "sourceRef": {
-                                    "id": "LoginDisable",
+                                    "id": "LoginDisable1",
                                     "location": "https://localhost:9999/pf-admin-api/v1/idp/adapters/LoginDisable"
                                 }
                             }
@@ -56,7 +56,7 @@
                 "action": {
                     "type": "FRAGMENT",
                     "fragment": {
-                        "id": "IDFirst-FG",
+                        "id": "IDFirst-FG1",
                         "location": "https://localhost:9999/pf-admin-api/v1/authenticationPolicies/fragments/IDFirst-FG"
                     },
                     "attributeRules": {
@@ -142,7 +142,7 @@
                                     "mail": {
                                         "source": {
                                             "type": "FRAGMENT",
-                                            "id": "HTML-FG"
+                                            "id": "IDFirst-FG"
                                         },
                                         "value": "mail"
                                     },

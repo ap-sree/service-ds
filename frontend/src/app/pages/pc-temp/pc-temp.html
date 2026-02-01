@@ -1,0 +1,187 @@
+<div class="flex flex-column h-full w-full surface-ground">
+    <!-- Header -->
+    <div class="px-4 py-3 flex align-items-center justify-content-between bg-white border-bottom-1 surface-border">
+        <div>
+            <h2 class="text-xl font-bold m-0 text-900">Policy Comparison</h2>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-grow-1 flex flex-column p-4 overflow-auto gap-4">
+
+        <!-- Input Cards -->
+        <div class="grid">
+            <div class="col-12 md:col-6">
+                <p-card styleClass="h-full surface-card shadow-1 border-1 surface-border">
+                    <ng-template pTemplate="header">
+                        <div
+                            class="px-3 py-2 flex align-items-center justify-content-between border-bottom-1 surface-border bg-gray-50 border-round-top">
+                            <span class="font-bold text-700">Policy A</span>
+                            <p-tag [value]="policiesA().length + ' items'" severity="info"
+                                *ngIf="policiesA().length"></p-tag>
+                        </div>
+                    </ng-template>
+
+                    <div class="p-3">
+                        @if (policiesA().length === 0) {
+                        <div
+                            class="flex flex-column align-items-center justify-content-center h-10rem border-1 border-dashed surface-border border-round surface-50">
+                            <p-fileUpload mode="basic" chooseLabel="Select JSON" [auto]="true" accept=".json"
+                                (onSelect)="onUploadA($event)" [customUpload]="true"
+                                styleClass="p-button-outlined p-button-secondary text-sm">
+                            </p-fileUpload>
+                        </div>
+                        } @else {
+                        <div class="flex flex-column gap-3">
+                            <div class="flex justify-content-end gap-2">
+                                <p-button label="Clear" icon="pi pi-times"
+                                    styleClass="p-button-text p-button-sm py-1 p-button-danger"
+                                    (click)="clearA()"></p-button>
+                                <p-button label="Change File" icon="pi pi-upload"
+                                    styleClass="p-button-text p-button-sm py-1" (click)="clearA()"></p-button>
+                            </div>
+                            <p-listbox [options]="policiesA()" [(ngModel)]="selectedPolicyA" optionLabel="name"
+                                [style]="{'width':'100%', 'max-height': '200px'}" [listStyle]="{'max-height': '200px'}"
+                                [filter]="true" filterPlaceHolder="Search policy..."
+                                styleClass="w-full border-1 surface-border">
+                                <ng-template let-item pTemplate="item">
+                                    <div class="flex align-items-center gap-2 w-full">
+                                        <i class="pi pi-file-o text-500"></i>
+                                        <span class="font-medium text-900">{{ item.name }}</span>
+                                    </div>
+                                </ng-template>
+                            </p-listbox>
+                        </div>
+                        }
+                    </div>
+                </p-card>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <p-card styleClass="h-full surface-card shadow-1 border-1 surface-border">
+                    <ng-template pTemplate="header">
+                        <div
+                            class="px-3 py-2 flex align-items-center justify-content-between border-bottom-1 surface-border bg-gray-50 border-round-top">
+                            <span class="font-bold text-700">Policy B</span>
+                            <p-tag [value]="policiesB().length + ' items'" severity="info"
+                                *ngIf="policiesB().length"></p-tag>
+                        </div>
+                    </ng-template>
+
+                    <div class="p-3">
+                        @if (policiesB().length === 0) {
+                        <div
+                            class="flex flex-column align-items-center justify-content-center h-10rem border-1 border-dashed surface-border border-round surface-50">
+                            <p-fileUpload mode="basic" chooseLabel="Select JSON" [auto]="true" accept=".json"
+                                (onSelect)="onUploadB($event)" [customUpload]="true"
+                                styleClass="p-button-outlined p-button-secondary text-sm">
+                            </p-fileUpload>
+                        </div>
+                        } @else {
+                        <div class="flex flex-column gap-3">
+                            <div class="flex justify-content-end gap-2">
+                                <p-button label="Clear" icon="pi pi-times"
+                                    styleClass="p-button-text p-button-sm py-1 p-button-danger"
+                                    (click)="clearB()"></p-button>
+                                <p-button label="Change File" icon="pi pi-upload"
+                                    styleClass="p-button-text p-button-sm py-1" (click)="clearB()"></p-button>
+                            </div>
+                            <p-listbox [options]="policiesB()" [(ngModel)]="selectedPolicyB" optionLabel="name"
+                                [style]="{'width':'100%', 'max-height': '200px'}" [listStyle]="{'max-height': '200px'}"
+                                [filter]="true" filterPlaceHolder="Search policy..."
+                                styleClass="w-full border-1 surface-border">
+                                <ng-template let-item pTemplate="item">
+                                    <div class="flex align-items-center gap-2 w-full">
+                                        <i class="pi pi-file-o text-500"></i>
+                                        <span class="font-medium text-900">{{ item.name }}</span>
+                                    </div>
+                                </ng-template>
+                            </p-listbox>
+                        </div>
+                        }
+                    </div>
+                </p-card>
+            </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="flex justify-content-center">
+            <button pButton label="Compare Selected" icon="pi pi-arrows-h"
+                class="p-button-primary p-button-rounded shadow-2 w-15rem" (click)="compare()"
+                [disabled]="!canCompare()"></button>
+        </div>
+
+        <!-- Viz Area -->
+        <div class="flex-grow-1 surface-card shadow-1 border-1 surface-border border-round relative overflow-hidden"
+            style="min-height: 500px;">
+            @if (diffTree()) {
+            <app-policy-viz [data]="diffTree()" (nodeSelected)="onNodeSelected($event)"></app-policy-viz>
+            } @else {
+            <div
+                class="absolute top-0 left-0 w-full h-full flex flex-column align-items-center justify-content-center text-400">
+                <i class="pi pi-sitemap text-5xl text-300 mb-3 opacity-50"></i>
+                <h3 class="text-xl font-medium text-600 m-0">No policy selected</h3>
+                <p class="text-500 mt-2">Select policies above and click Compare</p>
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Details Settings -->
+    <p-drawer [(visible)]="showDetails" position="right" [style]="{width: '30rem'}" styleClass="surface-card">
+        <ng-template pTemplate="header">
+            <span class="font-bold text-xl">Diff Details</span>
+        </ng-template>
+        @if (selectedNode(); as node) {
+        <div class="flex flex-column gap-3 pb-4">
+            <div class="surface-ground p-3 border-round border-1 surface-border">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs font-bold text-500 uppercase">{{ node.type }}</span>
+                    <p-tag [value]="node.status" [severity]="getSeverity(node.status)"></p-tag>
+                </div>
+                <h2 class="text-lg font-bold text-900 m-0 break-all line-height-2">{{ node.name }}</h2>
+                <div class="mt-2 text-xs text-500 font-mono break-all">ID: {{ node.id }}</div>
+            </div>
+
+            @if (node.status === 'modified' && node.diffs && node.diffs.length > 0) {
+            <div class="flex flex-column gap-2">
+                <h3 class="text-sm font-semibold text-700 border-bottom-1 surface-border pb-1 m-0">Property Changes</h3>
+                @for (diff of node.diffs; track diff.key) {
+                <div class="surface-card p-3 border-round border-1 surface-border shadow-none">
+                    <div class="font-mono text-xs font-bold text-primary mb-2">{{ diff.key }}</div>
+                    <div class="grid grid-nogutter gap-2 text-xs m-0">
+                        <div class="col-12 bg-red-50 p-2 border-round text-red-700 break-all border-1 border-red-100">
+                            <div class="font-bold text-xs uppercase opacity-50 mb-1">Old Value</div>
+                            {{ diff.oldVal | json }}
+                        </div>
+                        <div
+                            class="col-12 bg-green-50 p-2 border-round text-green-700 break-all border-1 border-green-100">
+                            <div class="font-bold text-xs uppercase opacity-50 mb-1">New Value</div>
+                            {{ diff.newVal | json }}
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            } @else if (node.status === 'added') {
+            <div
+                class="bg-green-50 p-3 border-round text-sm text-green-800 border-1 border-green-100 flex align-items-center gap-2">
+                <i class="pi pi-plus-circle"></i> Added in Policy B
+            </div>
+            } @else if (node.status === 'removed') {
+            <div
+                class="bg-red-50 p-3 border-round text-sm text-red-800 border-1 border-red-100 flex align-items-center gap-2">
+                <i class="pi pi-minus-circle"></i> Removed from Policy B
+            </div>
+            }
+
+            @if (node.details) {
+            <div class="surface-50 p-3 border-round border-1 surface-border mt-2">
+                <h4 class="text-xs font-bold text-500 mb-2 uppercase m-0">Configuration</h4>
+                <pre class="text-xs overflow-auto m-0 text-700">{{ node.details | json }}</pre>
+            </div>
+            }
+        </div>
+        }
+    </p-drawer>
+</div>
