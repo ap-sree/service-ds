@@ -5,7 +5,7 @@ body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-/* Bootstrap Variables for Form Builder */
+
 @import '../node_modules/bootstrap/scss/functions';
 @import '../node_modules/bootstrap/scss/variables';
 @import '../node_modules/bootstrap/scss/maps';
@@ -13,7 +13,7 @@ body {
 @import '../node_modules/bootstrap/scss/root';
 
 
-/* PrimeNG */
+
 .d-flex {
   display: flex;
 }
@@ -228,7 +228,7 @@ body {
   }
 }
 
-/* Dashboard Content */
+
 .content-container {
   padding: 20px;
   height: calc(100vh - 64px);

@@ -7,7 +7,7 @@ public class Notification {
     private String id;
     private String title;
     private String body;
-    private String action_type; // TOAST, OS_NOTIFY
+    private String action_type; 
     private String targetUser;
     private String targetRole;
     private LocalDateTime timestamp;
@@ -25,7 +25,7 @@ public class Notification {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    
     public String getId() {
         return id;
     }

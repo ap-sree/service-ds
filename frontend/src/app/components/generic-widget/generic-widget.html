@@ -1,7 +1,7 @@
 <p-card
     [styleClass]="'widget-card h-full flex flex-column type-' + (widgetDef.type | lowercase) + ' ' + (cardColorClass ? cardColorClass : '')">
     <div class="flex flex-column h-full">
-        <!-- Manual Header for Custom Control -->
+        
         @if (widgetDef.type !== 'CARD' || isEditing) {
         <div class="px-3 pt-3 pb-2 font-bold text-lg text-900 flex justify-content-between align-items-center">
             <span>{{ widgetDef.title }}</span>
@@ -9,7 +9,7 @@
         </div>
         }
 
-        <div class="flex-grow-1 flex flex-column relative px-3 pb-3"> <!-- Content Area -->
+        <div class="flex-grow-1 flex flex-column relative px-3 pb-3"> 
 
             @if (loading) {
             <div class="flex justify-content-center align-items-center flex-grow-1 loading-placeholder">
@@ -23,7 +23,7 @@
 
             @if (!loading && !error) {
 
-            <!-- TABLE VIEW -->
+            
             @if (widgetDef.type === 'TABLE') {
             <div class="h-full w-full overflow-hidden flex flex-column">
                 <p-table [value]="data" [scrollable]="true" scrollHeight="400px"
@@ -57,7 +57,7 @@
             </div>
             }
 
-            <!-- CARD (METRIC) VIEW -->
+            
             @if (widgetDef.type === 'CARD') {
             <div class="flex flex-column align-items-center justify-content-center flex-grow-1">
                 <div class="text-5xl font-bold mb-1 line-height-2">{{ cardValue }}</div>
@@ -65,7 +65,7 @@
             </div>
             }
 
-            <!-- STATUS GRID VIEW -->
+            
             @if (widgetDef.type === 'STATUS_GRID') {
             <div class="grid grid-nogutter w-full overflow-y-auto max-h-15rem">
                 @for (item of statusGridItems; track item.label) {
@@ -89,7 +89,7 @@
             </div>
             }
 
-            <!-- MULTI METRIC VIEW -->
+            
             @if (widgetDef.type === 'MULTI_METRIC') {
             <div class="flex flex-row flex-wrap gap-3 align-items-center justify-content-center h-full">
                 @for (item of multiMetricItems; track item.label) {

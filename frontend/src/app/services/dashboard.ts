@@ -9,15 +9,15 @@ export interface WidgetDefinition {
     type: 'CARD' | 'TABLE' | 'GRID' | 'STATUS_GRID' | 'MULTI_METRIC';
     dataSourceTable: string;
     refreshInterval?: number;
-    queryConfig?: any; // JSON Object (Backend sends raw JSON)
+    queryConfig?: any; 
     userColumn?: string;
-    settings?: string; // JSON -> { "order": 1 }
+    settings?: string; 
 }
 
 export interface WidgetDataResponse {
     type: string;
     count?: number;
-    items?: any[]; // We can't strictly type dynamic rows yet, but better than top-level any
+    items?: any[]; 
     label?: string;
     limit?: number;
 }
@@ -43,22 +43,22 @@ export class DashboardService {
         return this.http.put(`${this.apiUrl}/widgets/${id}`, widget);
     }
 
-    // Widget Metadata (Strict: Requires username for dashboard view)
+    
     getWidgets(username: string): Observable<WidgetDefinition[]> {
         return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widgets?username=${username}`);
     }
 
-    // Catalog for Editing (Safe Minimal Data)
+    
     getWidgetCatalog(): Observable<WidgetDefinition[]> {
         return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widget-catalog`);
     }
 
-    // Admin: Get Full Definition List
+    
     getAllWidgets(): Observable<WidgetDefinition[]> {
         return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/admin/widgets`);
     }
 
-    // Optimize: Fetch data specifically for a widget (handled by backend)
+    
     getWidgetData(widgetId: number, userId?: string | number): Observable<WidgetDataResponse> {
         let url = `${this.apiUrl}/widgets/${widgetId}/data`;
         if (userId) {
@@ -67,12 +67,12 @@ export class DashboardService {
         return this.http.get<WidgetDataResponse>(url);
     }
 
-    // Generic Data Query (Legacy / Direct Table Access)
+    
     getData(tableName: string, limit: number = 10000): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/data/${tableName}?limit=${limit}`);
     }
 
-    // Layout
+    
     getLayout(userId: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/dashboard-layout/${userId}`);
     }

@@ -10,7 +10,7 @@ export const authGuard: CanActivateFn = () => {
         return true;
     }
 
-    // Redirect to login (AuthService keeps the logic)
+    
     authService.login();
     return false;
 };

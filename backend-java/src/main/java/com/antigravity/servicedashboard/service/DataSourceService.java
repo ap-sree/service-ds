@@ -41,13 +41,13 @@ public class DataSourceService {
         if (!repository.existsById(id))
             return false;
 
-        // 1. Delete all Sync Jobs (Cascade)
+        
         List<SyncDefinition> syncs = syncRepo.findBySourceId(id);
         for (SyncDefinition sync : syncs) {
             syncService.deleteSyncCascade(sync.getId());
         }
 
-        // 2. Delete Source
+        
         repository.deleteById(id);
         return true;
     }

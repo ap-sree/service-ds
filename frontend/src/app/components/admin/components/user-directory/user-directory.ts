@@ -46,7 +46,7 @@ export class UserDirectoryComponent implements OnInit {
 
     dataSource: User[] = [];
     currentUserId: string | null = null;
-    // ref removed
+    
 
     ngOnInit() {
         this.currentUserId = this.authService.currentUser()?.username || null;

@@ -1,233 +1,175 @@
-<div class="policy-comparison-container">
-    <div class="header">
-        <h2>Policy Comparison</h2>
-        <p class="text-600">Compare two PingFederate authentication policies side-by-side</p>
+<div class="flex flex-column h-full w-full surface-ground">
+    
+    <div class="px-4 py-3 flex align-items-center justify-content-between bg-white border-bottom-1 surface-border">
+        <div>
+            <h2 class="text-xl font-bold m-0 text-900">Policy Comparison</h2>
+        </div>
     </div>
 
-    <div class="comparison-grid">
-        <!-- Left Policy -->
-        <p-card styleClass="h-full">
-            <ng-template pTemplate="header">
-                <div class="card-header">
-                    <span>Policy A</span>
-                    @if (leftData) {
-                    <p-button icon="pi pi-times" [text]="true" [rounded]="true" size="small" severity="danger"
-                        (click)="leftData = null"></p-button>
-                    }
-                </div>
-            </ng-template>
+    
+    <div class="flex-grow-1 flex flex-column p-4 overflow-auto gap-4">
 
-            @if (!leftData) {
-            <p-fileUpload mode="basic" chooseLabel="Upload JSON" accept="application/json" [auto]="true" size="small"
-                (onSelect)="onLeftPolicyUpload($event)" [customUpload]="true"></p-fileUpload>
-            } @else {
-            <div class="policy-container flex flex-column h-full">
-                <div class="list-container flex-1 overflow-hidden h-full">
-                    <p-listbox [options]="leftData.items" [(ngModel)]="leftData.selectedItem" optionLabel="label"
-                        optionValue="value" [style]="{'width':'100%', 'height': '100%', 'border':'none'}"
-                        [listStyle]="{'height': '100%'}" [filter]="true" filterPlaceHolder="Search...">
-                        <ng-template let-item pTemplate="item">
-                            <div class="flex align-items-center gap-2">
-                                <i [class]="item.icon"></i>
-                                <span>{{item.label}}</span>
+        
+        <div class="grid">
+            <div class="col-12 md:col-6">
+                <p-card styleClass="h-full surface-card shadow-1 border-1 surface-border">
+                    <ng-template pTemplate="header">
+                        <div
+                            class="px-3 py-2 flex align-items-center justify-content-between border-bottom-1 surface-border bg-gray-50 border-round-top">
+                            <span class="font-bold text-700">Policy A</span>
+                            <p-tag [value]="policiesA().length + ' items'" severity="info"
+                                *ngIf="policiesA().length"></p-tag>
+                        </div>
+                    </ng-template>
+
+                    <div class="p-3">
+                        @if (policiesA().length === 0) {
+                        <div
+                            class="flex flex-column align-items-center justify-content-center h-10rem border-1 border-dashed surface-border border-round surface-50">
+                            <p-fileUpload mode="basic" chooseLabel="Select JSON" [auto]="true" accept=".json"
+                                (onSelect)="onUploadA($event)" [customUpload]="true"
+                                styleClass="p-button-outlined p-button-secondary text-sm">
+                            </p-fileUpload>
+                        </div>
+                        } @else {
+                        <div class="flex flex-column gap-3">
+                            <div class="flex justify-content-end gap-2">
+                                <p-button label="Clear" icon="pi pi-times"
+                                    styleClass="p-button-text p-button-sm py-1 p-button-danger"
+                                    (click)="clearA()"></p-button>
                             </div>
-                        </ng-template>
-                    </p-listbox>
-                </div>
+                            <p-listbox [options]="policiesA()" [(ngModel)]="selectedPolicyA" optionLabel="name"
+                                [style]="{'width':'100%', 'max-height': '200px'}" [listStyle]="{'max-height': '200px'}"
+                                [filter]="true" filterPlaceHolder="Search policy..."
+                                styleClass="w-full border-1 surface-border">
+                                <ng-template let-item pTemplate="item">
+                                    <div class="flex align-items-center gap-2 w-full">
+                                        <i class="pi pi-file-o text-500"></i>
+                                        <span class="font-medium text-900">{{ item.name }}</span>
+                                    </div>
+                                </ng-template>
+                            </p-listbox>
+                        </div>
+                        }
+                    </div>
+                </p-card>
             </div>
-            }
-        </p-card>
 
-        <!-- Center Policy -->
-        <p-card styleClass="h-full">
-            <ng-template pTemplate="header">
-                <div class="card-header">
-                    <span>Policy B</span>
-                    @if (centerData) {
-                    <p-button icon="pi pi-times" [text]="true" [rounded]="true" size="small" severity="danger"
-                        (click)="centerData = null"></p-button>
-                    }
-                </div>
-            </ng-template>
+            <div class="col-12 md:col-6">
+                <p-card styleClass="h-full surface-card shadow-1 border-1 surface-border">
+                    <ng-template pTemplate="header">
+                        <div
+                            class="px-3 py-2 flex align-items-center justify-content-between border-bottom-1 surface-border bg-gray-50 border-round-top">
+                            <span class="font-bold text-700">Policy B</span>
+                            <p-tag [value]="policiesB().length + ' items'" severity="info"
+                                *ngIf="policiesB().length"></p-tag>
+                        </div>
+                    </ng-template>
 
-            @if (!centerData) {
-            <p-fileUpload mode="basic" chooseLabel="Upload JSON" accept="application/json" [auto]="true" size="small"
-                (onSelect)="onCenterPolicyUpload($event)" [customUpload]="true"></p-fileUpload>
-            } @else {
-            <div class="policy-container flex flex-column h-full">
-                <div class="list-container flex-1 overflow-hidden h-full">
-                    <p-listbox [options]="centerData.items" [(ngModel)]="centerData.selectedItem" optionLabel="label"
-                        optionValue="value" [style]="{'width':'100%', 'height': '100%', 'border':'none'}"
-                        [listStyle]="{'height': '100%'}" [filter]="true" filterPlaceHolder="Search...">
-                        <ng-template let-item pTemplate="item">
-                            <div class="flex align-items-center gap-2">
-                                <i [class]="item.icon"></i>
-                                <span>{{item.label}}</span>
+                    <div class="p-3">
+                        @if (policiesB().length === 0) {
+                        <div
+                            class="flex flex-column align-items-center justify-content-center h-10rem border-1 border-dashed surface-border border-round surface-50">
+                            <p-fileUpload mode="basic" chooseLabel="Select JSON" [auto]="true" accept=".json"
+                                (onSelect)="onUploadB($event)" [customUpload]="true"
+                                styleClass="p-button-outlined p-button-secondary text-sm">
+                            </p-fileUpload>
+                        </div>
+                        } @else {
+                        <div class="flex flex-column gap-3">
+                            <div class="flex justify-content-end gap-2">
+                                <p-button label="Clear" icon="pi pi-times"
+                                    styleClass="p-button-text p-button-sm py-1 p-button-danger"
+                                    (click)="clearB()"></p-button>
                             </div>
-                        </ng-template>
-                    </p-listbox>
-                </div>
+                            <p-listbox [options]="policiesB()" [(ngModel)]="selectedPolicyB" optionLabel="name"
+                                [style]="{'width':'100%', 'max-height': '200px'}" [listStyle]="{'max-height': '200px'}"
+                                [filter]="true" filterPlaceHolder="Search policy..."
+                                styleClass="w-full border-1 surface-border">
+                                <ng-template let-item pTemplate="item">
+                                    <div class="flex align-items-center gap-2 w-full">
+                                        <i class="pi pi-file-o text-500"></i>
+                                        <span class="font-medium text-900">{{ item.name }}</span>
+                                    </div>
+                                </ng-template>
+                            </p-listbox>
+                        </div>
+                        }
+                    </div>
+                </p-card>
             </div>
-            }
-        </p-card>
-
-        <!-- Right Policy -->
-        <p-card styleClass="h-full">
-            <ng-template pTemplate="header">
-                <div class="card-header">
-                    <span>Policy C</span>
-                    @if (rightData) {
-                    <p-button icon="pi pi-times" [text]="true" [rounded]="true" size="small" severity="danger"
-                        (click)="rightData = null"></p-button>
-                    }
-                </div>
-            </ng-template>
-
-            @if (!rightData) {
-            <p-fileUpload mode="basic" chooseLabel="Upload JSON" accept="application/json" [auto]="true" size="small"
-                (onSelect)="onRightPolicyUpload($event)" [customUpload]="true"></p-fileUpload>
-            } @else {
-            <div class="policy-container flex flex-column h-full">
-                <div class="list-container flex-1 overflow-hidden h-full">
-                    <p-listbox [options]="rightData.items" [(ngModel)]="rightData.selectedItem" optionLabel="label"
-                        optionValue="value" [style]="{'width':'100%', 'height': '100%', 'border':'none'}"
-                        [listStyle]="{'height': '100%'}" [filter]="true" filterPlaceHolder="Search...">
-                        <ng-template let-item pTemplate="item">
-                            <div class="flex align-items-center gap-2">
-                                <i [class]="item.icon"></i>
-                                <span>{{item.label}}</span>
-                            </div>
-                        </ng-template>
-                    </p-listbox>
-                </div>
-            </div>
-            }
-        </p-card>
-    </div>
-
-    @if (leftData || centerData || rightData) {
-    <div class="actions mt-4 flex gap-2">
-        <p-button label="Compare" icon="pi pi-table" (click)="comparePolicies()"></p-button>
-        <p-button label="Clear Comparison" icon="pi pi-trash" severity="secondary"
-            (click)="clearComparison()"></p-button>
-    </div>
-    }
-
-    <p-dialog header="Policy Comparison" [(visible)]="showComparisonDialog" [modal]="true" [style]="{width: '90vw'}"
-        [maximizable]="true" [resizable]="true">
-
-        <!-- View Toggle Buttons -->
-        <div class="flex gap-2 mb-3">
-            <p-button label="Table View" [outlined]="activeView !== 'table'" (click)="switchView('table')"
-                icon="pi pi-table" size="small">
-            </p-button>
-            <p-button label="Card View" [outlined]="activeView !== 'cards'" (click)="switchView('cards')"
-                icon="pi pi-list" size="small">
-            </p-button>
-            <p-button label="Tree View" [outlined]="activeView !== 'tree'" (click)="switchView('tree')"
-                icon="pi pi-sitemap" size="small">
-            </p-button>
-
         </div>
 
-        <!-- Table View -->
-        @if (activeView === 'table') {
-        <p-table [value]="comparisonRows" [tableStyle]="{ 'min-width': '50rem' }"
-            styleClass="p-datatable-gridlines p-datatable-sm">
-            <ng-template pTemplate="header">
-                <tr>
-                    <th style="width:20%">Feature</th>
-                    <th style="width:5%">Match</th>
-                    @if (isLeftVisible) { <th [style.width]="policyColumnWidth">Policy A</th> }
-                    @if (isCenterVisible) { <th [style.width]="policyColumnWidth">Policy B</th> }
-                    @if (isRightVisible) { <th [style.width]="policyColumnWidth">Policy C</th> }
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-row>
-                <tr [class.surface-200]="row.policyA === '' && row.policyB === '' && !row.isGroupHeader"
-                    [class.bg-blue-50]="row.isGroupHeader" [class.font-bold]="row.policyA === '' && row.policyB === ''">
-                    <td class="whitespace-nowrap" [class.font-bold]="row.isGroupHeader"
-                        [style.padding-left.px]="row.level * 20">
-                        @if (!row.isGroupHeader && row.level > 0) {
-                        <i class="pi pi-angle-down text-300 mr-2 text-xs"></i>
-                        }
-                        @if (row.isGroupHeader && row.level > 0) {
-                        <i class="pi pi-folder-open text-primary mr-2"></i>
-                        }
-                        {{ row.feature }}
-                    </td>
-                    <td class="text-center">
-                        @if (row.matches && !row.isGroupHeader) {
-                        <i class="pi pi-check-circle text-green-500 font-bold"></i>
-                        }
-                    </td>
-                    @if (isLeftVisible) { <td [class.text-green-500]="row.matches" style="white-space: pre-wrap">{{
-                        row.policyA }}</td> }
-                    @if (isCenterVisible) { <td [class.text-green-500]="row.matches" style="white-space: pre-wrap">{{
-                        row.policyB }}</td> }
-                    @if (isRightVisible) { <td [class.text-green-500]="row.matches" style="white-space: pre-wrap">{{
-                        row.policyC }}</td> }
-                </tr>
-            </ng-template>
-        </p-table>
-        }
+        
+        <div class="flex justify-content-center">
+            <button pButton label="Compare Selected" icon="pi pi-arrows-h"
+                class="p-button-primary p-button-rounded shadow-2 w-15rem" (click)="compare()"
+                [disabled]="!canCompare()"></button>
+        </div>
 
-        <!-- Card View -->
-        @if (activeView === 'cards') {
-        <div class="grid gap-3" [ngClass]="gridColsClass">
-            <!-- Policy A Column -->
-            @if (isLeftVisible) {
-            <div class="policy-column">
-                <h3 class="text-lg font-semibold mb-3 text-center">Policy A</h3>
-                <p-accordion [multiple]="true">
-                    @for (card of comparisonCards; track card.context) {
-                    <app-policy-comparison-card [card]="card" column="a"></app-policy-comparison-card>
-                    }
-                </p-accordion>
-            </div>
-            }
-
-            <!-- Policy B Column -->
-            @if (isCenterVisible) {
-            <div class="policy-column">
-                <h3 class="text-lg font-semibold mb-3 text-center">Policy B</h3>
-                <p-accordion [multiple]="true">
-                    @for (card of comparisonCards; track card.context) {
-                    <app-policy-comparison-card [card]="card" column="b"></app-policy-comparison-card>
-                    }
-                </p-accordion>
-            </div>
-            }
-
-            <!-- Policy C Column -->
-            @if (isRightVisible) {
-            <div class="policy-column">
-                <h3 class="text-lg font-semibold mb-3 text-center">Policy C</h3>
-                <p-accordion [multiple]="true">
-                    @for (card of comparisonCards; track card.context) {
-                    <app-policy-comparison-card [card]="card" column="c"></app-policy-comparison-card>
-                    }
-                </p-accordion>
+        
+        <div class="flex-grow-1 surface-card shadow-1 border-1 surface-border border-round relative overflow-hidden"
+            style="min-height: 500px;">
+            @if (diffTree()) {
+            <app-policy-viz [data]="diffTree()" (nodeSelected)="onNodeSelected($event)"></app-policy-viz>
+            } @else {
+            <div
+                class="absolute top-0 left-0 w-full h-full flex flex-column align-items-center justify-content-center text-400">
+                <i class="pi pi-sitemap text-5xl text-300 mb-3 opacity-50"></i>
+                <h3 class="text-xl font-medium text-600 m-0">No policy selected</h3>
+                <p class="text-500 mt-2">Select policies above and click Compare</p>
             </div>
             }
         </div>
+    </div>
 
-        }
+    
+    <p-dialog [(visible)]="showDetails" [modal]="true" header="Diff Details"
+        [style]="{width: '90vw', maxWidth: '1400px'}" [maximizable]="true" [draggable]="false" [resizable]="false"
+        [dismissableMask]="true">
+        @if (selectedNode(); as node) {
+        <div class="flex flex-column gap-3 pb-4">
+            <div class="surface-ground p-3 border-round border-1 surface-border">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xs font-bold text-500 uppercase">{{ node.type }}</span>
+                    <p-tag [value]="node.status" [severity]="getSeverity(node.status)"></p-tag>
+                </div>
+                <h2 class="text-lg font-bold text-900 m-0 break-all line-height-2">{{ node.name }}</h2>
+                <div class="mt-2 text-xs text-500 font-mono break-all">ID: {{ node.id }}</div>
+            </div>
 
-        <!-- Tree View -->
-        @if (activeView === 'tree') {
-        <div class="card p-4 h-full overflow-auto">
-            <p-tree [value]="treeNodes" class="w-full" [filter]="true" filterMode="lenient">
-                <ng-template let-node pTemplate="default">
-                    <span [ngClass]="node.styleClass">{{ node.label }}</span>
-                </ng-template>
-            </p-tree>
+            
+            @if (node.comparison) {
+            <div class="grid">
+                <div class="col-12 md:col-6">
+                    <div class="surface-card p-3 border-round border-1 surface-border h-full">
+                        <div
+                            class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                            <span class="font-bold text-700">Policy A</span>
+                            <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.a">(Not active)</span>
+                        </div>
+                        <p-accordion [value]="[node.name]" [multiple]="true">
+                            <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="a">
+                            </app-policy-comparison-card>
+                        </p-accordion>
+                    </div>
+                </div>
+                <div class="col-12 md:col-6">
+                    <div class="surface-card p-3 border-round border-1 surface-border h-full">
+                        <div
+                            class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                            <span class="font-bold text-700">Policy B</span>
+                            <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.b">(Not active)</span>
+                        </div>
+                        <p-accordion [value]="[node.name]" [multiple]="true">
+                            <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="b">
+                            </app-policy-comparison-card>
+                        </p-accordion>
+                    </div>
+                </div>
+            </div>
+            }
         </div>
         }
-
-        <ng-template pTemplate="footer">
-            <p-button icon="pi pi-check" (click)="showComparisonDialog = false" label="Close"
-                styleClass="p-button-text"></p-button>
-        </ng-template>
     </p-dialog>
 </div>

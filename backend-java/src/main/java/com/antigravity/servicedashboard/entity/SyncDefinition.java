@@ -22,14 +22,14 @@ public class SyncDefinition {
     private String fetchQuery;
 
     @Column(name = "sync_mode", nullable = false)
-    private String syncMode; // MANUAL, SCHEDULED, INTERVAL
+    private String syncMode; 
 
     @Column(name = "schedule_config")
     private String scheduleConfig;
 
     @Lob
     @Column(name = "field_mapping")
-    private String fieldMapping; // JSON
+    private String fieldMapping; 
 
     @Column(name = "last_run_at")
     private LocalDateTime lastRunAt;
@@ -38,12 +38,12 @@ public class SyncDefinition {
     private String lastStatus;
 
     @Column(name = "sync_strategy")
-    private String syncStrategy; // RELOAD, APPEND
+    private String syncStrategy; 
 
     @Column(name = "primary_key")
     private String primaryKey;
 
-    // Getters and Setters
+    
     public Long getId() {
         return id;
     }

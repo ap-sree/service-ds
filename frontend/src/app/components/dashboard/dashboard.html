@@ -2,7 +2,7 @@
     <p-confirmDialog></p-confirmDialog>
 
     <div class="toolbar d-flex justify-end gap-4 align-center p-10 surface-card border-round mb-3">
-        <!-- Refresh Interval Selector -->
+        
         @if (!isEditing) {
         <div class="d-flex align-center gap-4">
             <i class="pi pi-clock text-600"></i>
@@ -17,7 +17,7 @@
         <div class="d-flex gap-4 align-center spacer">
             <strong class="text-900">Editing Layout</strong>
 
-            <!-- Add Widget -->
+            
             <p-select [options]="allWidgets" optionLabel="title" placeholder="Add Widget"
                 (onChange)="addToDash($event.value)" class="w-15rem">
                 <ng-template let-item pTemplate="item">
@@ -32,7 +32,7 @@
         </div>
         }
 
-        <!-- Actions -->
+        
         @if (!isEditing) {
         <p-button label="Customize Dashboard" icon="pi pi-pencil" (click)="toggleEdit()"></p-button>
         }
@@ -49,7 +49,7 @@
         }
     </div>
 
-    <!-- Cards Section -->
+    
     <div class="widgets-grid mb-16">
         @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
         @if (widget.type === 'CARD') {
@@ -74,7 +74,7 @@
         }
     </div>
 
-    <!-- Main Section -->
+    
     <div class="widgets-grid">
         @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
         @if (widget.type !== 'CARD') {

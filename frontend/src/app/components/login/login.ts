@@ -24,7 +24,7 @@ export class LoginComponent {
     private router = inject(Router);
 
     ngOnInit() {
-        // Clear session when visiting login page to prevent layout wrapper from showing
+        
         this.authService.currentUser.set(null);
         sessionStorage.removeItem('currentUser');
     }

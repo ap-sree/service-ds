@@ -37,7 +37,7 @@ public class WidgetService {
     public List<WidgetDefinition> getWidgetsForUser(String username) {
         List<WidgetDefinition> allWidgets = repository.findAll();
 
-        // 2. Resolve Layout
+        
         List<Long> activeIds = parseWidgetIds(null);
 
         if (username != null) {

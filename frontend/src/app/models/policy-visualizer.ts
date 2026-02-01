@@ -1,6 +1,6 @@
 export interface PolicyResponse {
     authnSelectionTrees: AuthenticationPolicyTree[];
-    items?: any[]; // For contracts.json
+    items?: any[]; 
     authenticationPolicyFragments?: AuthenticationPolicyFragment[];
 }
 
@@ -20,18 +20,18 @@ export interface PolicyRootNode {
 export interface PolicyAction {
     id: string;
     name: string;
-    type: string; // e.g. "AUTHN_SELECTOR", "AUTHN_SOURCE", "DONE", "APC_MAPPING"
-    context?: string; // e.g. "Success", "Fail", "Identity_Sign_On"
+    type: string; 
+    context?: string; 
     description?: string;
     authenticationSelectorRef?: ResourceLink;
     authenticationSource?: AuthenticationSource;
     authenticationPolicyContractRef?: ResourceLink;
     policyFragmentRef?: ResourceLink;
-    fragment?: ResourceLink; // For FRAGMENT type
+    fragment?: ResourceLink; 
     attributeRules?: AttributeRule;
     fragmentMapping?: FragmentMapping;
     attributeMapping?: any;
-    // children moved to PolicyChildNode to match JSON structure
+    
 }
 
 export interface PolicyChildNode {
@@ -40,24 +40,24 @@ export interface PolicyChildNode {
 }
 
 export interface AuthenticationSource {
-    type: string; // e.g. "IDP_ADAPTER"
+    type: string; 
     sourceRef?: ResourceLink;
     id?: string;
 }
 
 export interface ResourceLink {
-    id: string; // e.g. "CheckDisabledLogin"
+    id: string; 
     location?: string;
 }
 
-// Keep Fragment Support for backward compatibility or future use
+
 export interface AuthenticationPolicyFragment {
     id: string;
     name: string;
     description?: string;
     inputs?: any;
     outputs?: any;
-    rootNode: PolicyRootNode; // Updated to match new structure
+    rootNode: PolicyRootNode; 
 }
 
 
@@ -66,7 +66,7 @@ export interface AuthenticationSelector {
     type: string;
     name?: string;
     pluginDescriptorRef?: ResourceLink;
-    configuration?: any; // Define strict config structure if known, or keep generic for now
+    configuration?: any; 
 }
 
 export interface PolicyNodeData {
@@ -103,7 +103,7 @@ export interface AttributeRule {
 export interface AttributeRuleItem {
     attributeSource: { type: string; id?: string };
     attributeName: string;
-    condition: string; // e.g. "EQUALS"
+    condition: string; 
     expectedValue: string;
     result: string;
 }

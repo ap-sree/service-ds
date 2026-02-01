@@ -19,7 +19,7 @@ public class NotificationRule {
     private com.antigravity.servicedashboard.model.NotificationCondition condition;
 
     @Column(name = "action_type", nullable = false)
-    private String actionType; // TOAST, OS_NOTIFY
+    private String actionType; 
 
     @Column(name = "message_template")
     private String messageTemplate;
@@ -34,12 +34,12 @@ public class NotificationRule {
     private String userColumn;
 
     @Column(name = "target_role")
-    private String targetRole; // ADMIN, USER, VIEWER
+    private String targetRole; 
 
     @Column(name = "title_template")
     private String titleTemplate;
 
-    // Getters and Setters
+    
     public Long getId() {
         return id;
     }

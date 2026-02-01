@@ -20,7 +20,7 @@
     (click)="viewMode = viewMode === 'SIMPLE' ? 'JSON' : 'SIMPLE'" [text]="true" size="small"></p-button>
   </div>
 
-  <!-- SIMPLE MODE: SQL -->
+  
   @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'SQL_SERVER') {
     <ng-container [formGroup]="sqlForm">
       <div class="field grid">
@@ -49,7 +49,7 @@
     </ng-container>
   }
 
-  <!-- SIMPLE MODE: REST API -->
+  
   @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'REST_API') {
     <ng-container [formGroup]="restForm">
       <div class="field grid">
@@ -96,7 +96,7 @@
             styleClass="w-full" appendTo="body"></p-select>
           </div>
         </div>
-        <!-- BASIC -->
+        
         @if (restForm.get('authType')?.value === 'BASIC') {
           <div class="field grid">
             <label class="col-12 md:col-3 font-bold">Username</label>
@@ -108,7 +108,7 @@
             class="w-full" /></div>
           </div>
         }
-        <!-- DYNAMIC -->
+        
         @if (restForm.get('authType')?.value === 'DYNAMIC') {
           <div class="field grid">
             <label class="col-12 md:col-3 font-bold">Auth URL</label>

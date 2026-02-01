@@ -17,12 +17,7 @@ public class FileService {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    /**
-     * Reads a local file and parses it as a list of maps.
-     * 
-     * @param filePath Absolute path or relative to running dir.
-     * @param format   json, csv, or auto.
-     */
+    
     public List<Map<String, Object>> readFile(String filePath, String format) throws IOException {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
@@ -45,18 +40,18 @@ public class FileService {
         } else if (AppConstants.FORMAT_CSV.equalsIgnoreCase(determinedFormat)) {
             return parseCsv(file);
         } else {
-            // Fallback to text lines
+            
             return parseText(file);
         }
     }
 
     private List<Map<String, Object>> parseJson(File file) throws IOException {
         try {
-            // Try parsing as array of objects
+            
             return mapper.readValue(file, new TypeReference<List<Map<String, Object>>>() {
             });
         } catch (Exception e) {
-            // Try NDJSON (Line delimited)
+            
             List<Map<String, Object>> result = new ArrayList<>();
             List<String> lines = Files.readAllLines(file.toPath());
             for (String line : lines) {
@@ -81,7 +76,7 @@ public class FileService {
             if (headerLine == null)
                 return result;
 
-            // Simple split, ideally use CSV library
+            
             String[] headers = headerLine.split(",");
             for (int i = 0; i < headers.length; i++) {
                 headers[i] = headers[i].trim().replaceAll("^\"|\"$", "");
@@ -91,7 +86,7 @@ public class FileService {
             while ((line = br.readLine()) != null) {
                 if (line.trim().isEmpty())
                     continue;
-                String[] values = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"); // Split by comma ignoring quotes
+                String[] values = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"); 
                 Map<String, Object> row = new LinkedHashMap<>();
                 for (int i = 0; i < headers.length; i++) {
                     String val = (i < values.length) ? values[i].trim().replaceAll("^\"|\"$", "") : null;

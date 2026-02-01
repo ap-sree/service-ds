@@ -22,8 +22,8 @@ import { DataSource } from '../../../../models/sync';
     SelectModule,
     CheckboxModule
 ],
-    // MessageService provided by parent or globally? DynamicDialog components share root injector usually, 
-    // but safer to use what's available. If this component needs to show toast, it should use MessageService.
+    
+    
     templateUrl: './data-source-dialog.html',
     styles: [`
     .field { margin-bottom: 1rem; }
@@ -42,7 +42,7 @@ export class DataSourceDialogComponent implements OnInit {
     isEditing = false;
     sourceData: DataSource | undefined;
 
-    // Helper Templates
+    
     private SQL_TEMPLATE = `{\n  "server": "localhost",\n  "database": "testdb",\n  "user": "sa",\n  "password": "yourPassword",\n  "options": { "encrypt": true, "trustServerCertificate": true }\n}`;
     private REST_TEMPLATE = `{\n  "baseUrl": "https://api.example.com",\n  "headers": { "Authorization": "Bearer token" }, \n  "dataPropertyPath": "data",\n  "pagination": {\n    "type": "PAGE_PARAM",\n    "key": "page",\n    "limit": 100\n  }\n}`;
     private CMD_TEMPLATE = `{\n  "format": "json" \n}`;
@@ -82,7 +82,7 @@ export class DataSourceDialogComponent implements OnInit {
             config: ['', Validators.required]
         });
 
-        // SQL Form
+        
         this.sqlForm = this.fb.group({
             server: ['localhost', Validators.required],
             database: ['', Validators.required],
@@ -91,16 +91,16 @@ export class DataSourceDialogComponent implements OnInit {
             encrypt: [true]
         });
 
-        // REST Form
+        
         this.restForm = this.fb.group({
             baseUrl: ['https://', Validators.required],
             dataPropertyPath: [''],
             paginationType: ['NONE'],
             paginationKey: ['page'],
-            paginationNextPath: ['next'], // for NEXT_URL
-            headers: ['{}'], // JSON string
+            paginationNextPath: ['next'], 
+            headers: ['{}'], 
 
-            // Auth
+            
             authType: ['NONE'],
             basicUser: [''],
             basicPass: [''],
@@ -108,7 +108,7 @@ export class DataSourceDialogComponent implements OnInit {
             authTokenPath: ['access_token'],
             authClientId: [''],
             authClientSecret: [''],
-            authCredentialPlacement: ['HEADER_BASIC'], // Default per user request
+            authCredentialPlacement: ['HEADER_BASIC'], 
             authGrantType: ['client_credentials'],
             authScope: [''],
             authBody: ['{}']
@@ -122,7 +122,7 @@ export class DataSourceDialogComponent implements OnInit {
             });
             this.parseConfigToForms();
         } else {
-            this.onTypeChange(); // Set defaults
+            this.onTypeChange(); 
         }
     }
 
@@ -146,13 +146,13 @@ export class DataSourceDialogComponent implements OnInit {
 
                 const authBody = json.authRequest?.body || {};
 
-                // Extract known fields from body to simplify UI
+                
                 const clientId = authBody.client_id || '';
                 const clientSecret = authBody.client_secret || '';
                 const grantType = authBody.grant_type || 'client_credentials';
                 const scope = authBody.scope || '';
 
-                // Remove extracted fields from "Additional Params" logic to avoid duplication
+                
                 const otherParams = { ...authBody };
                 delete otherParams.client_id;
                 delete otherParams.client_secret;
@@ -182,7 +182,7 @@ export class DataSourceDialogComponent implements OnInit {
             }
         } catch (e) {
             console.error('Failed to parse config to form', e);
-            this.viewMode = 'JSON'; // Fallback
+            this.viewMode = 'JSON'; 
         }
     }
 
@@ -191,7 +191,7 @@ export class DataSourceDialogComponent implements OnInit {
         let configObj: any = {};
 
         try {
-            // Start with existing JSON to preserve extra fields (headers etc)
+            
             configObj = JSON.parse(this.sourceForm.get('config')?.value || '{}');
         } catch (e) { configObj = {}; }
 
@@ -207,19 +207,19 @@ export class DataSourceDialogComponent implements OnInit {
             configObj.baseUrl = val.baseUrl;
             configObj.dataPropertyPath = val.dataPropertyPath;
 
-            // Pagination
+            
             if (val.paginationType !== 'NONE') {
                 configObj.pagination = { type: val.paginationType, key: val.paginationKey, nextPath: val.paginationNextPath };
             } else { delete configObj.pagination; }
 
-            // Headers
+            
             try {
                 const h = JSON.parse(val.headers || '{}');
                 if (Object.keys(h).length > 0) configObj.headers = h;
                 else delete configObj.headers;
-            } catch (e) { /* ignore */ }
+            } catch (e) {  }
 
-            // Auth
+            
             delete configObj.auth;
             delete configObj.authRequest;
 
@@ -233,7 +233,7 @@ export class DataSourceDialogComponent implements OnInit {
                     tokenPath: val.authTokenPath,
                 };
 
-                // Add standard OAuth fields
+                
                 if (val.authCredentialPlacement === 'HEADER_BASIC') {
                     if (val.authClientId && val.authClientSecret) {
                         const auth = btoa(val.authClientId + ':' + val.authClientSecret);
@@ -241,7 +241,7 @@ export class DataSourceDialogComponent implements OnInit {
                         configObj.authRequest.headers['Authorization'] = 'Basic ' + auth;
                     }
                 } else {
-                    // BODY (Default)
+                    
                     if (val.authClientId) body.client_id = val.authClientId;
                     if (val.authClientSecret) body.client_secret = val.authClientSecret;
                 }
@@ -249,7 +249,7 @@ export class DataSourceDialogComponent implements OnInit {
                 if (val.authGrantType) body.grant_type = val.authGrantType;
                 if (val.authScope) body.scope = val.authScope;
 
-                // Merge extra params
+                
                 try {
                     const extra = JSON.parse(val.authBody || '{}');
                     body = { ...body, ...extra };
@@ -273,7 +273,7 @@ export class DataSourceDialogComponent implements OnInit {
 
             this.sourceForm.patchValue({ config: template });
 
-            // Auto-fill forms from template
+            
             setTimeout(() => this.parseConfigToForms());
         }
     }

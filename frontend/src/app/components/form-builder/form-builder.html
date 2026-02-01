@@ -26,17 +26,17 @@
   </p-toolbar>
 
   <div class="builder-layout flex h-full gap-2">
-    <!-- Left: Palette -->
+    
     <div class="palette-panel card w-3">
       <app-element-palette></app-element-palette>
     </div>
 
-    <!-- Center: Canvas -->
+    
     <div class="canvas-panel card flex-grow-1 overflow-auto surface-ground border-round">
       <app-canvas></app-canvas>
     </div>
 
-    <!-- Right: Properties -->
+    
     @if (selectedElement$ | async) {
       <div class="properties-panel card w-3">
         <app-properties-panel></app-properties-panel>

@@ -35,8 +35,8 @@ public class ShellService {
             ProcessBuilder builder = new ProcessBuilder();
 
             if (isWindows) {
-                // Use EncodedCommand to avoid quoting/escaping issues with special chars like |
-                // $ "
+                
+                
                 String encodedCmd = Base64.getEncoder().encodeToString(command.getBytes(StandardCharsets.UTF_16LE));
                 builder.command("powershell.exe", "-EncodedCommand", encodedCmd);
             } else {
@@ -49,7 +49,7 @@ public class ShellService {
 
             Process process = builder.start();
 
-            // Read Output
+            
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -57,7 +57,7 @@ public class ShellService {
                 }
             }
 
-            // Read Error (Optional: Log it)
+            
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -84,14 +84,14 @@ public class ShellService {
     }
 
     private List<Map<String, Object>> parseOutput(List<String> lines) {
-        // Build full string
+        
         String fullOutput = String.join("\n", lines).trim();
 
         if (fullOutput.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // 1. Try JSON
+        
         if (fullOutput.startsWith("[") || fullOutput.startsWith("{")) {
             try {
                 if (fullOutput.startsWith("[")) {
@@ -108,8 +108,8 @@ public class ShellService {
             }
         }
 
-        // 2. Fallback: Return raw lines as objects
-        // Useful for user to debug: { "output": "line..." }
+        
+        
         List<Map<String, Object>> result = new ArrayList<>();
         for (String line : lines) {
             result.add(Collections.singletonMap("output", line));

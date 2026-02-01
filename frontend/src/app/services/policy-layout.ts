@@ -21,7 +21,7 @@ export class PolicyLayoutService {
         const buildAndLayout = (action: PolicyAction, children: PolicyChildNode[], depth: number, parentId: string | null): string => {
             const myId = flowId + '_node_' + (++idCounter);
 
-            // Recurse first to determine children Y
+            
             let myY = 0;
 
             if (children && children.length > 0) {
@@ -29,7 +29,7 @@ export class PolicyLayoutService {
                 children.forEach(child => {
                     if (child.action) {
                         const cId = buildAndLayout(child.action, child.children || [], depth + 1, myId);
-                        // Find the Y of that child
+                        
                         const childNode = nodes.find(n => n.id === cId);
                         if (childNode && !Number.isNaN(childNode.position.y)) {
                             childYs.push(childNode.position.y);
@@ -47,7 +47,7 @@ export class PolicyLayoutService {
                 yCursor += 150;
             }
 
-            // Validate Coordinates to prevent SVG NaN errors
+            
             let finalX = 50 + (depth * 350);
 
             if (Number.isNaN(finalX)) {
@@ -77,7 +77,7 @@ export class PolicyLayoutService {
                 connections.push({
                     source: parentId,
                     target: myId,
-                    label: action.context // Label on the connector
+                    label: action.context 
                 });
             }
 
@@ -103,11 +103,11 @@ export class PolicyLayoutService {
         switch (action.type) {
             case 'AUTHN_SELECTOR':
                 icon = 'pi-th-large';
-                colorClass = 'selector-node'; // Blue
+                colorClass = 'selector-node'; 
                 label = action.authenticationSelectorRef?.id || 'Selector';
                 subLabel = 'Selector';
 
-                // Look up selector configuration
+                
                 if (selectors && selectors.length > 0 && action.authenticationSelectorRef?.id) {
                     const found = selectors.find(s => s.id === action.authenticationSelectorRef!.id);
                     if (found) selectorConfig = found;
@@ -115,7 +115,7 @@ export class PolicyLayoutService {
                 break;
             case 'AUTHN_SOURCE':
                 icon = 'pi-box';
-                colorClass = 'source-node'; // Green
+                colorClass = 'source-node'; 
                 label = action.authenticationSource?.sourceRef?.id || 'Adapter';
                 subLabel = action.authenticationSource?.type === 'IDP_ADAPTER' ? 'Adapter' : 'Source';
                 break;
@@ -133,16 +133,16 @@ export class PolicyLayoutService {
                 break;
             case 'RESTART':
                 icon = 'pi-undo';
-                colorClass = 'restart-node'; // Orange
+                colorClass = 'restart-node'; 
                 label = 'Restart';
                 break;
             case 'FRAGMENT':
                 icon = 'pi-sitemap';
-                colorClass = 'fragment-node'; // Purple
-                label = action.fragment?.id || 'Fragment'; // Corrected property access based on JSON
+                colorClass = 'fragment-node'; 
+                label = action.fragment?.id || 'Fragment'; 
                 subLabel = 'Fragment';
 
-                // Look up fragment structure
+                
                 if (fragments && fragments.length > 0 && action.fragment?.id) {
                     const found = fragments.find(f => f.id === action.fragment!.id);
                     if (found) fragmentStructure = found;
@@ -151,7 +151,7 @@ export class PolicyLayoutService {
             case 'APC_MAPPING':
             case 'LOCAL_IDENTITY_MAPPING':
                 icon = 'pi-wrench';
-                colorClass = 'mapping-node'; // Indigo
+                colorClass = 'mapping-node'; 
                 label = action.authenticationPolicyContractRef?.id || 'Contract Mapping';
                 subLabel = 'Mapping';
                 break;

@@ -1,8 +1,8 @@
 <div class="layout-wrapper font-family-sans">
-    <!-- Top Bar -->
+    
     <div class="topbar">
         <div class="topbar-left flex align-items-center gap-3">
-            <!-- Mobile Toggle (Visible only on small screens) -->
+            
             <p-button icon="pi pi-bars" styleClass="md:hidden" [text]="true" [rounded]="true"
                 (click)="toggleMobileMenu()"></p-button>
 
@@ -26,13 +26,13 @@
         </div>
     </div>
 
-    <!-- Layout Body -->
+    
     <div class="layout-body">
-        <!-- Sidebar (Desktop: Static, Mobile: Drawer/Overlay) -->
+        
         <div class="sidebar-container" [class.mobile-visible]="mobileMenuVisible">
             <div class="sidebar-content">
 
-                <!-- Navigation Group: Main -->
+                
                 <div class="nav-group">
                     <a pRipple routerLink="/dashboard" routerLinkActive="active-item"
                         [routerLinkActiveOptions]="{exact: true}" class="nav-item">
@@ -43,7 +43,7 @@
 
                 <div class="separator"></div>
 
-                <!-- Navigation Group: Utilities -->
+                
                 <div class="nav-group">
                     <div class="nav-header">Utilities</div>
 
@@ -56,7 +56,7 @@
 
                 <div class="separator"></div>
 
-                <!-- Navigation Group: PingFederate -->
+                
                 <div class="nav-group">
                     <div class="nav-header">PingFederate</div>
 
@@ -68,10 +68,7 @@
                         <i class="pi pi-clone"></i>
                         <span>Policy Comparison</span>
                     </a>
-                    <a pRipple routerLink="/pc-temp" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-arrows-h"></i>
-                        <span>PC Temp (Diff)</span>
-                    </a>
+
 
                 </div>
 
@@ -101,7 +98,7 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        
         <div class="main-content">
             <div class="content-container">
                 <ng-content></ng-content>

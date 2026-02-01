@@ -2,7 +2,7 @@ export interface DataSource {
     id?: number;
     name: string;
     type: 'SQL_SERVER' | 'REST_API' | 'LOCAL_COMMAND' | 'LOCAL_FILE';
-    config: string; // JSON string
+    config: string; 
 }
 
 export interface SyncDefinition {

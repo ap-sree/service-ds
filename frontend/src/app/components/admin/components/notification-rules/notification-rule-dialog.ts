@@ -42,9 +42,9 @@ export class NotificationRuleDialogComponent implements OnInit {
     tableColumns: string[] = [];
     ruleData: NotificationRule | undefined;
 
-    // ... imports remain same ...
+    
 
-    // Helper options
+    
     roles = [
         { label: '-- All Roles --', value: '' },
         { label: 'Admin', value: 'ADMIN' },
@@ -91,7 +91,7 @@ export class NotificationRuleDialogComponent implements OnInit {
             localTableName: ['', Validators.required],
             userColumn: [''],
             targetRole: [''],
-            // condition is separate form group
+            
             actionType: ['TOAST', Validators.required],
             titleTemplate: ['Service Alert', Validators.required],
             messageTemplate: ['Alert: Value is {{value}}', Validators.required],
@@ -99,11 +99,11 @@ export class NotificationRuleDialogComponent implements OnInit {
             scheduleConfig: ['']
         });
 
-        // New Multi-Metric Style Condition
+        
         this.ruleConditionForm = this.fb.group({
             operation: ['COUNT', Validators.required],
             column: ['*', Validators.required],
-            condition: [''], // SQL Filter
+            condition: [''], 
             thresholdOperator: ['>', Validators.required],
             thresholdValue: ['0', Validators.required]
         });
@@ -113,14 +113,14 @@ export class NotificationRuleDialogComponent implements OnInit {
             this.onRuleTableChange();
 
             if (this.ruleData.condition) {
-                // If it's already an object (new model)
+                
                 const cond = this.ruleData.condition;
                 this.ruleConditionForm.patchValue(cond);
             }
         }
     }
 
-    // ... loadTables, onRuleTableChange, save, cancel, showMsg remain same ...
+    
     loadTables() {
         this.sourceService.getSyncDefs().subscribe({
             next: (data) => {
@@ -142,7 +142,7 @@ export class NotificationRuleDialogComponent implements OnInit {
 
         const ruleVal = this.ruleForm.getRawValue();
         const conditionVal = this.ruleConditionForm.getRawValue();
-        // Send condition object directly
+        
         ruleVal.condition = conditionVal;
 
         if (this.isEditing) {

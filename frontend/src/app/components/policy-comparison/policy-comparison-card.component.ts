@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AccordionModule } from 'primeng/accordion';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { ComparisonCard } from './policy-comparison';
+import { ComparisonCard } from './policy-comparison.model';
 
 @Component({
     selector: 'app-policy-comparison-card',
@@ -70,10 +70,10 @@ export class PolicyComparisonCardComponent {
     }
 
     hasDiff(field: 'type' | 'action' | 'mappings'): boolean {
-        // Simple comparison between A and B (primary use case)
+        
         const vals = this.card.details[field];
-        // If we are showing column A or B, show warning if they differ
-        // Ignore C for now as it's less common in this view
+        
+        
         return vals.a !== vals.b;
     }
 

@@ -52,7 +52,7 @@ public class SyncDefinitionController {
 
             List<Map<String, Object>> sample = syncService.previewData(sourceId, fetchQuery);
 
-            // Generate Identity Mapping for UI convenience
+            
             Map<String, String> mapping = new java.util.LinkedHashMap<>();
             if (!sample.isEmpty()) {
                 sample.get(0).keySet().forEach(k -> mapping.put(k, k));
@@ -64,11 +64,11 @@ public class SyncDefinitionController {
         }
     }
 
-    // Manual Sync Trigger
+    
     @PostMapping("/api/sync/{id}")
     public ResponseEntity<Object> triggerSync(@PathVariable Long id) {
         try {
-            // Fetch fresh from DB to be safe
+            
             SyncDefinition sync = syncService.getById(id);
             if (sync == null)
                 throw new IllegalArgumentException("Sync not found");

@@ -14,13 +14,13 @@ public class DataSource {
     private String name;
 
     @Column(nullable = false)
-    private String type; // SQL_SERVER, REST_API, LOCAL_COMMAND
+    private String type; 
 
     @Lob
     @Column(nullable = false)
-    private String config; // JSON
+    private String config; 
 
-    // Getters and Setters
+    
     public Long getId() {
         return id;
     }

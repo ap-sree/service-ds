@@ -38,7 +38,7 @@ public class TableService {
         String type = widget.getType().toLowerCase();
         String userColumn = widget.getUserColumn();
 
-        // Quote table name
+        
         StringBuilder sql = new StringBuilder("SELECT * FROM \"").append(tableName).append("\"");
         List<Object> params = new ArrayList<>();
 
@@ -47,13 +47,13 @@ public class TableService {
             params.add(userId);
         }
 
-        // Global Filter Logic
+        
         if (widget.getQueryConfig() != null) {
             Map<String, Object> config = parseConfig(widget.getQueryConfig());
             String globalFilter = (String) config.get(AppConstants.CONFIG_GLOBAL_FILTER);
 
             if (globalFilter != null && !globalFilter.isBlank()) {
-                // Apply Date Regex
+                
                 globalFilter = AppUtils.applyDateRegex(globalFilter);
 
                 if (sql.toString().contains(" WHERE ")) {
@@ -73,13 +73,13 @@ public class TableService {
         else if (AppConstants.WIDGET_TYPE_GRID.equals(type) || AppConstants.WIDGET_TYPE_STATUS_GRID.equals(type))
 
         {
-            // Apply LIMIT
+            
             sql.append(" LIMIT ?");
             params.add(limit);
             return fetchGridData(sql.toString(), params, widget, limit, type);
         }
 
-        // Default: Table
+        
         sql.append(" LIMIT ?");
         params.add(limit);
 
@@ -102,9 +102,9 @@ public class TableService {
 
     private Map<String, Object> fetchCardData(String baseSql, List<Object> params, WidgetDefinition widget) {
         String countSql = baseSql.replaceFirst("SELECT \\* FROM \"? \\w+ \"?",
-                "SELECT COUNT(*) as count FROM " + getQuotedTableName(widget.getDataSourceTable())); // Simplified
-                                                                                                     // replacement
-        // Better approach: Reconstruct query
+                "SELECT COUNT(*) as count FROM " + getQuotedTableName(widget.getDataSourceTable())); 
+                                                                                                     
+        
         countSql = "SELECT COUNT(*) as count FROM \"" + widget.getDataSourceTable() + "\"";
         if (baseSql.contains(" WHERE ")) {
             countSql += baseSql.substring(baseSql.indexOf(" WHERE "));
@@ -158,7 +158,7 @@ public class TableService {
                 selects.add(op + "(" + target + ") as m" + i);
             }
 
-            // Fix SQL Construction
+            
             String tableName = widget.getDataSourceTable();
             StringBuilder aggSql = new StringBuilder("SELECT ").append(String.join(", ", selects))
                     .append(" FROM \"").append(tableName).append("\"");
@@ -201,12 +201,12 @@ public class TableService {
             for (Map<String, Object> row : rows) {
                 Object labelVal = labelCol != null ? row.get(labelCol) : AppConstants.DEFAULT_UNKNOWN;
                 Object statusVal = statusCol != null ? row.get(statusCol) : AppConstants.DEFAULT_STATUS;
-                String color = AppConstants.DEFAULT_COLOR; // Default
+                String color = AppConstants.DEFAULT_COLOR; 
 
                 if (rules != null && statusVal != null) {
                     for (Map<String, Object> rule : rules) {
                         Object ruleVal = rule.get("value");
-                        // Loose equality check (String vs Number)
+                        
                         if (String.valueOf(ruleVal).equals(String.valueOf(statusVal))) {
                             color = (String) rule.get("color");
                             break;
@@ -230,14 +230,14 @@ public class TableService {
         if (!AppUtils.isValidTableName(tableName)) {
             throw new IllegalArgumentException("Invalid table name");
         }
-        // Use standard JDBC or H2 INFORMATION_SCHEMA instead of PRAGMA
+        
         List<Map<String, Object>> columns = jdbcTemplate.queryForList(
                 "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
                 tableName);
-        // Fallback or double check casing if empty?
-        // H2 stores quoted table names case-sensitively. Since we are fixing the app to
-        // quote,
-        // we should expect it to be passed correctly.
+        
+        
+        
+        
         if (columns.isEmpty()) {
             columns = jdbcTemplate.queryForList(
                     "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
@@ -253,5 +253,5 @@ public class TableService {
         return "\"" + tableName + "\"";
     }
 
-    // applyDateRegex moved to AppUtils
+    
 }

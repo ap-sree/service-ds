@@ -17,7 +17,7 @@ public class NotificationCondition {
 
     private Double thresholdValue;
 
-    // Getters and Setters
+    
     public String getOperation() {
         return operation;
     }

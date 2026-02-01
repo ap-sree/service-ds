@@ -4,17 +4,17 @@ import { DashboardService, WidgetDefinition } from '../../services/dashboard';
 import { AuthService } from '../../auth/auth';
 import { UserService } from '../../services/user';
 
-// PrimeNG Imports
+
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select'; // Check if Select or Dropdown
+import { SelectModule } from 'primeng/select'; 
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CardModule } from 'primeng/card';
-import { InputNumberModule } from 'primeng/inputnumber'; // For interval maybe?
+import { InputNumberModule } from 'primeng/inputnumber'; 
 import { FormsModule } from '@angular/forms';
 
-// Prime Component
+
 import { GenericWidgetComponent } from '../generic-widget/generic-widget';
 
 @Component({
@@ -58,12 +58,12 @@ export class DashboardComponent implements OnInit {
         this.loadData();
     }
 
-    // Load USER'S view (User -> Global -> Empty)
+    
     loadData() {
         this.loading = true;
         this.dashboardService.getWidgets(this.username).subscribe({
             next: (widgets) => {
-                // Custom Sort Order: CARD -> MULTI_METRIC -> STATUS_GRID -> TABLE
+                
                 const typeOrder: { [key: string]: number } = {
                     'CARD': 1,
                     'MULTI_METRIC': 2,
@@ -75,7 +75,7 @@ export class DashboardComponent implements OnInit {
                     const orderA = typeOrder[a.type] || 99;
                     const orderB = typeOrder[b.type] || 99;
                     if (orderA !== orderB) return orderA - orderB;
-                    // Secondary sort by ID (creation time) to be stable
+                    
                     return (a.id || 0) - (b.id || 0);
                 });
 
@@ -88,14 +88,14 @@ export class DashboardComponent implements OnInit {
         });
     }
 
-    // Lazy load FULL inventory for "Add Widget" dropdown
+    
     loadInventory() {
         this.dashboardService.getWidgetCatalog().subscribe(all => {
             this.allWidgets = all;
         });
     }
 
-    // Helper to load Global for editing (Admin)
+    
     loadGlobalForEdit() {
         this.loadData();
     }
@@ -195,7 +195,7 @@ export class DashboardComponent implements OnInit {
         });
     }
 
-    // --- Edit Actions ---
+    
     addToDash(widget: WidgetDefinition) {
         if (!this.displayedWidgets.find(w => w.id === widget.id)) {
             this.displayedWidgets.push(widget);

@@ -1,6 +1,6 @@
 .form-builder-wrapper {
     height: calc(100vh - 100px);
-    /* Adjust for header */
+    
     display: flex;
     flex-direction: column;
 }
@@ -8,7 +8,7 @@
 .builder-layout {
     flex: 1;
     min-height: 0;
-    /* Important for scrolling */
+    
 }
 
 .card {

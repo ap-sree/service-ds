@@ -9,9 +9,11 @@ import { SplitterModule } from 'primeng/splitter';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { BadgeModule } from 'primeng/badge';
+import { DialogModule } from 'primeng/dialog';
 
 import { PolicyVisualizerService } from '../../services/policy-visualizer';
-import { PolicyVisualizerComponent } from './policy-visualizer';
+import { PolicyDiffService, DiffNode } from '../../services/policy-diff';
+import { PolicyVizComponent } from '../../components/policy-viz/policy-viz';
 
 @Component({
     selector: 'app-policy-dashboard',
@@ -27,7 +29,8 @@ import { PolicyVisualizerComponent } from './policy-visualizer';
         ButtonModule,
         InputTextModule,
         BadgeModule,
-        PolicyVisualizerComponent
+        DialogModule,
+        PolicyVizComponent
     ],
     templateUrl: './policy-dashboard.html',
     styles: [`
@@ -48,21 +51,25 @@ export class PolicyDashboardComponent implements OnInit {
     totalItemsCount: number = 0;
     searchText: string = '';
 
-    constructor(public policyService: PolicyVisualizerService) {
+    currentTree: DiffNode | null = null; 
+
+    constructor(
+        public policyService: PolicyVisualizerService,
+        private diffService: PolicyDiffService
+    ) {
         this.policyService.policies$.subscribe((items: any[]) => {
             if (items && items.length > 0) {
                 this.processItems(items);
                 if (!this.selectedPolicy) {
-                    if (this.isGrouped && this.groupedPolicies.length > 0) {
-                        this.selectedPolicy = this.groupedPolicies[0].items[0].value;
-                    } else if (!this.isGrouped && this.groupedPolicies.length > 0) {
-                        this.selectedPolicy = this.groupedPolicies[0].value;
-                    }
+                    
+                    const first = this.isGrouped && this.groupedPolicies.length > 0 ? this.groupedPolicies[0].items[0].value : (this.groupedPolicies.length > 0 ? this.groupedPolicies[0].value : null);
+                    if (first) this.onSelectPolicy(first);
                 }
             } else {
                 this.groupedPolicies = [];
                 this.totalItemsCount = 0;
                 this.selectedPolicy = null;
+                this.currentTree = null;
             }
         });
 
@@ -76,9 +83,8 @@ export class PolicyDashboardComponent implements OnInit {
     }
 
     ngOnInit() {
+        
         this.loadTab('policies');
-        this.policyService.loadSelectorsFromAsset();
-        this.policyService.loadFragmentsFromAsset(false);
     }
 
     filteredPolicies() {
@@ -91,18 +97,7 @@ export class PolicyDashboardComponent implements OnInit {
     loadTab(tab: string) {
         this.currentTab = tab;
         this.selectedPolicy = null;
-
-        switch (tab) {
-            case 'policies':
-                this.policyService.loadPoliciesFromAsset();
-                break;
-            case 'selectors':
-                this.policyService.loadSelectorsFromAsset();
-                break;
-            case 'fragments':
-                this.policyService.loadFragmentsFromAsset(true);
-                break;
-        }
+        
     }
 
     loadPolicies() {
@@ -114,7 +109,101 @@ export class PolicyDashboardComponent implements OnInit {
     }
 
     onSelectPolicy(policy: any) {
+        console.log('PolicyVisualizer: onSelectPolicy', policy);
         this.selectedPolicy = policy;
+        if (policy) {
+            
+            const dataToVisualize = policy.data || policy;
+            console.log('PolicyVisualizer: visualizing data', dataToVisualize);
+            this.currentTree = this.diffService.visualizePolicy(dataToVisualize);
+            console.log('PolicyVisualizer: currentTree generated', this.currentTree);
+        } else {
+            this.currentTree = null;
+        }
+    }
+
+    detailsVisible: boolean = false;
+    selectedNode: DiffNode | null = null;
+    mappingData: any[] = [];
+
+    onNodeSelected(node: DiffNode) {
+        this.selectedNode = node;
+        this.mappingData = [];
+
+        if (!node || !node.details) {
+            this.detailsVisible = !!node;
+            return;
+        }
+
+        
+        const action = node.details.action || node.details.rootNode?.action;
+
+        if (!action) {
+            this.detailsVisible = !!node;
+            return;
+        }
+        let mapping = null;
+
+        
+        if (action.attributeContractFulfillment) {
+            mapping = action.attributeContractFulfillment;
+        }
+        
+        else if (action.fragmentMapping?.attributeContractFulfillment) {
+            mapping = action.fragmentMapping.attributeContractFulfillment;
+        }
+        
+        else if (action.fragment?.attributeMapping?.attributeContractFulfillment) {
+            mapping = action.fragment.attributeMapping.attributeContractFulfillment;
+        }
+        
+        else if (action.fragment?.attributeMapping) {
+            mapping = action.fragment.attributeMapping;
+        }
+        
+        else if (action.attributeMapping?.attributeContractFulfillment) {
+            mapping = action.attributeMapping.attributeContractFulfillment;
+        }
+        
+        else if (action.attributeMapping) {
+            mapping = action.attributeMapping;
+        }
+        
+        else if (action.inputUserIdMapping) {
+            mapping = { "USER_KEY": action.inputUserIdMapping };
+        }
+
+        if (mapping) {
+            this.mappingData = Object.keys(mapping).map(key => {
+                const item = mapping[key];
+                
+                const sourceObj = item?.source;
+                let displayValue = '';
+
+                if (sourceObj) {
+                    if (sourceObj.type === 'TEXT') displayValue = sourceObj.value;
+                    else if (sourceObj.type === 'EXPRESSION') displayValue = '${' + sourceObj.value + '}';
+                    else {
+                        let prefix = sourceObj.type;
+                        if (sourceObj.id) prefix += ` (${sourceObj.id})`;
+
+                        
+                        const val = sourceObj.value || item.value;
+                        displayValue = val ? `${prefix}: ${val}` : prefix;
+                    }
+                } else {
+                    
+                    displayValue = typeof item === 'object' ? JSON.stringify(item) : item;
+                }
+
+                return {
+                    target: key,
+                    source: displayValue
+                };
+            });
+        }
+
+        this.detailsVisible = true;
     }
 
     processItems(items: any[]) {

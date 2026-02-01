@@ -48,15 +48,15 @@ public class RestClientService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 String jsonBody = response.getBody();
 
-                // Flexible parsing: The root might be an Array [...] or Object { data: [...] }
+                
                 if (jsonBody.trim().startsWith("[")) {
                     return objectMapper.readValue(jsonBody, new TypeReference<List<Map<String, Object>>>() {
                     });
                 } else {
-                    // Start as Map, need to extract list? For now just wrap single obect?
-                    // Or expect user to provide JsonPath? Node.js implementation had
-                    // 'dataPropertyPath'.
-                    // For MVP, if object, wrap in list list.
+                    
+                    
+                    
+                    
                     Map<String, Object> singleObj = objectMapper.readValue(jsonBody,
                             new TypeReference<Map<String, Object>>() {
                             });

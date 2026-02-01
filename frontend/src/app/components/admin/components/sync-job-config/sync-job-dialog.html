@@ -46,7 +46,7 @@
         </div>
     </div>
     }
-    <!-- Visual Mapping Table -->
+    
     @if (mappingRows.length > 0 || syncFormGroup.get('fetchQuery')?.value) {
     <div class="field grid">
         <label class="col-12 font-bold mb-2">Field Mapping</label>
@@ -66,7 +66,7 @@
                                 class="w-full text-sm" />
                         </td>
                         <td>
-                            <!-- Editable Dropdown for Source Path -->
+                            
                             <p-select formControlName="source_path" [options]="availablePaths" [editable]="true"
                                 placeholder="Select or type..." appendTo="body" styleClass="w-full text-sm"></p-select>
                         </td>
@@ -89,7 +89,7 @@
     </div>
     }
 
-    <!-- Sync Strategy (Moved after Mapping) -->
+    
     <div class="field grid">
         <label for="strategy" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Strategy</label>
         <div class="col-12 md:col-9">
@@ -102,7 +102,7 @@
     <div class="field grid">
         <label for="pk" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Primary Key</label>
         <div class="col-12 md:col-9">
-            <!-- Dropdown based on Mapped Target Columns -->
+            
             <p-select id="pk" formControlName="primaryKey" [options]="targetColumnOptions" optionLabel="label"
                 optionValue="value" placeholder="Select Primary Key Column" styleClass="w-full"
                 [disabled]="targetColumnOptions.length === 0" appendTo="body"></p-select>
@@ -117,7 +117,7 @@
     </div>
     }
 
-    <!-- Live Preview Table -->
+    
     @if (previewRows.length > 0) {
     <div class="field grid">
         <div class="col-12 flex justify-content-between align-items-center mb-2">

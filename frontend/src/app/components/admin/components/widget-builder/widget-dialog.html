@@ -23,7 +23,7 @@
     </div>
 
 
-    <!-- Global Filter (New) -->
+    
     @if (widgetForm.get('dataSourceTable')?.value) {
     <div class="field grid">
         <label for="global_filter" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Global Filter
@@ -62,7 +62,7 @@
     </div>
     }
 
-    <!-- Column Selector (Only for TABLE) -->
+    
     @if (widgetForm.get('type')?.value === 'TABLE' && tableColumns.length > 0) {
     <div class="field grid">
         <label for="columns" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Display Columns</label>
@@ -73,7 +73,7 @@
     </div>
     }
 
-    <!-- Status Grid Config -->
+    
     @if (widgetForm.get('type')?.value === 'STATUS_GRID') {
     <div>
         <p class="font-bold mb-2">Grid Configuration</p>
@@ -113,12 +113,12 @@
     </div>
     }
 
-    <!-- Multi Metric Config -->
+    
     @if (widgetForm.get('type')?.value === 'MULTI_METRIC') {
     <div>
         <p class="font-bold mb-2">Metrics Configuration (Max 4)</p>
 
-        <!-- Headers -->
+        
         <div class="flex gap-2 mb-2 px-1">
             <div class="w-3 font-bold text-sm">Label</div>
             <div class="w-2 font-bold text-sm">Op</div>

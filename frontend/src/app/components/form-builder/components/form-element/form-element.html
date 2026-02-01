@@ -1,7 +1,7 @@
 <div class="form-element relative p-3 border-1 border-transparent border-round" [class.preview-mode]="isPreview"
   [class.pl-6]="!isPreview" [class.pr-6]="!isPreview">
 
-  <!-- Delete Button (Edit Mode Only) -->
+  
   @if (!isPreview) {
     <div class="element-actions absolute top-0 right-0 p-2 z-2">
       <p-button icon="pi pi-trash" rounded="true" text="true" severity="danger"
@@ -11,7 +11,7 @@
 
   <div class="w-100" [formGroup]="group">
     @switch (element.type) {
-      <!-- Text Inputs -->
+      
       @case ('text') {
         <div class="mb-3">
           <label class="form-label">{{ element.label }}</label>
@@ -41,7 +41,7 @@
                   [formControlName]="element.id">
                 </div>
               }
-              <!-- Textarea -->
+              
               @case ('textarea') {
                 <div class="mb-3">
                   <label class="form-label">{{ element.label }}</label>
@@ -50,7 +50,7 @@
                   </textarea>
                 </div>
               }
-              <!-- Select -->
+              
               @case ('select') {
                 <div class="mb-3">
                   <label class="form-label">{{ element.label }}</label>
@@ -62,7 +62,7 @@
                   </select>
                 </div>
               }
-              <!-- Checkbox -->
+              
               @case ('checkbox') {
                 <div class="mb-3">
                   <div class="form-check">
@@ -73,7 +73,7 @@
                   </div>
                 </div>
               }
-              <!-- Radio -->
+              
               @case ('radio') {
                 <div class="mb-3">
                   <label class="form-label d-block">{{ element.label }}</label>
@@ -88,14 +88,14 @@
                     }
                   </div>
                 }
-                <!-- Date -->
+                
                 @case ('date') {
                   <div class="mb-3">
                     <label class="form-label">{{ element.label }}</label>
                     <input type="date" class="form-control" [required]="element.required" [formControlName]="element.id">
                   </div>
                 }
-                <!-- Buttons -->
+                
                 @case ('button') {
                   <div class="mb-3">
                     <button type="button" class="btn btn-primary w-100">{{ element.label }}</button>

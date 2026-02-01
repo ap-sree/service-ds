@@ -28,7 +28,7 @@ import { InputIconModule } from 'primeng/inputicon';
     IconFieldModule,
     InputIconModule
 ],
-    providers: [DialogService, ConfirmationService], // ConfirmService needed if using confirmDialog here, or use global
+    providers: [DialogService, ConfirmationService], 
     templateUrl: './data-source-config.html',
     styles: [`
     .full-width { width: 100%; }
@@ -56,7 +56,7 @@ export class DataSourceConfigComponent implements OnInit {
         });
     }
 
-    openDialog(config?: DataSource) { // Changed parameter name from source to config, type remains DataSource as DataSourceConfig is not defined
+    openDialog(config?: DataSource) { 
         const ref = this.dialogService.open(DataSourceDialogComponent, {
             header: config ? 'Edit Data Source' : 'Add Data Source',
             width: '70vw',

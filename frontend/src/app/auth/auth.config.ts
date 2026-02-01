@@ -8,7 +8,7 @@ export const authConfig: AuthConfig = {
     responseType: 'code',
     scope: 'openid profile email',
     showDebugInformation: true,
-    requireHttps: false, // Set to true in production
+    requireHttps: false, 
     strictDiscoveryDocumentValidation: false,
     skipIssuerCheck: true,
 };

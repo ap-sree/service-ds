@@ -11,7 +11,7 @@ export class SourceService {
     private http = inject(HttpClient);
     private apiUrl = environment.apiUrl;
 
-    // Data Sources
+    
     getSources(): Observable<DataSource[]> {
         return this.http.get<DataSource[]>(`${this.apiUrl}/data-sources`);
     }
@@ -28,7 +28,7 @@ export class SourceService {
         return this.http.put(`${this.apiUrl}/data-sources/${id}`, source);
     }
 
-    // Sync Definitions
+    
     getSyncDefs(): Observable<SyncDefinition[]> {
         return this.http.get<SyncDefinition[]>(`${this.apiUrl}/sync-defs`);
     }
@@ -53,7 +53,7 @@ export class SourceService {
         return this.http.post(`${this.apiUrl}/preview`, { source_id: sourceId, fetch_query: fetchQuery });
     }
 
-    // Schema
+    
     getTableSchema(tableName: string): Observable<string[]> {
         return this.http.get<string[]>(`${this.apiUrl}/schema/${tableName}`);
     }

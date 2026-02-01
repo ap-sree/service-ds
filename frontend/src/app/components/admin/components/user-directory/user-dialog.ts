@@ -70,7 +70,7 @@ export class UserDialogComponent implements OnInit {
         const formVal = this.userForm.getRawValue();
 
         if (this.isEditing) {
-            // Update User
+            
             const updatePayload: any = { role: formVal.role };
 
             this.userService.updateUser(this.userData!.username, updatePayload).subscribe({
@@ -81,7 +81,7 @@ export class UserDialogComponent implements OnInit {
                 }
             });
         } else {
-            // Create User - Password omitted for SSO future
+            
             this.userService.createUser(formVal).subscribe({
                 next: () => this.ref.close(true),
                 error: (err) => {

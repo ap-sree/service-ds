@@ -31,7 +31,7 @@ export class PropertiesPanelComponent implements OnInit, OnDestroy {
         name: [''],
         placeholder: [''],
         required: [false],
-        options: ['', { updateOn: 'blur' }], // Update options on blur to prevent cursor jumping
+        options: ['', { updateOn: 'blur' }], 
         rows: [4],
         min: [null],
         max: [null]
@@ -51,7 +51,7 @@ export class PropertiesPanelComponent implements OnInit, OnDestroy {
 
                 this.currentElementId = element.id;
 
-                // Sync Store -> Form (Only patch if changed to update cursor/state correctly)
+                
                 this.patchIfChanged('label', element.label);
                 this.patchIfChanged('name', element.name);
                 this.patchIfChanged('placeholder', element.placeholder || '');
@@ -71,7 +71,7 @@ export class PropertiesPanelComponent implements OnInit, OnDestroy {
 
                 const updates: Partial<FormElement> = { ...values };
 
-                // Handle options conversion
+                
                 if (typeof values.options === 'string') {
                     updates.options = values.options.split('\n').filter((opt: string) => opt.trim().length > 0);
                 }

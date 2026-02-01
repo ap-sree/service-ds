@@ -28,7 +28,7 @@ export class GenericWidgetComponent implements OnInit {
   loading = true;
   error = '';
 
-  // Card Metrics
+  
   cardValue: string | number = '-';
   cardColorClass = '';
 
@@ -38,7 +38,7 @@ export class GenericWidgetComponent implements OnInit {
   }
 
   assignCardColor() {
-    // Generate a consistent color based on title length/char codes
+    
     if (this.widgetDef.type === 'CARD') {
       const variants = ['bg-cyan', 'bg-purple', 'bg-orange', 'bg-blue'];
       const index = (this.widgetDef.title.length + (this.widgetDef.id || 0)) % variants.length;
@@ -49,10 +49,10 @@ export class GenericWidgetComponent implements OnInit {
   loadData() {
     this.loading = true;
 
-    // Pass Current User ID to Backend for Server-Side Filtering
+    
     let currentUser = this.authService.currentUser();
 
-    // Fallback: Check localStorage manually if Signal is empty (edge case)
+    
     if (!currentUser) {
       const stored = localStorage.getItem('currentUser');
       if (stored) {
@@ -75,25 +75,25 @@ export class GenericWidgetComponent implements OnInit {
     });
   }
 
-  // Status Grid
+  
   statusGridItems: { label: string, status: string, color: string }[] = [];
   multiMetricItems: { label: string, value: number, operation: string }[] = [];
 
   processSmartData(res: WidgetDataResponse) {
-    // res = { type: 'card'|'table', count?, items?, label? }
+    
     if (!res || !res.type) return;
 
     const lowerType = res.type.toLowerCase();
 
     if (lowerType === 'card') {
-      // Backend already counted it
+      
       this.cardValue = res.count ?? '-';
-      // We could use res.label if we wanted to update title dynamically
+      
     }
     else if (lowerType === 'table') {
       this.data = res.items || [];
       if (this.data.length > 0) {
-        // Check for User-Defined Columns in Query Config
+        
         let config = this.widgetDef.queryConfig;
         if (typeof config === 'string') {
           try {
@@ -104,16 +104,16 @@ export class GenericWidgetComponent implements OnInit {
         }
 
         if (config && Array.isArray(config.columns) && config.columns.length > 0) {
-          // Use configured columns
+          
           this.displayedColumns = config.columns;
         } else {
-          // Auto-detect columns (excluding hidden ones)
+          
           this.displayedColumns = Object.keys(this.data[0]).filter(k => !k.startsWith('_'));
         }
       }
     }
     else if (lowerType === 'grid' || lowerType === 'status_grid') {
-      // Backend now handles color/label mapping
+      
       this.statusGridItems = res.items || [];
     }
     else if (lowerType === 'multi_metric') {

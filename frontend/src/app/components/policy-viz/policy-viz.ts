@@ -32,15 +32,16 @@ interface FlowLink {
 })
 export class PolicyVizComponent implements OnChanges {
     @Input() data: DiffNode | null = null;
+    @Input() mode: 'compare' | 'view' = 'compare';
     @Output() nodeSelected = new EventEmitter<DiffNode>();
 
     @ViewChild('container', { static: true }) containerRef!: ElementRef;
 
-    // Render State
+    
     nodes = signal<FlowNode[]>([]);
     links = signal<FlowLink[]>([]);
 
-    // Viewport State
+    
     transform = signal<{ k: number, x: number, y: number }>({ k: 1, x: 0, y: 0 });
 
     transformStyle = computed(() =>
@@ -57,11 +58,14 @@ export class PolicyVizComponent implements OnChanges {
     constructor() { }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['data'] && this.data) {
-            // Calculate Layout immediately
-            this.calculateLayout(this.data);
-            // Setup zoom after view init effectively (or just re-bind if needed)
-            setTimeout(() => this.setupZoom(), 0);
+        if (changes['data']) {
+            console.log('PolicyViz: data changed', this.data);
+            if (this.data) {
+                
+                this.calculateLayout(this.data);
+                
+                setTimeout(() => this.setupZoom(), 0);
+            }
         }
     }
 
@@ -78,7 +82,7 @@ export class PolicyVizComponent implements OnChanges {
 
         this.selection.call(this.zoomBehavior);
 
-        // Center initial view if new data
+        
         this.centerView();
     }
 
@@ -89,7 +93,7 @@ export class PolicyVizComponent implements OnChanges {
         const width = el.offsetWidth;
         const height = el.offsetHeight;
 
-        // Find bounding box
+        
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         this.nodes().forEach(n => {
             minX = Math.min(minX, n.x - n.width / 2);
@@ -118,32 +122,32 @@ export class PolicyVizComponent implements OnChanges {
     }
 
     private calculateLayout(data: DiffNode) {
-        // 1. D3 Hierarchy
+        
         const root = d3.hierarchy(data);
 
-        // 2. Tree Config
+        
         const nodeW = 200;
         const nodeH = 80;
 
-        // Using simple tree layout, rotating to horizontal
+        
         const treeMap = d3.tree()
-            .nodeSize([nodeH + 40, nodeW + 60]); // [height, width] separation
+            .nodeSize([nodeH + 40, nodeW + 60]); 
 
         const treeData = treeMap(root as any);
 
-        // 3. Map to FlowNodes
+        
         const newNodes: FlowNode[] = [];
 
-        // In D3 tree: x is vertical, y is horizontal (if we think left-to-right)
-        // We want Left-to-Right flow.
-        // D3 default is Top-Down where x=horizontal position, y=depth.
-        // wait, d3.tree() defaults: x along root's breadth, y along depth.
-        // So for L-R: x -> y, y -> x.
+        
+        
+        
+        
+        
 
         treeData.descendants().forEach((d: any) => {
             newNodes.push({
                 id: d.data.id,
-                x: d.y, // Swap for L-R
+                x: d.y, 
                 y: d.x,
                 data: d.data,
                 width: 180,
@@ -151,19 +155,19 @@ export class PolicyVizComponent implements OnChanges {
             });
         });
 
-        // 4. Map to FlowLinks
+        
         const newLinks: FlowLink[] = [];
         const linkGen = d3.linkHorizontal()
-            .x((d: any) => d.y) // Swap for L-R
+            .x((d: any) => d.y) 
             .y((d: any) => d.x);
 
         treeData.links().forEach((l: any, i: number) => {
-            // Extract label from target name if formatted as "Label -> NodeName"
+            
             let label = '';
             if (l.target.data.name && l.target.data.name.includes(' -> ')) {
                 const parts = l.target.data.name.split(' -> ');
                 label = parts[0];
-                // Clean up the node name for display (optional, handled in template)
+                
             }
 
             newLinks.push({
@@ -195,9 +199,9 @@ export class PolicyVizComponent implements OnChanges {
     }
 
     getLabelTransform(link: FlowLink): string {
-        // Very rough approximation of midpoint on Bezier
-        // For horizontal links, midpoint x is avg, y is avg + calc
-        // Better to just take avg for simple visual
+        
+        
+        
         const mx = (link.source.x + link.target.x) / 2;
         const my = (link.source.y + link.target.y) / 2;
         return `translate(${mx}, ${my})`;

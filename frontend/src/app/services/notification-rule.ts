@@ -28,7 +28,7 @@ export class NotificationRuleService {
     }
 
     getPendingNotifications(username: string): Observable<any[]> {
-        // Pass username query param if strict user scoping needed, or handle in backend
+        
         return this.http.get<any[]>(`${this.apiUrl}/notifications?user=${username}`);
     }
 }

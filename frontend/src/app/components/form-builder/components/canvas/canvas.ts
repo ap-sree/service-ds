@@ -44,21 +44,21 @@ export class CanvasComponent implements OnInit, OnDestroy {
     }
 
     rebuildForm(schema: FormSchema): void {
-        // Retain existing values if possible, or just rebuild.
-        // For simplicity in builder, we rebuild. 
-        // Ideally we should patch values back if we want persistence during drag/drop, 
-        // but element.value is the source of truth in the service.
+        
+        
+        
+        
 
         const newGroup: any = {};
         schema.elements.forEach(element => {
             newGroup[element.id] = new FormControl(element.value || '');
         });
 
-        // Because we can't easily replace controls in-place without losing focus/state if done naively,
-        // we'll just create a new form group. 
-        // NOTE: This might cause focus loss on re-render. 
-        // Given this is a builder, dragging rebuilds anyway. 
-        // Editing properties updates the service, which updates schema, which triggers this.
+        
+        
+        
+        
+        
         this.form = this.fb.group(newGroup);
     }
 

@@ -8,7 +8,7 @@
       class="form-elements-container min-h-screen p-4 border-2 border-dashed border-primary-100 border-round bg-white transition-colors"
       [class.preview-mode]="isPreviewMode$ | async" [class.empty]="formSchema.elements.length === 0"
       (click)="onCanvasClick($event)">
-      <!-- Empty state -->
+      
       @if (formSchema.elements.length === 0) {
         <div
           class="empty-state flex flex-column align-items-center justify-content-center text-500 p-8">
@@ -16,7 +16,7 @@
           <p class="text-xl">Drag form elements here</p>
         </div>
       }
-      <!-- Form elements -->
+      
       @for (element of formSchema.elements; track trackByElementId($index, element)) {
         <div cdkDrag [cdkDragData]="element"
           [cdkDragDisabled]="isPreviewMode$ | async"
@@ -25,18 +25,18 @@
           [class.border-blue-500]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
           [class.border-2]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
           (click)="selectElement(element); $event.stopPropagation()">
-          <!-- Drag handle -->
+          
           @if (!(isPreviewMode$ | async)) {
             <div class="drag-handle absolute top-0 left-0 p-2 cursor-move text-500 hover:text-primary z-5"
               cdkDragHandle>
               <i class="pi pi-bars"></i>
             </div>
           }
-          <!-- Element content -->
+          
           <app-form-element [element]="element" [group]="form" [isPreview]="(isPreviewMode$ | async) || false"
             [isSelected]="(selectedElement$ | async)?.id === element.id" (deleteElement)="deleteElement($event)">
           </app-form-element>
-          <!-- Drag placeholder -->
+          
           <div *cdkDragPlaceholder class="drag-placeholder h-4rem surface-200 border-round mb-3"></div>
         </div>
       }

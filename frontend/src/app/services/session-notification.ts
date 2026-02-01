@@ -11,7 +11,7 @@ export interface AppNotification {
     body: string;
     action_type: string;
     timestamp: Date;
-    severity?: string; // info, warn, error
+    severity?: string; 
 }
 
 @Injectable({
@@ -24,17 +24,17 @@ export class SessionNotificationService implements OnDestroy {
     private readonly apiUrl = environment.apiUrl;
     private pollInterval: any;
 
-    // Reactive list of notifications for the session
+    
     notifications = signal<AppNotification[]>([]);
 
-    // Event stream for new notifications (for Toasts/OS alerts)
+    
     notificationReceived$ = new Subject<AppNotification>();
 
     constructor() { }
 
     startPolling() {
         if (this.pollInterval) clearInterval(this.pollInterval);
-        this.checkNotifications(); // Immediate check
+        this.checkNotifications(); 
         this.pollInterval = setInterval(() => this.checkNotifications(), 10000);
     }
 
@@ -66,12 +66,12 @@ export class SessionNotificationService implements OnDestroy {
                     notifs.forEach(n => this.processNotification(n));
                 }
             },
-            error: () => { /* Suppress error */ }
+            error: () => {  }
         });
     }
 
     private processNotification(raw: any) {
-        // Enforce timestamp
+        
         const notif: AppNotification = {
             title: raw.title,
             body: raw.body,
@@ -80,10 +80,10 @@ export class SessionNotificationService implements OnDestroy {
             severity: 'info'
         };
 
-        // Add to history (newest first)
+        
         this.notifications.update(current => [notif, ...current]);
 
-        // Emit event for UI handling
+        
         this.notificationReceived$.next(notif);
     }
 }

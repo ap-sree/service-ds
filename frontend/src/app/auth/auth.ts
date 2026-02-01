@@ -17,7 +17,7 @@ export class AuthService {
     currentUser = signal<User | null>(null);
 
     constructor(private oauthService: OAuthService) {
-        // Restore session if available
+        
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
             this.currentUser.set(JSON.parse(storedUser));
@@ -32,7 +32,7 @@ export class AuthService {
         this.currentUser.set(null);
         sessionStorage.removeItem('currentUser');
         this.oauthService.logOut();
-        // Router navigation might be handled by OAuth or manually if needed
+        
         this.router.navigate(['/login']);
     }
 

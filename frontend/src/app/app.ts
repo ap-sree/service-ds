@@ -37,17 +37,17 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.initialNavigation();
     this.sessionNotifService.startPolling();
 
-    // Sync OAuth state with App State
+    
     if (this.authService.isAuthenticated && !this.authService.currentUser()) {
       const claims: any = this.authService.identityClaims;
-      // Fallback to 'sub' or 'preferred_username' or 'username' depending on IDP
+      
       const username = claims?.username || claims?.preferred_username || claims?.sub;
       if (username) {
         this.authService.syncUser(username).subscribe();
       }
     }
 
-    // Subscribe to events
+    
     this.sessionNotifService.notificationReceived$.subscribe(n => {
       this.triggerAlert(n);
     });

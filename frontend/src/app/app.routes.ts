@@ -23,13 +23,8 @@ export const routes: Routes = [
         loadComponent: () => import('./components/policy-comparison/policy-comparison').then(m => m.PolicyComparisonComponent),
         canActivate: [authGuard]
     },
-    {
-        path: 'pc-temp',
-        loadComponent: () => import('./pages/pc-temp/pc-temp').then(m => m.PcTempComponent),
-        canActivate: [authGuard]
-    },
 
-    // Admin Module (Nested & Lazy Loaded)
+    
     {
         path: 'admin',
         component: AdminComponent,
@@ -58,6 +53,6 @@ export const routes: Routes = [
         ]
     },
 
-    // Redirect root to dashboard
+    
     { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
 ];

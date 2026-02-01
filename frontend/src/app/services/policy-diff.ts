@@ -4,12 +4,12 @@ import { Injectable } from '@angular/core';
 export type DiffStatus = 'same' | 'added' | 'removed' | 'modified';
 
 export interface DiffNode {
-    id: string; // unique ID for D3
+    id: string; 
     name: string;
     type: string;
     status: DiffStatus;
-    details: any; // The original data object (or combined)
-    comparison?: { a: any, b: any }; // Full A vs B Objects for side-by-side view
+    details: any; 
+    comparison?: { a: any, b: any }; 
     diffs?: { key: string; oldVal: any; newVal: any }[];
     children: DiffNode[];
     _collapsed?: boolean;
@@ -34,7 +34,7 @@ export class PolicyDiffService {
             const data = typeof jsonInput === 'string' ? JSON.parse(jsonInput) : jsonInput;
             if (!data) return [];
 
-            // Case 1: "items" array (Common in IDP/Contract/Fragment bundles)
+            
             if (Array.isArray(data.items)) {
                 return data.items.map((t: any) => ({
                     id: t.id || t._id || 'unknown',
@@ -43,7 +43,7 @@ export class PolicyDiffService {
                 })).sort((a: any, b: any) => a.name.localeCompare(b.name));
             }
 
-            // Case 2: "authnSelectionTrees" array (Policy Bundles)
+            
             if (Array.isArray(data.authnSelectionTrees)) {
                 return data.authnSelectionTrees.map((t: any) => ({
                     id: t._id || t.id || 'unknown',
@@ -52,11 +52,11 @@ export class PolicyDiffService {
                 })).sort((a: any, b: any) => a.name.localeCompare(b.name));
             }
 
-            // Case 3: Single Object (Policy, Fragment, etc.)
-            // Heuristics:
-            // - Policy: rootNode, entryNode
-            // - Contract: coreAttributes, extendedAttributes
-            // - Selector: configuration
+            
+            
+            
+            
+            
             const isSingle = data.rootNode || data.entryNode || data.coreAttributes || data.configuration || data.id;
 
             if (isSingle) {
@@ -79,12 +79,12 @@ export class PolicyDiffService {
         const objA = typeof jsonA === 'string' ? JSON.parse(jsonA) : jsonA;
         const objB = typeof jsonB === 'string' ? JSON.parse(jsonB) : jsonB;
 
-        // Detect Type based on A (assuming A and B are same type usually)
+        
         if (this.isContract(objA)) return this.compareContracts(objA, objB);
         if (this.isFragment(objA)) return this.compareFragments(objA, objB);
         if (this.isSelector(objA)) return this.compareSelectors(objA, objB);
 
-        // Default to Tree/Bundle Comparison
+        
         const isBundleA = Array.isArray(objA?.authnSelectionTrees);
         const isBundleB = Array.isArray(objB?.authnSelectionTrees);
 
@@ -95,23 +95,28 @@ export class PolicyDiffService {
         }
     }
 
-    // --- Type Guards ---
+    visualizePolicy(json: any): DiffNode {
+        
+        return this.comparePolicies(json, json);
+    }
+
+    
     private isContract(obj: any): boolean {
         return !!(obj?.coreAttributes || obj?.extendedAttributes);
     }
 
     private isFragment(obj: any): boolean {
-        // Fragments look like policies but often have separate inputs/outputs definitions
+        
         return !!(obj?.rootNode && (obj?.inputs || obj?.outputs));
     }
 
     private isSelector(obj: any): boolean {
-        // Selectors have configuration and resultAttributeName, but NOT rootNode
+        
         return !!(obj?.configuration) && !obj?.rootNode;
     }
 
 
-    // --- Comparison Implementations ---
+    
 
     private compareContracts(objA: any, objB: any): DiffNode {
         const root: DiffNode = {
@@ -178,7 +183,7 @@ export class PolicyDiffService {
         const diffs = this.getShallowDiffs(objA?.configuration, objB?.configuration);
         const status: DiffStatus = diffs.length > 0 ? 'modified' : 'same';
 
-        // Re-map diff keys to be cleaner
+        
         const cleanDiffs = diffs.map(d => ({ ...d, key: `config.${d.key}` }));
 
         return {
@@ -194,11 +199,11 @@ export class PolicyDiffService {
     }
 
     private compareFragments(objA: any, objB: any): DiffNode {
-        // Compare the Main Flow exactly like a Policy
+        
         const root = this.compareSingleTrees(objA, objB);
         root.type = 'FRAGMENT';
 
-        // Add Inputs/Outputs Check
+        
         const inputsDiff = this.compareIO('Inputs', objA?.inputs, objB?.inputs);
         const outputsDiff = this.compareIO('Outputs', objA?.outputs, objB?.outputs);
 
@@ -216,9 +221,9 @@ export class PolicyDiffService {
     }
 
     private compareIO(label: string, objA: any, objB: any): DiffNode | null {
-        // Inputs/Outputs can be simple ID references or objects
-        // In the sample, they seem to be objects with IDs?
-        // Let's assume shallow diff of whatever properties exist
+        
+        
+        
         const diffs = this.getShallowDiffs(objA, objB);
         if (diffs.length === 0) return null;
 
@@ -248,7 +253,7 @@ export class PolicyDiffService {
         const treesA = jsonA?.authnSelectionTrees || [];
         const treesB = jsonB?.authnSelectionTrees || [];
 
-        // Explicitly type the Maps to ensure values are 'any' and not 'unknown'
+        
         const mapA = new Map<string, any>(treesA.map((t: any) => [t._id || t.id, t]));
         const mapB = new Map<string, any>(treesB.map((t: any) => [t._id || t.id, t]));
 
@@ -276,7 +281,7 @@ export class PolicyDiffService {
                     children: []
                 };
 
-                // Determine entry point (rootNode or entryNode)
+                
                 const rootA = policyA.rootNode || policyA.entryNode;
                 const rootB = policyB.rootNode || policyB.entryNode;
 
@@ -295,14 +300,14 @@ export class PolicyDiffService {
     }
 
     private compareSingleTrees(objA: any, objB: any): DiffNode {
-        // If objects are Policy/Fragment Containers (have rootNode/entryNode)
-        // We want to preserve the Container as the top node, and RootNode as child
+        
+        
         if (objA?.rootNode || objB?.rootNode || objA?.entryNode || objB?.entryNode) {
             const name = objB?.name || objA?.name || 'Policy';
             const root: DiffNode = {
                 id: `node-${this.nodeIdCounter++}`,
                 name: name,
-                type: 'ROOT', // Will be overridden by caller (e.g. FRAGMENT)
+                type: 'ROOT', 
                 status: 'same',
                 details: objB || objA,
                 children: []
@@ -320,8 +325,8 @@ export class PolicyDiffService {
             return root;
         }
 
-        // Existing logic for raw nodes (no rootNode wrapper) or fallback
-        // Special case: if inputs are null/empty
+        
+        
         if (!objA && !objB) {
             return {
                 id: `node-${this.nodeIdCounter++}`,
@@ -335,7 +340,7 @@ export class PolicyDiffService {
 
         const diff = this.compareRecursive(objA, objB);
 
-        // If the top level objects had names, label the root (only if we didn't use container logic)
+        
         if (objA?.name || objB?.name) {
             diff.name = objB?.name || objA?.name || diff.name;
         }
@@ -352,13 +357,13 @@ export class PolicyDiffService {
         if (!nodeA && nodeB) return this.mapNode(nodeB, 'added');
         if (nodeA && !nodeB) return this.mapNode(nodeA, 'removed');
 
-        // Compare Node Properties (ignoring structure keys)
-        // Structure keys: children, next, nodes, transitions
+        
+        
         const structureKeys = ['children', 'next', 'nodes', 'transitions', 'outcomes'];
         const diffs = this.getShallowDiffs(nodeA, nodeB, structureKeys);
 
-        // Also compare 'action' or 'nodeType' specifically if they exist as nested objects
-        // Assuming flat-ish node structure common in AM trees, or nested 'action' objects
+        
+        
         if (nodeA.action && nodeB.action) {
             const actionDiffs = this.getShallowDiffs(nodeA.action, nodeB.action);
             if (actionDiffs.length) {
@@ -373,15 +378,15 @@ export class PolicyDiffService {
             name: this.getNodeName(nodeB),
             type: this.getNodeType(nodeB),
             status: status,
-            details: nodeB || nodeA, // Fallback to A if B missing
+            details: nodeB || nodeA, 
             comparison: { a: nodeA, b: nodeB },
             diffs: diffs,
             children: []
         };
 
-        // Normalize children access
-        // Normalize children access
-        // AM Trees usually have 'children' or 'transitions' (outcomes)
+        
+        
+        
         const getChildren = (n: any) => {
             if (!n) return [];
             if (Array.isArray(n.children)) {
@@ -391,7 +396,7 @@ export class PolicyDiffService {
                 }));
             }
 
-            // Handle Map-like transitions { "true": { ... }, "false": { ... } }
+            
             if (n.transitions && typeof n.transitions === 'object') {
                 return Object.keys(n.transitions).map(k => ({
                     ...n.transitions[k],
@@ -399,7 +404,7 @@ export class PolicyDiffService {
                 }));
             }
 
-            // Handle array-like outcomes/nodes
+            
             if (Array.isArray(n.nodes)) {
                 return n.nodes.map((c: any) => ({
                     ...c,
@@ -413,7 +418,7 @@ export class PolicyDiffService {
         const childrenA = getChildren(nodeA);
         const childrenB = getChildren(nodeB);
 
-        // Try to align by _outcomeName if present
+        
         const isOutcomeBased = childrenA.some((c: any) => c._outcomeName) || childrenB.some((c: any) => c._outcomeName);
 
         if (isOutcomeBased) {
@@ -424,18 +429,18 @@ export class PolicyDiffService {
             for (const out of outcomes) {
                 const cA = mapChildA.get(out);
                 const cB = mapChildB.get(out);
-                // Pass pure null if undefined
+                
                 const childDiff = this.compareRecursive(cA || null, cB || null);
-                // Append outcome name to label if useful
-                // Important: We encode the outcome in the name so the Viz can extract it for the edge label
+                
+                
                 childDiff.name = `${out} -> ${childDiff.name}`;
                 diffNode.children.push(childDiff);
                 if (childDiff.status !== 'same' && status === 'same') {
-                    // status = 'modified'; // Optional: Propagate modified status up? 
+                    
                 }
             }
         } else {
-            // Index based alignment
+            
             const maxLen = Math.max(childrenA.length, childrenB.length);
             for (let i = 0; i < maxLen; i++) {
                 const childDiff = this.compareRecursive(childrenA[i] || null, childrenB[i] || null);
@@ -461,12 +466,12 @@ export class PolicyDiffService {
             children: []
         };
 
-        // If it has a rootNode (is a Policy object)
+        
         if (data.rootNode) {
             node.children.push(this.mapNode(data.rootNode, status));
         }
         else {
-            // Check children - normalize
+            
             let children: any[] = [];
             if (Array.isArray(data.children)) {
                 children = data.children.map((c: any) => ({
@@ -487,8 +492,8 @@ export class PolicyDiffService {
             children.forEach(c => {
                 const cNode = this.mapNode(c, status);
                 if (c._outcomeName && cNode.name) {
-                    // Check if name is generic, if so maybe replace? 
-                    // But Standard arrow format:
+                    
+                    
                     cNode.name = `${c._outcomeName} -> ${cNode.name}`;
                 }
                 node.children.push(cNode);
@@ -502,20 +507,25 @@ export class PolicyDiffService {
         if (!data) return 'None';
         if (data.displayName) return data.displayName;
         if (data.name) return data.name;
-        if (data._outcomeName) return data._outcomeName; // Fallback if it's just a connector
 
+        
         if (data.action) {
-            // detailed naming for specific action types
+            
             if (data.action.fragment?.id) return data.action.fragment.id;
             if (data.action.authenticationSelectorRef?.id) return data.action.authenticationSelectorRef.id;
             if (data.action.authenticationPolicyContractRef?.id) return data.action.authenticationPolicyContractRef.id;
             if (data.action.authenticationSource?.sourceRef?.id) return data.action.authenticationSource.sourceRef.id;
 
-            if (data.action.type) return data.action.type;
+            
+            
+            
         }
 
-        if (data.nodeType) return data.nodeType;
-        return 'Node';
+        if (data._outcomeName) return data._outcomeName; 
+
+        if (data.action && data.action.type) return data.action.type;
+
+        return 'Unknown';
     }
 
     private getNodeType(data: any): string {
@@ -534,8 +544,8 @@ export class PolicyDiffService {
             const valA = objA[key];
             const valB = objB[key];
 
-            // Simple equality check
-            // For arrays/objects, we do a quick JSON stringify comparison to avoid false positives on references
+            
+            
             if (JSON.stringify(valA) !== JSON.stringify(valB)) {
                 diffs.push({
                     key,

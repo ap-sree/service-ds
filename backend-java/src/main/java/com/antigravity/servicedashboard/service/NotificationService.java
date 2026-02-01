@@ -36,10 +36,10 @@ public class NotificationService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    // Run every minute (Scheduled Rules)
+    
     @Scheduled(fixedDelay = 60000)
     public void checkRules() {
-        // Implementation for CRON or other scheduled types to be added
+        
     }
 
     public void triggerEventRules(String tableName) {
@@ -64,7 +64,7 @@ public class NotificationService {
             String thresholdOp = condition.getThresholdOperator() != null ? condition.getThresholdOperator() : ">";
             double thresholdVal = condition.getThresholdValue() != null ? condition.getThresholdValue() : 0.0;
 
-            // Safety check for SQL Injection on Column Name
+            
             if (!column.matches("^[a-zA-Z0-9_*]+$"))
                 column = "*";
             if (!sqlFilter.isEmpty() && !sqlFilter.toUpperCase().trim().startsWith("WHERE")) {
@@ -97,7 +97,7 @@ public class NotificationService {
             }
         } else {
             query = String.format("SELECT %s(%s) FROM %s %s", operation, column, table, sqlFilter);
-            Double result = jdbcTemplate.queryForObject(query, Double.class); // NOSONAR: simplified query
+            Double result = jdbcTemplate.queryForObject(query, Double.class); 
 
             if (result != null && checkThreshold(result, thresholdOp, thresholdVal)) {
                 queueNotification(rule, result, null);
@@ -153,7 +153,7 @@ public class NotificationService {
         List<Notification> userNotifications = new ArrayList<>();
         List<Notification> remaining = new ArrayList<>();
 
-        // Resolve User Role
+        
         String userRole = null;
         if (username != null && !username.isEmpty()) {
             var userOpt = userRepo.findById(username);

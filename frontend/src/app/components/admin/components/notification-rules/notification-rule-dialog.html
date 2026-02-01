@@ -28,13 +28,13 @@
         </div>
     </div>
 
-    <!-- Condition Builder -->
+    
     <div class="field grid">
         <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Condition</label>
         <div class="col-12 md:col-9">
             <div class="surface-ground p-3 border-round border-1 surface-border" [formGroup]="ruleConditionForm">
 
-                <!-- 1. Operation & Column -->
+                
                 <div class="flex gap-2 mb-2">
                     <div class="field flex-1 mb-0">
                         <label class="text-sm">Operation</label>
@@ -48,14 +48,14 @@
                     </div>
                 </div>
 
-                <!-- 2. SQL Filter -->
+                
                 <div class="field mb-2">
                     <label class="text-sm">Filter (SQL WHERE)</label>
                     <input type="text" pInputText formControlName="condition" placeholder="e.g. status='FAILED'"
                         class="w-full" />
                 </div>
 
-                <!-- 3. Threshold -->
+                
                 <div class="flex gap-2 align-items-end">
                     <span class="mb-2 font-bold">IF Result</span>
                     <div class="field flex-1 mb-0">

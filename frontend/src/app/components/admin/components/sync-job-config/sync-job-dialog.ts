@@ -52,8 +52,8 @@ export class SyncJobDialogComponent implements OnInit {
         { label: 'Append (Insert New & Update Existing)', value: 'APPEND' }
     ];
 
-    // Visual Mapping State
-    availablePaths: string[] = []; // Discovered from simple response
+    
+    availablePaths: string[] = []; 
     sampleData: any[] = [];
     previewRows: any[] = [];
 
@@ -74,10 +74,10 @@ export class SyncJobDialogComponent implements OnInit {
             scheduleConfig: [''],
             syncStrategy: ['RELOAD', Validators.required],
             primaryKey: [''],
-            mappingRows: this.fb.array([]) // Visual Mapping
+            mappingRows: this.fb.array([]) 
         });
 
-        // Dynamic Validator for Primary Key based on Strategy
+        
         this.syncFormGroup.get('syncStrategy')?.valueChanges.subscribe(val => {
             const pkControl = this.syncFormGroup.get('primaryKey');
             if (val === 'APPEND') {
@@ -88,7 +88,7 @@ export class SyncJobDialogComponent implements OnInit {
             pkControl?.updateValueAndValidity();
         });
 
-        // Auto-update preview when mapping changes
+        
         this.syncFormGroup.get('mappingRows')?.valueChanges.subscribe(() => {
             this.updatePreview();
         });
@@ -104,12 +104,12 @@ export class SyncJobDialogComponent implements OnInit {
                 primaryKey: (this.syncData as any).primaryKey
             });
 
-            // Trigger validator check
+            
             const strategy = (this.syncData as any).syncStrategy || 'RELOAD';
             if (strategy === 'APPEND') this.syncFormGroup.get('primaryKey')?.setValidators(Validators.required);
             this.syncFormGroup.get('primaryKey')?.updateValueAndValidity();
 
-            // Load existing mapping into FormArray
+            
             if (this.syncData.fieldMapping) {
                 try {
                     const mapConfig = JSON.parse(this.syncData.fieldMapping);
@@ -121,8 +121,8 @@ export class SyncJobDialogComponent implements OnInit {
                 }
             }
         } else {
-            // Add one empty row by default
-            // this.addMappingRow();
+            
+            
         }
     }
 
@@ -145,10 +145,10 @@ export class SyncJobDialogComponent implements OnInit {
     }
 
     get targetColumnOptions() {
-        // extract target_col values from form array
+        
         return this.mappingRows.controls
             .map(c => c.get('target_col')?.value)
-            .filter(v => !!v) // remove empty
+            .filter(v => !!v) 
             .map(v => ({ label: v, value: v }));
     }
 
@@ -188,25 +188,25 @@ export class SyncJobDialogComponent implements OnInit {
 
         this.sourceService.previewData(sourceId, query).subscribe({
             next: (res) => {
-                // Raw response wrapper? usually res.sample is the data array
-                // The backend previewData returns { sample: [], mapping: {} } 
-                // But wait, our API service returns raw array usually. 
-                // Let's assume the previous code was right about structure:  { sample: any[], mapping: any }
+                
+                
+                
+                
 
                 this.sampleData = res.sample || [];
 
-                // Discover Paths from first item
+                
                 if (this.sampleData.length > 0) {
                     this.availablePaths = this.flattenObject(this.sampleData[0]);
                 }
 
-                // If no mapping exists yet, auto-populate from discovery
+                
                 if (this.mappingRows.length === 0) {
-                    // Start with simple top-level keys
-                    // Or use the suggested 'mapping' from backend if available, or just top-level keys
-                    const initialKeys = Object.keys(this.sampleData[0]).slice(0, 5); // Limit to first 5 to avoid spam
+                    
+                    
+                    const initialKeys = Object.keys(this.sampleData[0]).slice(0, 5); 
                     initialKeys.forEach(k => {
-                        // Check if it's an object, if so, ignore top level? No, let user decide.
+                        
                         this.addMappingRow(k, k);
                     });
                 }
@@ -221,7 +221,7 @@ export class SyncJobDialogComponent implements OnInit {
     updatePreview() {
         if (!this.sampleData || this.sampleData.length === 0) return;
 
-        // Apply current mapping to sample data
+        
         const currentMapping: any = {};
         this.mappingRows.controls.forEach(control => {
             const val = control.value;
@@ -250,7 +250,7 @@ export class SyncJobDialogComponent implements OnInit {
         });
     }
 
-    // --- Helpers ---
+    
 
     flattenObject(obj: any, prefix = ''): string[] {
         let paths: string[] = [];
@@ -258,12 +258,12 @@ export class SyncJobDialogComponent implements OnInit {
             const val = obj[key];
             const fullPath = prefix ? `${prefix}.${key}` : key;
 
-            paths.push(fullPath); // Add the path itself
+            paths.push(fullPath); 
 
             if (val && typeof val === 'object' && !Array.isArray(val)) {
                 paths = paths.concat(this.flattenObject(val, fullPath));
             } else if (Array.isArray(val) && val.length > 0) {
-                // Inspect first item if array of objects
+                
                 const firstItem = val[0];
                 if (typeof firstItem === 'object') {
                     paths = paths.concat(this.flattenObject(firstItem, `${fullPath}[0]`));
@@ -275,7 +275,7 @@ export class SyncJobDialogComponent implements OnInit {
 
     resolvePath(obj: any, path: string) {
         if (!path || !obj) return null;
-        const cleanPath = path.replace(/\[(\d+)\]/g, '.$1'); // items[0] -> items.0
+        const cleanPath = path.replace(/\[(\d+)\]/g, '.$1'); 
         return cleanPath.split('.').reduce((acc, part) => acc && acc[part] !== undefined ? acc[part] : null, obj);
     }
 
@@ -284,31 +284,31 @@ export class SyncJobDialogComponent implements OnInit {
         const formVal = this.syncFormGroup.getRawValue();
         this.loading = true;
 
-        // Check for duplicate table name
+        
         const existingTables = this.config.data?.existingTables || [];
         const currentTable = formVal.targetTableName;
 
-        // If creating, check if exists. If editing, check if exists and is not self (though target_table_name usually shouldn't change, if it does, it must be unique)
-        // Actually, if editing, we might want to prevent renaming to an existing one.
-        // But for Creation:
+        
+        
+        
         if (!this.isEditing && existingTables.includes(currentTable)) {
             this.showMsg('error', `Table "${currentTable}" already exists.`);
             this.loading = false;
             return;
         }
 
-        // Convert rows back to JSON
+        
         const mappingJson: any = {};
         formVal.mappingRows.forEach((row: any) => {
             mappingJson[row.target_col] = row.source_path;
         });
 
-        // Construct payload
+        
         const payload = {
             ...formVal,
             fieldMapping: JSON.stringify(mappingJson)
         };
-        // Remove mappingRows from payload to be safe (though backend ignores extras usually)
+        
         delete (payload as any).mappingRows;
 
 
