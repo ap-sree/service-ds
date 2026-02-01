@@ -9,6 +9,7 @@ export interface DiffNode {
     type: string;
     status: DiffStatus;
     details: any; // The original data object (or combined)
+    comparison?: { a: any, b: any }; // Full A vs B Objects for side-by-side view
     diffs?: { key: string; oldVal: any; newVal: any }[];
     children: DiffNode[];
     _collapsed?: boolean;
@@ -119,6 +120,7 @@ export class PolicyDiffService {
             type: 'CONTRACT',
             status: 'same',
             details: objB || objA,
+            comparison: { a: objA, b: objB },
             children: []
         };
 
@@ -185,6 +187,7 @@ export class PolicyDiffService {
             type: 'SELECTOR',
             status: status,
             details: objB,
+            comparison: { a: objA, b: objB },
             diffs: cleanDiffs,
             children: []
         };
@@ -225,6 +228,7 @@ export class PolicyDiffService {
             type: 'IO',
             status: 'modified',
             details: objB,
+            comparison: { a: objA, b: objB },
             diffs: diffs,
             children: []
         };
@@ -291,40 +295,52 @@ export class PolicyDiffService {
     }
 
     private compareSingleTrees(objA: any, objB: any): DiffNode {
-        // Create a wrapper root
-        const root: DiffNode = {
-            id: `node-${this.nodeIdCounter++}`,
-            name: 'Comparison Root',
-            type: 'ROOT',
-            status: 'same',
-            details: {},
-            children: []
-        };
+        // If objects are Policy/Fragment Containers (have rootNode/entryNode)
+        // We want to preserve the Container as the top node, and RootNode as child
+        if (objA?.rootNode || objB?.rootNode || objA?.entryNode || objB?.entryNode) {
+            const name = objB?.name || objA?.name || 'Policy';
+            const root: DiffNode = {
+                id: `node-${this.nodeIdCounter++}`,
+                name: name,
+                type: 'ROOT', // Will be overridden by caller (e.g. FRAGMENT)
+                status: 'same',
+                details: objB || objA,
+                children: []
+            };
 
-        // Usually single tree JSONs might be the policy object itself or the root node
-        // We assume it's the root node structure if it has 'children' or 'next'
-        // If it looks like a policy container (has rootNode), drill down.
+            const rootNodeA = objA?.rootNode || objA?.entryNode;
+            const rootNodeB = objB?.rootNode || objB?.entryNode;
 
-        let rootNodeA = objA?.rootNode || objA?.entryNode || objA;
-        let rootNodeB = objB?.rootNode || objB?.entryNode || objB;
+            if (rootNodeA || rootNodeB) {
+                const childDiff = this.compareRecursive(rootNodeA, rootNodeB);
+                root.children.push(childDiff);
+                if (this.hasChanges(childDiff)) root.status = 'modified';
+            }
 
+            return root;
+        }
+
+        // Existing logic for raw nodes (no rootNode wrapper) or fallback
         // Special case: if inputs are null/empty
-        if (!rootNodeA && !rootNodeB) return root;
+        if (!objA && !objB) {
+            return {
+                id: `node-${this.nodeIdCounter++}`,
+                name: 'Empty',
+                type: 'ROOT',
+                status: 'same',
+                details: {},
+                children: []
+            };
+        }
 
-        const diff = this.compareRecursive(rootNodeA, rootNodeB);
+        const diff = this.compareRecursive(objA, objB);
 
-        // If the top level objects had names, label the root
+        // If the top level objects had names, label the root (only if we didn't use container logic)
         if (objA?.name || objB?.name) {
             diff.name = objB?.name || objA?.name || diff.name;
         }
 
-        root.children.push(diff);
-
-        if (this.hasChanges(diff)) {
-            root.status = 'modified';
-        }
-
-        return root;
+        return diff;
     }
 
     private hasChanges(node: DiffNode): boolean {
@@ -357,16 +373,23 @@ export class PolicyDiffService {
             name: this.getNodeName(nodeB),
             type: this.getNodeType(nodeB),
             status: status,
-            details: nodeB,
+            details: nodeB || nodeA, // Fallback to A if B missing
+            comparison: { a: nodeA, b: nodeB },
             diffs: diffs,
             children: []
         };
 
         // Normalize children access
+        // Normalize children access
         // AM Trees usually have 'children' or 'transitions' (outcomes)
         const getChildren = (n: any) => {
             if (!n) return [];
-            if (Array.isArray(n.children)) return n.children;
+            if (Array.isArray(n.children)) {
+                return n.children.map((c: any) => ({
+                    ...c,
+                    _outcomeName: c.action?.context || c.context
+                }));
+            }
 
             // Handle Map-like transitions { "true": { ... }, "false": { ... } }
             if (n.transitions && typeof n.transitions === 'object') {
@@ -377,7 +400,12 @@ export class PolicyDiffService {
             }
 
             // Handle array-like outcomes/nodes
-            if (Array.isArray(n.nodes)) return n.nodes;
+            if (Array.isArray(n.nodes)) {
+                return n.nodes.map((c: any) => ({
+                    ...c,
+                    _outcomeName: c.action?.context || c.context
+                }));
+            }
 
             return [];
         };
@@ -429,6 +457,7 @@ export class PolicyDiffService {
             type: typeOverride || this.getNodeType(data),
             status: status,
             details: data,
+            comparison: status === 'added' ? { a: undefined, b: data } : (status === 'removed' ? { a: data, b: undefined } : undefined),
             children: []
         };
 
@@ -437,16 +466,31 @@ export class PolicyDiffService {
             node.children.push(this.mapNode(data.rootNode, status));
         }
         else {
-            // Check children
+            // Check children - normalize
             let children: any[] = [];
-            if (Array.isArray(data.children)) children = data.children;
+            if (Array.isArray(data.children)) {
+                children = data.children.map((c: any) => ({
+                    ...c,
+                    _outcomeName: c.action?.context || c.context
+                }));
+            }
+            else if (Array.isArray(data.nodes)) {
+                children = data.nodes.map((c: any) => ({
+                    ...c,
+                    _outcomeName: c.action?.context || c.context
+                }));
+            }
             else if (data.transitions) {
                 children = Object.keys(data.transitions).map(k => ({ ...data.transitions[k], _outcomeName: k }));
             }
 
             children.forEach(c => {
                 const cNode = this.mapNode(c, status);
-                if (c._outcomeName) cNode.name = `${c._outcomeName} -> ${cNode.name}`;
+                if (c._outcomeName && cNode.name) {
+                    // Check if name is generic, if so maybe replace? 
+                    // But Standard arrow format:
+                    cNode.name = `${c._outcomeName} -> ${cNode.name}`;
+                }
                 node.children.push(cNode);
             });
         }
@@ -459,7 +503,17 @@ export class PolicyDiffService {
         if (data.displayName) return data.displayName;
         if (data.name) return data.name;
         if (data._outcomeName) return data._outcomeName; // Fallback if it's just a connector
-        if (data.action?.type) return data.action.type;
+
+        if (data.action) {
+            // detailed naming for specific action types
+            if (data.action.fragment?.id) return data.action.fragment.id;
+            if (data.action.authenticationSelectorRef?.id) return data.action.authenticationSelectorRef.id;
+            if (data.action.authenticationPolicyContractRef?.id) return data.action.authenticationPolicyContractRef.id;
+            if (data.action.authenticationSource?.sourceRef?.id) return data.action.authenticationSource.sourceRef.id;
+
+            if (data.action.type) return data.action.type;
+        }
+
         if (data.nodeType) return data.nodeType;
         return 'Node';
     }

@@ -2,12 +2,13 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AccordionModule } from 'primeng/accordion';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { ComparisonCard } from './policy-comparison';
 
 @Component({
     selector: 'app-policy-comparison-card',
     standalone: true,
-    imports: [CommonModule, AccordionModule, TagModule],
+    imports: [CommonModule, AccordionModule, TagModule, TooltipModule],
     template: `
         <p-accordion-panel [value]="card.context">
             <p-accordion-header>
@@ -18,10 +19,19 @@ import { ComparisonCard } from './policy-comparison';
             </p-accordion-header>
             <p-accordion-content>
                 <div class="card-content">
-                    <div class="mb-2"><strong>Type:</strong> {{ getType() }}</div>
-                    <div class="mb-2"><strong>Action:</strong> {{ getAction() }}</div>
                     <div class="mb-2">
-                        <strong>Mappings:</strong>
+                        <strong>Type:</strong> {{ getType() }}
+                        <i class="pi pi-exclamation-circle text-orange-500 ml-2" *ngIf="hasDiff('type')" pTooltip="Value differs from other policy"></i>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Action:</strong> {{ getAction() }}
+                        <i class="pi pi-exclamation-circle text-orange-500 ml-2" *ngIf="hasDiff('action')" pTooltip="Value differs from other policy"></i>
+                    </div>
+                    <div class="mb-2">
+                        <div class="flex align-items-center">
+                            <strong>Mappings:</strong>
+                            <i class="pi pi-exclamation-circle text-orange-500 ml-2" *ngIf="hasDiff('mappings')" pTooltip="Mappings differ"></i>
+                        </div>
                         <pre class="text-sm mt-1 bg-gray-50 p-2 rounded">{{ getMappings() }}</pre>
                     </div>
                     <div class="mt-3" *ngIf="card.children.length > 0">
@@ -57,6 +67,14 @@ export class PolicyComparisonCardComponent {
 
     getMappings(): string {
         return this.card.details.mappings[this.column];
+    }
+
+    hasDiff(field: 'type' | 'action' | 'mappings'): boolean {
+        // Simple comparison between A and B (primary use case)
+        const vals = this.card.details[field];
+        // If we are showing column A or B, show warning if they differ
+        // Ignore C for now as it's less common in this view
+        return vals.a !== vals.b;
     }
 
     getSeverity(status: ComparisonCard['status']): 'success' | 'warn' | 'info' | 'danger' {
