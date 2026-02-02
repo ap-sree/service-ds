@@ -39,6 +39,12 @@
       "sourceRoot": "src",
       "prefix": "app",
       "architect": {
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "runnerConfig": "vitest.config.ts"
+          }
+        },
         "build": {
           "builder": "@angular/build:application",
           "options": {
@@ -58,7 +64,6 @@
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.scss",
-              "node_modules/ngx-toastr/toastr.css",
               "node_modules/primeicons/primeicons.css",
               "node_modules/primeflex/primeflex.css"
             ],

@@ -4,7 +4,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types",
+      "./node_modules"
+    ],
+    "types": [
+      "vitest/globals"
+    ],
   },
   "include": [
     "src/**/*.ts"
