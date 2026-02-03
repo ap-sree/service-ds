@@ -7,7 +7,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        setupFiles: ['@analogjs/vitest-angular/setup-zone'],
+        setupFiles: ['src/test-setup.ts'],
         include: ['src/**/*.spec.ts'],
         coverage: {
             provider: 'v8',

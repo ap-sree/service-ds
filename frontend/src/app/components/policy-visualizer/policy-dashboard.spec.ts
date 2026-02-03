@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PolicyDashboardComponent } from './policy-dashboard';
 import { PolicyVisualizerService } from '../../services/policy-visualizer';
 import { PolicyDiffService } from '../../services/policy-diff';
@@ -53,15 +53,17 @@ describe('PolicyDashboardComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should process uploaded file', fakeAsync(() => {
+    it('should process uploaded file', async () => {
         const mockFile = {
             text: vi.fn().mockReturnValue(Promise.resolve('{"test": true}'))
         };
         const mockEvent = { files: [mockFile] };
 
         component.onUpload(mockEvent);
-        tick(); // Wait for promise resolution
+
+        // Wait for promise resolution
+        await new Promise(resolve => setTimeout(resolve, 0));
 
         expect(mockPolicyService.loadPolicy).toHaveBeenCalledWith({ test: true });
-    }));
+    });
 });
