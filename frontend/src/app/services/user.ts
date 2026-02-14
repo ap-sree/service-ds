@@ -46,7 +46,7 @@ export class UserService {
     saveGlobalPreferences(preferences: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/config`, {
             key: 'global_dashboard_layout',
-            value: preferences
+            value: JSON.stringify(preferences)
         });
     }
 

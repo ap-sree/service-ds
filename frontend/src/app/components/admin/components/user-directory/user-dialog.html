@@ -1,6 +1,7 @@
 <form [formGroup]="userForm" class="p-fluid">
     <div class="field grid">
-        <label for="username" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Username</label>
+        <label for="username" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Username <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <input id="username" type="text" pInputText formControlName="username" placeholder="john.doe"
                 class="w-full" />
@@ -8,7 +9,8 @@
     </div>
 
     <div class="field grid">
-        <label for="role" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Role</label>
+        <label for="role" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Role <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="role" formControlName="role" [options]="roles" optionLabel="label" optionValue="value"
                 placeholder="Select Role" styleClass="w-full" appendTo="body"></p-select>

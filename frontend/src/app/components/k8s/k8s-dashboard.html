@@ -1,0 +1,96 @@
+<p-toast></p-toast>
+<div class="px-5 py-3 md:px-6 md:py-4">
+    <h2 class="text-2xl font-bold mb-4">Kubernetes Monitoring</h2>
+
+    <p-tabs value="pods">
+        <p-tablist>
+            <p-tab value="pods">Pods</p-tab>
+            <p-tab value="config">Configuration</p-tab>
+        </p-tablist>
+
+        <p-tabpanels>
+            <p-tabpanel value="pods">
+                <div class="flex justify-content-between align-items-center mb-3">
+                    <p-iconfield iconPosition="left">
+                        <p-inputicon styleClass="pi pi-search" />
+                        <input type="text" pInputText placeholder="Namespace (default: all)" [(ngModel)]="namespace"
+                            (keyup.enter)="loadPods()" />
+                    </p-iconfield>
+
+                    <p-button label="Refresh" icon="pi pi-refresh" (click)="loadPods()"></p-button>
+                </div>
+
+                <p-card styleClass="p-0">
+                    <p-table [value]="pods" [rowHover]="true" [paginator]="true" [rows]="10"
+                        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                        [showCurrentPageReport]="true" styleClass="p-datatable-sm">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="name">Name <p-sortIcon field="name"></p-sortIcon></th>
+                                <th pSortableColumn="namespace">Namespace <p-sortIcon field="namespace"></p-sortIcon>
+                                </th>
+                                <th>Status</th>
+                                <th>IP</th>
+                                <th>Node</th>
+                                <th>Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-pod>
+                            <tr>
+                                <td>{{pod.name}}</td>
+                                <td>{{pod.namespace}}</td>
+                                <td>
+                                    <p-tag [value]="pod.status" [severity]="getSeverity(pod.status)"></p-tag>
+                                </td>
+                                <td>{{pod.ip}}</td>
+                                <td>{{pod.node}}</td>
+                                <td>
+                                    <p-button icon="pi pi-code" [rounded]="true" [text]="true" severity="secondary"
+                                        pTooltip="Shell" (click)="openTerminal(pod)"></p-button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="6" class="text-center p-4">No pods found. Check configuration.</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </p-card>
+            </p-tabpanel>
+
+            <p-tabpanel value="config">
+                <p-card header="Connection Settings">
+                    <div class="field mb-3">
+                        <label class="block mb-2 font-bold">Connection Type</label>
+                        <p-selectButton [options]="configOptions" [(ngModel)]="configType" optionLabel="label"
+                            optionValue="value"></p-selectButton>
+                    </div>
+
+                    <div class="field mb-3">
+                        <label class="block mb-2 font-bold" *ngIf="configType === 'FILE'">KubeConfig File Path</label>
+                        <label class="block mb-2 font-bold" *ngIf="configType === 'TOKEN'">KubeConfig Content /
+                            Token</label>
+
+                        <input *ngIf="configType === 'FILE'" pInputText class="w-full" [(ngModel)]="configValue"
+                            placeholder="C:\Users\User\.kube\config" />
+                        <textarea *ngIf="configType === 'TOKEN'" pInputTextarea class="w-full" rows="10"
+                            [(ngModel)]="configValue" placeholder="Paste kubeconfig content here..."></textarea>
+                    </div>
+
+                    <div class="flex justify-content-end">
+                        <p-button label="Save & Connect" icon="pi pi-check" (click)="saveConfig()"></p-button>
+                    </div>
+                </p-card>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+</div>
+
+<!-- Terminal Dialog -->
+<p-dialog header="Terminal: {{selectedPod?.name}}" [(visible)]="displayTerminal" [modal]="true"
+    [style]="{width: '80vw', height: '600px'}" [maximizable]="true">
+    <app-k8s-terminal *ngIf="displayTerminal && selectedPod" [namespace]="selectedPod.namespace"
+        [pod]="selectedPod.name" [command]="terminalCommand">
+    </app-k8s-terminal>
+</p-dialog>

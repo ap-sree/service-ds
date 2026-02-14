@@ -97,9 +97,14 @@ export class SyncJobConfigComponent implements OnInit {
             message: 'Are you sure? This will DELETE ALL related Widgets, Rules, and Data Tables!',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.sourceService.deleteSyncDef(id).subscribe(() => {
-                    this.showMsg('info', 'Deleted');
-                    this.loadData();
+                this.sourceService.deleteSyncDef(id).subscribe({
+                    next: () => {
+                        this.showMsg('info', 'Deleted');
+                        this.loadData();
+                    },
+                    error: (err) => {
+                        this.showMsg('error', 'Failed to delete: ' + (err.error?.message || err.message));
+                    }
                 });
             }
         });

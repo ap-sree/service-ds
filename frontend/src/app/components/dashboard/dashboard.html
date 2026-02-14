@@ -2,7 +2,7 @@
     <p-confirmDialog></p-confirmDialog>
 
     <div class="toolbar d-flex justify-end gap-4 align-center p-10 surface-card border-round mb-3">
-        
+
         @if (!isEditing) {
         <div class="d-flex align-center gap-4">
             <i class="pi pi-clock text-600"></i>
@@ -17,39 +17,48 @@
         <div class="d-flex gap-4 align-center spacer">
             <strong class="text-900">Editing Layout</strong>
 
-            
+
             <p-select [options]="allWidgets" optionLabel="title" placeholder="Add Widget"
                 (onChange)="addToDash($event.value)" class="w-15rem">
-                <ng-template let-item pTemplate="item">
+                <ng-template let-option pTemplate="item">
                     <div class="flex align-items-center gap-2">
-                        <span [class]="'badge badge-' + item.type">{{item.type}}</span>
-                        <div>{{item.title}}</div>
+                        <span [class]="'badge badge-' + option.type">{{option.type}}</span>
+                        <div>{{option.title}}</div>
                     </div>
                 </ng-template>
             </p-select>
 
             <span class="spacer"></span>
+
+            <div class="d-flex align-center gap-2 mr-3">
+                <i class="pi pi-clock text-600"></i>
+                <p-select [options]="refreshOptions" optionLabel="label" optionValue="value"
+                    [(ngModel)]="refreshInterval" placeholder="Auto-Refresh" styleClass="w-full" style="width: 160px"
+                    appendTo="body"></p-select>
+            </div>
         </div>
         }
 
-        
+
         @if (!isEditing) {
         <p-button label="Customize Dashboard" icon="pi pi-pencil" (click)="toggleEdit()"></p-button>
         }
         @if (isEditing) {
-        <p-button label="Save My Layout" icon="pi pi-save" (click)="saveLayout()" severity="success"></p-button>
+        <p-button label="Save My Layout" icon="pi pi-save" (click)="saveLayout()" severity="success"
+            styleClass="white-space-nowrap"></p-button>
 
-        @if (username === 'admin') {
+        @if (isAdmin) {
         <p-button label="Save as Global" icon="pi pi-globe" (click)="saveGlobalLayout()" severity="warn"
-            [outlined]="true"></p-button>
+            [outlined]="true" styleClass="white-space-nowrap"></p-button>
         }
-        <p-button label="Reset" icon="pi pi-refresh" (click)="resetLayout($event)" severity="danger"
-            [outlined]="true"></p-button>
-        <p-button label="Cancel" (click)="toggleEdit()" [text]="true" severity="secondary"></p-button>
+        <p-button label="Reset" icon="pi pi-refresh" (click)="resetLayout($event)" severity="danger" [outlined]="true"
+            styleClass="white-space-nowrap"></p-button>
+        <p-button label="Cancel" (click)="toggleEdit()" [text]="true" severity="secondary"
+            styleClass="white-space-nowrap"></p-button>
         }
     </div>
 
-    
+
     <div class="widgets-grid mb-16">
         @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
         @if (widget.type === 'CARD') {
@@ -74,7 +83,7 @@
         }
     </div>
 
-    
+
     <div class="widgets-grid">
         @for (widget of displayedWidgets; track widget.id || $index; let i = $index) {
         @if (widget.type !== 'CARD') {

@@ -123,3 +123,29 @@
     margin-top: 50px;
     color: #666;
 }
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    min-width: 50px;
+    text-align: center;
+}
+
+.badge-CARD {
+    background-color: #3B82F6; /* Blue */
+}
+
+.badge-TABLE {
+    background-color: #10B981; /* Green */
+}
+
+.badge-STATUS_GRID {
+    background-color: #F59E0B; /* Orange */
+}
+
+.badge-MULTI_METRIC {
+    background-color: #8B5CF6; /* Purple */
+}

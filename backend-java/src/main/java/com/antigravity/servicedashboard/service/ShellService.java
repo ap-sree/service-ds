@@ -1,11 +1,5 @@
 package com.antigravity.servicedashboard.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -13,8 +7,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.Base64;
-import java.nio.charset.StandardCharsets;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ShellService {
@@ -26,30 +25,30 @@ public class ShellService {
         this.objectMapper = objectMapper;
     }
 
+    // Allowlist of permitted commands
+    private static final java.util.Set<String> ALLOWED_COMMANDS = java.util.Set.of(
+            "kubectl", "docker", "az", "aws", "gcloud",
+            "systemctl", "journalctl", "df", "free", "uptime", "echo", "printf");
+
+    // Characters that must never appear in command arguments to prevent injection
+    private static final String DANGEROUS_CHARS = ";|&$><!(){}\\\"'`";
+
     public List<Map<String, Object>> executeCommand(String command, String cwd) {
-        logger.info("Executing Shell Command: {}", command);
+        validateCommand(command);
+        logger.info("Executing Approved Command: {}", command);
         List<String> outputLines = new ArrayList<>();
 
         try {
-            boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
-            ProcessBuilder builder = new ProcessBuilder();
-
-            if (isWindows) {
-                
-                
-                String encodedCmd = Base64.getEncoder().encodeToString(command.getBytes(StandardCharsets.UTF_16LE));
-                builder.command("powershell.exe", "-EncodedCommand", encodedCmd);
-            } else {
-                builder.command("sh", "-c", command);
-            }
+            List<String> cmdParts = parseCommandParts(command);
+            ProcessBuilder builder = new ProcessBuilder(cmdParts);
 
             if (cwd != null && !cwd.isEmpty()) {
                 builder.directory(new java.io.File(cwd));
             }
 
+            builder.redirectErrorStream(true);
             Process process = builder.start();
 
-            
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -57,17 +56,9 @@ public class ShellService {
                 }
             }
 
-            
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    logger.error("Stderr: {}", line);
-                }
-            }
-
             boolean finished = process.waitFor(30, TimeUnit.SECONDS);
             if (!finished) {
-                process.destroy();
+                process.destroyForcibly();
                 throw new RuntimeException("Command timed out");
             }
 
@@ -77,21 +68,48 @@ public class ShellService {
 
             return parseOutput(outputLines);
 
+        } catch (SecurityException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Shell Execution Failed", e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("Command execution failed", e);
         }
     }
 
+    private void validateCommand(String command) {
+        if (command == null || command.isBlank()) {
+            throw new SecurityException("Command cannot be empty");
+        }
+
+        String baseCommand = command.trim().split("\\s+")[0];
+        // Normalize path (e.g. /usr/bin/docker -> docker)
+        if (baseCommand.contains("/") || baseCommand.contains("\\")) {
+            baseCommand = new java.io.File(baseCommand).getName();
+        }
+
+        if (!ALLOWED_COMMANDS.contains(baseCommand.toLowerCase())) {
+            throw new SecurityException("Command not allowed: " + baseCommand);
+        }
+
+        for (char c : DANGEROUS_CHARS.toCharArray()) {
+            if (command.indexOf(c) >= 0) {
+                throw new SecurityException("Command contains forbidden character: " + c);
+            }
+        }
+    }
+
+    private List<String> parseCommandParts(String command) {
+        return java.util.Arrays.asList(command.trim().split("\\s+"));
+    }
+
     private List<Map<String, Object>> parseOutput(List<String> lines) {
-        
+
         String fullOutput = String.join("\n", lines).trim();
 
         if (fullOutput.isEmpty()) {
             return Collections.emptyList();
         }
 
-        
         if (fullOutput.startsWith("[") || fullOutput.startsWith("{")) {
             try {
                 if (fullOutput.startsWith("[")) {
@@ -108,8 +126,6 @@ public class ShellService {
             }
         }
 
-        
-        
         List<Map<String, Object>> result = new ArrayList<>();
         for (String line : lines) {
             result.add(Collections.singletonMap("output", line));

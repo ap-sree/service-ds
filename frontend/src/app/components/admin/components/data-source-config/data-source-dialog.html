@@ -1,172 +1,177 @@
 <form [formGroup]="sourceForm" class="p-fluid">
   <div class="field grid">
-    <label for="name" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Name</label>
+    <label for="name" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Name <span
+        class="text-red-500">*</span></label>
     <div class="col-12 md:col-9">
-      <input id="name" type="text" pInputText formControlName="name" placeholder="My DB" class="w-full" />
+      <input id="name" type="text" pInputText formControlName="name" placeholder="Datasource Name" class="w-full" />
     </div>
   </div>
 
   <div class="field grid">
-    <label for="type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Type</label>
+    <label for="type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Type <span
+        class="text-red-500">*</span></label>
     <div class="col-12 md:col-9">
       <p-select id="type" formControlName="type" [options]="sourceTypes" optionLabel="label" optionValue="value"
-      (onChange)="onTypeChange()" placeholder="Select a Type" styleClass="w-full" appendTo="body"></p-select>
+        (onChange)="onTypeChange()" placeholder="Select a Type" styleClass="w-full" appendTo="body"></p-select>
     </div>
   </div>
 
   <div class="flex justify-content-end mb-2">
     <p-button [label]="viewMode === 'SIMPLE' ? 'Switch to JSON Mode' : 'Switch to Form Mode'"
       [icon]="viewMode === 'SIMPLE' ? 'pi pi-code' : 'pi pi-list'"
-    (click)="viewMode = viewMode === 'SIMPLE' ? 'JSON' : 'SIMPLE'" [text]="true" size="small"></p-button>
+      (click)="viewMode = viewMode === 'SIMPLE' ? 'JSON' : 'SIMPLE'" [text]="true" size="small"></p-button>
   </div>
 
-  
+
   @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'SQL_SERVER') {
-    <ng-container [formGroup]="sqlForm">
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Server</label>
-        <div class="col-12 md:col-9"><input pInputText formControlName="server" class="w-full" /></div>
+  <ng-container [formGroup]="sqlForm">
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Server <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="server" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Database <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="database" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">User <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="user" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Password <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input type="password" pInputText formControlName="password" class="w-full" />
       </div>
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Database</label>
-        <div class="col-12 md:col-9"><input pInputText formControlName="database" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Encrypt</label>
+      <div class="col-12 md:col-9">
+        <p-checkbox formControlName="encrypt" [binary]="true" label="Encrypt Connection"></p-checkbox>
       </div>
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">User</label>
-        <div class="col-12 md:col-9"><input pInputText formControlName="user" class="w-full" /></div>
-      </div>
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Password</label>
-        <div class="col-12 md:col-9"><input type="password" pInputText formControlName="password" class="w-full" />
-        </div>
-      </div>
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Encrypt</label>
-        <div class="col-12 md:col-9">
-          <p-checkbox formControlName="encrypt" [binary]="true" label="Encrypt Connection"></p-checkbox>
-        </div>
-      </div>
-    </ng-container>
+    </div>
+  </ng-container>
   }
 
-  
+
   @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'REST_API') {
-    <ng-container [formGroup]="restForm">
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Base URL</label>
-        <div class="col-12 md:col-9">
-          <input pInputText formControlName="baseUrl" class="w-full" placeholder="https://api.example.com" />
-        </div>
+  <ng-container [formGroup]="restForm">
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Base URL <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9">
+        <input pInputText formControlName="baseUrl" class="w-full" placeholder="https://api.example.com" />
       </div>
-      <div class="field grid">
-        <label class="col-12 md:col-3 font-bold">Data Path</label>
-        <div class="col-12 md:col-9">
-          <input pInputText formControlName="dataPropertyPath" class="w-full"
-            placeholder="data (leave empty if array)" />
-            <small class="block text-gray-500">Path to the array in response JSON</small>
-          </div>
-        </div>
-        <h4 class="mt-4 mb-2">Pagination</h4>
-        <div class="field grid">
-          <label class="col-12 md:col-3 font-bold">Type</label>
-          <div class="col-12 md:col-9">
-            <p-select formControlName="paginationType" [options]="paginationTypes" optionLabel="label"
-            optionValue="value" styleClass="w-full" appendTo="body"></p-select>
-          </div>
-        </div>
-        @if (restForm.get('paginationType')?.value === 'PAGE_PARAM') {
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Page Param Name</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="paginationKey" class="w-full"
-            placeholder="page" /></div>
-          </div>
-        }
-        <div class="field grid">
-          <label class="col-12 md:col-3 font-bold">Static Headers (JSON)</label>
-          <div class="col-12 md:col-9">
-            <textarea pTextarea formControlName="headers" class="w-full font-monospace" rows="3"
-            placeholder='{ "X-API-Key": "..." }'></textarea>
-          </div>
-        </div>
-        <h4 class="mt-4 mb-2">Authentication</h4>
-        <div class="field grid">
-          <label class="col-12 md:col-3 font-bold">Type</label>
-          <div class="col-12 md:col-9">
-            <p-select formControlName="authType" [options]="authTypes" optionLabel="label" optionValue="value"
-            styleClass="w-full" appendTo="body"></p-select>
-          </div>
-        </div>
-        
-        @if (restForm.get('authType')?.value === 'BASIC') {
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Username</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="basicUser" class="w-full" /></div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Password</label>
-            <div class="col-12 md:col-9"><input type="password" pInputText formControlName="basicPass"
-            class="w-full" /></div>
-          </div>
-        }
-        
-        @if (restForm.get('authType')?.value === 'DYNAMIC') {
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Auth URL</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="authUrl" class="w-full"
-            placeholder="https://.../login" /></div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Client ID</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="authClientId" class="w-full" /></div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Client Secret</label>
-            <div class="col-12 md:col-9"><input type="password" pInputText formControlName="authClientSecret"
-            class="w-full" /></div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Credential Placement</label>
-            <div class="col-12 md:col-9">
-              <select class="w-full p-2 border-1 border-gray-300 border-round"
-                formControlName="authCredentialPlacement">
-                <option value="HEADER_BASIC">Header (Basic Auth)</option>
-                <option value="BODY">Body (JSON)</option>
-              </select>
-            </div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Grant Type</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="authGrantType" class="w-full"
-            placeholder="client_credentials" /></div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Additional Params (JSON)</label>
-            <div class="col-12 md:col-9">
-              <textarea pTextarea formControlName="authBody" class="w-full font-monospace" rows="3"
-              placeholder='{ "extra": "val" }'></textarea>
-            </div>
-          </div>
-          <div class="field grid">
-            <label class="col-12 md:col-3 font-bold">Token Path</label>
-            <div class="col-12 md:col-9"><input pInputText formControlName="authTokenPath" class="w-full"
-            placeholder="access_token" /></div>
-          </div>
-        }
-      </ng-container>
-    }
-
-    @if (viewMode === 'JSON') {
-      <div class="field grid">
-        <label for="config" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Configuration (JSON)</label>
-        <div class="col-12 md:col-9">
-          <textarea id="config" rows="12" pTextarea formControlName="config" placeholder="Configuration JSON"
-          class="w-full font-monospace"></textarea>
-        </div>
-      </div>
-    }
-
-    <div class="flex justify-content-end gap-2 mt-4">
-      <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
-      <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="sourceForm.invalid"></p-button>
     </div>
-  </form>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Data Path</label>
+      <div class="col-12 md:col-9">
+        <input pInputText formControlName="dataPropertyPath" class="w-full" placeholder="data (leave empty if array)" />
+        <small class="block text-gray-500">Path to the array in response JSON</small>
+      </div>
+    </div>
+    <h4 class="mt-4 mb-2">Pagination</h4>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Type</label>
+      <div class="col-12 md:col-9">
+        <p-select formControlName="paginationType" [options]="paginationTypes" optionLabel="label" optionValue="value"
+          styleClass="w-full" appendTo="body"></p-select>
+      </div>
+    </div>
+    @if (restForm.get('paginationType')?.value === 'PAGE_PARAM') {
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Page Param Name</label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="paginationKey" class="w-full"
+          placeholder="page" /></div>
+    </div>
+    }
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Static Headers (JSON)</label>
+      <div class="col-12 md:col-9">
+        <textarea pTextarea formControlName="headers" class="w-full font-monospace" rows="3"
+          placeholder='{ "X-API-Key": "..." }'></textarea>
+      </div>
+    </div>
+    <h4 class="mt-4 mb-2">Authentication</h4>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Type</label>
+      <div class="col-12 md:col-9">
+        <p-select formControlName="authType" [options]="authTypes" optionLabel="label" optionValue="value"
+          styleClass="w-full" appendTo="body"></p-select>
+      </div>
+    </div>
+
+    @if (restForm.get('authType')?.value === 'BASIC') {
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Username <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="basicUser" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Password <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input type="password" pInputText formControlName="basicPass" class="w-full" /></div>
+    </div>
+    }
+
+    @if (restForm.get('authType')?.value === 'DYNAMIC') {
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Auth URL <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="authUrl" class="w-full"
+          placeholder="https://.../login" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Client ID <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="authClientId" class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Client Secret <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input type="password" pInputText formControlName="authClientSecret"
+          class="w-full" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Credential Placement</label>
+      <div class="col-12 md:col-9">
+        <select class="w-full p-2 border-1 border-gray-300 border-round" formControlName="authCredentialPlacement">
+          <option value="HEADER_BASIC">Header (Basic Auth)</option>
+          <option value="BODY">Body (JSON)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Grant Type <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="authGrantType" class="w-full"
+          placeholder="client_credentials" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Scope</label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="authScope" class="w-full"
+          placeholder="openid profile" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Additional Params (JSON)</label>
+      <div class="col-12 md:col-9">
+        <textarea pTextarea formControlName="authBody" class="w-full font-monospace" rows="3"
+          placeholder='{ "extra": "val" }'></textarea>
+      </div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Token Path</label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="authTokenPath" class="w-full"
+          placeholder="access_token" /></div>
+    </div>
+    }
+  </ng-container>
+  }
+
+  @if (viewMode === 'JSON') {
+  <div class="field grid">
+    <label for="config" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Configuration (JSON) <span
+        class="text-red-500">*</span></label>
+    <div class="col-12 md:col-9">
+      <textarea id="config" rows="12" pTextarea formControlName="config" placeholder="Configuration JSON"
+        class="w-full font-monospace"></textarea>
+    </div>
+  </div>
+  }
+
+  <div class="flex justify-content-end gap-2 mt-4">
+    <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
+    <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="sourceForm.invalid"></p-button>
+  </div>
+</form>

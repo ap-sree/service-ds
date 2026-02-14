@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 
 import { MessageService } from 'primeng/api';
@@ -31,23 +31,28 @@ export class AppComponent implements OnInit, OnDestroy {
 
   currentUser = this.authService.currentUser;
 
-  constructor() { }
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user) {
+        this.sessionNotifService.startPolling();
+      } else {
+        this.sessionNotifService.stopPolling();
+      }
+    });
+  }
 
   ngOnInit() {
     this.router.initialNavigation();
-    this.sessionNotifService.startPolling();
 
-    
+
+
+
     if (this.authService.isAuthenticated && !this.authService.currentUser()) {
-      const claims: any = this.authService.identityClaims;
-      
-      const username = claims?.username || claims?.preferred_username || claims?.sub;
-      if (username) {
-        this.authService.syncUser(username).subscribe();
-      }
+      this.authService.fetchCurrentUser().subscribe();
     }
 
-    
+
     this.sessionNotifService.notificationReceived$.subscribe(n => {
       this.triggerAlert(n);
     });
@@ -59,6 +64,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   isAdmin() {
     return this.authService.isAdmin();
+  }
+
+  isAuthenticated() {
+    return this.authService.isAuthenticated;
   }
 
   ngOnDestroy() {

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface NotificationRuleRepository extends JpaRepository<NotificationRule, Long> {
+    @Transactional
     void deleteByLocalTableName(String localTableName);
 
     List<NotificationRule> findByLocalTableName(String localTableName);

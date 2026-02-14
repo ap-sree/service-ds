@@ -20,16 +20,16 @@ import { InputIconModule } from 'primeng/inputicon';
     selector: 'app-widget-builder',
     standalone: true,
     imports: [
-    CardModule,
-    ButtonModule,
-    TableModule,
-    InputTextModule,
-    TooltipModule,
-    ConfirmDialogModule,
-    TagModule,
-    IconFieldModule,
-    InputIconModule
-],
+        CardModule,
+        ButtonModule,
+        TableModule,
+        InputTextModule,
+        TooltipModule,
+        ConfirmDialogModule,
+        TagModule,
+        IconFieldModule,
+        InputIconModule
+    ],
     providers: [DialogService, ConfirmationService],
     templateUrl: './widget-builder.html',
     styles: [`
@@ -83,9 +83,14 @@ export class WidgetBuilderComponent implements OnInit {
             message: 'Are you sure that you want to delete this widget?',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.dashboardService.deleteWidget(id).subscribe(() => {
-                    this.showMsg('info', 'Deleted');
-                    this.loadData();
+                this.dashboardService.deleteWidget(id).subscribe({
+                    next: () => {
+                        this.showMsg('info', 'Deleted');
+                        this.loadData();
+                    },
+                    error: (err) => {
+                        this.showMsg('error', 'Failed to delete widget');
+                    }
                 });
             }
         });

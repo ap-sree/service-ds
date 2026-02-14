@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -11,10 +10,8 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DataSourceDialogComponent } from './data-source-dialog';
 import { SourceService } from '../../../../services/source';
 import { DataSource } from '../../../../models/sync';
-
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-
 @Component({
     selector: 'app-data-source-config',
     standalone: true,
@@ -36,17 +33,18 @@ import { InputIconModule } from 'primeng/inputicon';
   `]
 })
 export class DataSourceConfigComponent implements OnInit {
+
     private sourceService = inject(SourceService);
+
     private messageService = inject(MessageService);
+
     private dialogService = inject(DialogService);
+
     private confirmationService = inject(ConfirmationService);
-
     dataSource: DataSource[] = [];
-
     ngOnInit() {
         this.loadData();
     }
-
     loadData() {
         this.sourceService.getSources().subscribe({
             next: (data) => {
@@ -55,7 +53,6 @@ export class DataSourceConfigComponent implements OnInit {
             error: (err) => this.showMsg('error', 'Failed to load Sources: ' + err.message)
         });
     }
-
     openDialog(config?: DataSource) { 
         const ref = this.dialogService.open(DataSourceDialogComponent, {
             header: config ? 'Edit Data Source' : 'Add Data Source',
@@ -67,7 +64,6 @@ export class DataSourceConfigComponent implements OnInit {
             closeOnEscape: true,
             data: { config }
         });
-
         ref?.onClose.subscribe((result: any) => {
             if (result) {
                 this.loadData();
@@ -75,7 +71,6 @@ export class DataSourceConfigComponent implements OnInit {
             }
         });
     }
-
     deleteSource(event: Event, id: number) {
         this.confirmationService.confirm({
             target: event.target as EventTarget,
@@ -89,7 +84,6 @@ export class DataSourceConfigComponent implements OnInit {
             }
         });
     }
-
     showMsg(severity: string, summary: string) {
         this.messageService.add({ severity, summary, detail: summary });
     }

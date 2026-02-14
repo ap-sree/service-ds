@@ -30,6 +30,17 @@ public class UserPreferences {
         return theme;
     }
 
+    @JsonProperty("refreshInterval")
+    private Integer refreshInterval;
+
+    public Integer getRefreshInterval() {
+        return refreshInterval;
+    }
+
+    public void setRefreshInterval(Integer refreshInterval) {
+        this.refreshInterval = refreshInterval;
+    }
+
     public void setTheme(String theme) {
         this.theme = theme;
     }

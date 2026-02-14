@@ -1,13 +1,15 @@
 <form [formGroup]="widgetForm" class="p-fluid">
     <div class="field grid">
-        <label for="title" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Title</label>
+        <label for="title" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Title <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <input id="title" type="text" pInputText formControlName="title" placeholder="My Widget" class="w-full" />
         </div>
     </div>
 
     <div class="field grid">
-        <label for="type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Type</label>
+        <label for="type" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Type <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="type" formControlName="type" [options]="widgetTypes" optionLabel="label" optionValue="value"
                 placeholder="Select Type" appendTo="body" styleClass="w-full"></p-select>
@@ -15,7 +17,8 @@
     </div>
 
     <div class="field grid">
-        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Data Source (Table)</label>
+        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Data Source (Table) <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="source" formControlName="dataSourceTable" [options]="uniqueTables"
                 (onChange)="onTableChange()" placeholder="Select Source" appendTo="body" styleClass="w-full"></p-select>
@@ -23,7 +26,7 @@
     </div>
 
 
-    
+
     @if (widgetForm.get('dataSourceTable')?.value) {
     <div class="field grid">
         <label for="global_filter" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Global Filter
@@ -62,7 +65,7 @@
     </div>
     }
 
-    
+
     @if (widgetForm.get('type')?.value === 'TABLE' && tableColumns.length > 0) {
     <div class="field grid">
         <label for="columns" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Display Columns</label>
@@ -73,7 +76,7 @@
     </div>
     }
 
-    
+
     @if (widgetForm.get('type')?.value === 'STATUS_GRID') {
     <div>
         <p class="font-bold mb-2">Grid Configuration</p>
@@ -113,12 +116,12 @@
     </div>
     }
 
-    
+
     @if (widgetForm.get('type')?.value === 'MULTI_METRIC') {
     <div>
         <p class="font-bold mb-2">Metrics Configuration (Max 4)</p>
 
-        
+
         <div class="flex gap-2 mb-2 px-1">
             <div class="w-3 font-bold text-sm">Label</div>
             <div class="w-2 font-bold text-sm">Op</div>

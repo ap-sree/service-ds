@@ -2,24 +2,22 @@ package com.antigravity.servicedashboard.controller;
 
 import com.antigravity.servicedashboard.service.TableService;
 import com.antigravity.servicedashboard.constant.AppConstants;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping
 public class WidgetDataController {
 
     private final TableService service;
 
-    @Autowired
     public WidgetDataController(TableService service) {
         this.service = service;
     }
 
-    @GetMapping("/widgets/{id}/data")
+    @GetMapping("/{id}/data")
     public ResponseEntity<Object> getWidgetData(
             @PathVariable Long id,
             @RequestParam(required = false) String userId,

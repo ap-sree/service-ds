@@ -46,7 +46,7 @@ export class UserDirectoryComponent implements OnInit {
 
     dataSource: User[] = [];
     currentUserId: string | null = null;
-    
+
 
     ngOnInit() {
         this.currentUserId = this.authService.currentUser()?.username || null;
@@ -93,9 +93,14 @@ export class UserDirectoryComponent implements OnInit {
             message: `Are you sure that you want to delete user ${username}?`,
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.userService.deleteUser(username).subscribe(() => {
-                    this.showMsg('info', 'Deleted');
-                    this.loadData();
+                this.userService.deleteUser(username).subscribe({
+                    next: () => {
+                        this.showMsg('info', 'Deleted');
+                        this.loadData();
+                    },
+                    error: (err) => {
+                        this.showMsg('error', 'Failed to delete user');
+                    }
                 });
             }
         });

@@ -20,16 +20,16 @@ import { InputIconModule } from 'primeng/inputicon';
     selector: 'app-notification-rules',
     standalone: true,
     imports: [
-    CardModule,
-    ButtonModule,
-    TableModule,
-    InputTextModule,
-    TooltipModule,
-    TagModule,
-    ConfirmDialogModule,
-    IconFieldModule,
-    InputIconModule
-],
+        CardModule,
+        ButtonModule,
+        TableModule,
+        InputTextModule,
+        TooltipModule,
+        TagModule,
+        ConfirmDialogModule,
+        IconFieldModule,
+        InputIconModule
+    ],
     providers: [DialogService, ConfirmationService],
     templateUrl: './notification-rules.html',
     styles: [`
@@ -84,9 +84,14 @@ export class NotificationRulesComponent implements OnInit {
             message: 'Are you sure that you want to delete this notification rule?',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.notificationRuleService.deleteRule(id).subscribe(() => {
-                    this.showMsg('info', 'Deleted');
-                    this.loadData();
+                this.notificationRuleService.deleteRule(id).subscribe({
+                    next: () => {
+                        this.showMsg('info', 'Deleted');
+                        this.loadData();
+                    },
+                    error: (err) => {
+                        this.showMsg('error', 'Failed to delete rule');
+                    }
                 });
             }
         });

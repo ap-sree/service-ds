@@ -1,8 +1,6 @@
 package com.antigravity.servicedashboard.model;
 
-import com.antigravity.servicedashboard.constant.AppConstants;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NotificationCondition {

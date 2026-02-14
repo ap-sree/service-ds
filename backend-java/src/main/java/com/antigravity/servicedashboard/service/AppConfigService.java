@@ -1,6 +1,7 @@
 package com.antigravity.servicedashboard.service;
 
 import com.antigravity.servicedashboard.entity.AppConfig;
+import com.antigravity.servicedashboard.model.UserPreferences;
 import com.antigravity.servicedashboard.repository.AppConfigRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,5 +37,18 @@ public class AppConfigService {
 
         AppConfig config = new AppConfig(key, valueStr);
         return repository.save(config);
+    }
+
+    public UserPreferences getGlobalDashboardLayout() {
+        return repository.findById("global_dashboard_layout")
+                .map(config -> {
+                    try {
+                        return mapper.readValue(config.getValue(),
+                                UserPreferences.class);
+                    } catch (Exception e) {
+                        return new UserPreferences();
+                    }
+                })
+                .orElse(new UserPreferences());
     }
 }

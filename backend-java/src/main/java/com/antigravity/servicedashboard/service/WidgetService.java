@@ -23,13 +23,16 @@ public class WidgetService {
     private final WidgetDefinitionRepository repository;
     private final UserRepository userRepository;
     private final AppConfigRepository appConfigRepository;
+    private final com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo;
 
     public WidgetService(WidgetDefinitionRepository repository,
             UserRepository userRepository,
-            AppConfigRepository appConfigRepository) {
+            AppConfigRepository appConfigRepository,
+            com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo) {
         this.repository = repository;
         this.userRepository = userRepository;
         this.appConfigRepository = appConfigRepository;
+        this.syncRepo = syncRepo;
     }
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -37,7 +40,6 @@ public class WidgetService {
     public List<WidgetDefinition> getWidgetsForUser(String username) {
         List<WidgetDefinition> allWidgets = repository.findAll();
 
-        
         List<Long> activeIds = parseWidgetIds(null);
 
         if (username != null) {
@@ -80,6 +82,10 @@ public class WidgetService {
     }
 
     public WidgetDefinition create(WidgetDefinition entity) {
+        if (entity.getDataSourceTable() != null) {
+            syncRepo.findFirstByTargetTableName(entity.getDataSourceTable())
+                    .ifPresent(entity::setSyncDefinition);
+        }
         return repository.save(entity);
     }
 
@@ -87,6 +93,10 @@ public class WidgetService {
         if (!repository.existsById(id))
             return Optional.empty();
         entity.setId(id);
+        if (entity.getDataSourceTable() != null) {
+            syncRepo.findFirstByTargetTableName(entity.getDataSourceTable())
+                    .ifPresent(entity::setSyncDefinition);
+        }
         return Optional.of(repository.save(entity));
     }
 
@@ -102,23 +112,36 @@ public class WidgetService {
         if (json == null || json.isEmpty())
             return ids;
         try {
-            com.antigravity.servicedashboard.model.UserPreferences prefs = mapper.readValue(json,
-                    com.antigravity.servicedashboard.model.UserPreferences.class);
-            if (prefs != null && prefs.getWidgetIds() != null) {
-                return prefs.getWidgetIds();
+            JsonNode root = mapper.readTree(json);
+
+            // Handle double-encoded JSON string
+            if (root.isTextual()) {
+                try {
+                    root = mapper.readTree(root.asText());
+                } catch (Exception e) {
+                    logger.warn("Failed to unwrap double-encoded JSON: {}", json);
+                }
             }
-        } catch (Exception e) {
-            try {
-                JsonNode root = mapper.readTree(json);
-                JsonNode idsNode = root.get("widgetIds");
-                if (idsNode != null && idsNode.isArray()) {
-                    for (JsonNode id : idsNode) {
-                        ids.add(id.asLong());
+
+            // Case 1: JSON Object with "widgetIds"
+            if (root.isObject()) {
+                if (root.has("widgetIds")) {
+                    JsonNode idsNode = root.get("widgetIds");
+                    if (idsNode.isArray()) {
+                        for (JsonNode id : idsNode) {
+                            ids.add(id.asLong());
+                        }
                     }
                 }
-            } catch (Exception ex) {
-                logger.warn("Failed to parse widget IDs from JSON: {}", json, ex);
             }
+            // Case 2: JSON Array of IDs (Legacy)
+            else if (root.isArray()) {
+                for (JsonNode id : root) {
+                    ids.add(id.asLong());
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to parse widget IDs from JSON: {}", json, e);
         }
         return ids;
     }

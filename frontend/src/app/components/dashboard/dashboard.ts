@@ -7,11 +7,11 @@ import { UserService } from '../../services/user';
 
 import { ToolbarModule } from 'primeng/toolbar';
 import { ButtonModule } from 'primeng/button';
-import { SelectModule } from 'primeng/select'; 
+import { SelectModule } from 'primeng/select';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CardModule } from 'primeng/card';
-import { InputNumberModule } from 'primeng/inputnumber'; 
+import { InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 
 
@@ -52,18 +52,23 @@ export class DashboardComponent implements OnInit {
         return this.authService.getUsername() || 'default';
     }
 
+    get isAdmin(): boolean {
+        return this.authService.isAdmin();
+    }
+
     loading = false;
 
     ngOnInit() {
         this.loadData();
     }
 
-    
+
     loadData() {
         this.loading = true;
-        this.dashboardService.getWidgets(this.username).subscribe({
-            next: (widgets) => {
-                
+        this.dashboardService.getWidgets().subscribe({
+            next: (config) => {
+                const widgets = config.widgets || [];
+
                 const typeOrder: { [key: string]: number } = {
                     'CARD': 1,
                     'MULTI_METRIC': 2,
@@ -75,9 +80,15 @@ export class DashboardComponent implements OnInit {
                     const orderA = typeOrder[a.type] || 99;
                     const orderB = typeOrder[b.type] || 99;
                     if (orderA !== orderB) return orderA - orderB;
-                    
+
                     return (a.id || 0) - (b.id || 0);
                 });
+
+                // Set refresh interval from response
+                if (config.refreshInterval !== undefined && config.refreshInterval !== null) {
+                    this.refreshInterval = config.refreshInterval;
+                    this.onIntervalChange(this.refreshInterval);
+                }
 
                 this.loading = false;
             },
@@ -88,14 +99,14 @@ export class DashboardComponent implements OnInit {
         });
     }
 
-    
+
     loadInventory() {
         this.dashboardService.getWidgetCatalog().subscribe(all => {
             this.allWidgets = all;
         });
     }
 
-    
+
     loadGlobalForEdit() {
         this.loadData();
     }
@@ -151,7 +162,10 @@ export class DashboardComponent implements OnInit {
 
     saveLayout() {
         const ids = this.displayedWidgets.map(w => w.id!);
-        this.userService.savePreferences(this.username, { widgetIds: ids }).subscribe({
+        this.userService.savePreferences(this.username, {
+            widgetIds: ids,
+            refreshInterval: this.refreshInterval
+        }).subscribe({
             next: () => {
                 this.isEditing = false;
                 this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Layout saved successfully.' });
@@ -164,7 +178,10 @@ export class DashboardComponent implements OnInit {
 
     saveGlobalLayout() {
         const ids = this.displayedWidgets.map(w => w.id!);
-        this.userService.saveGlobalPreferences({ widgetIds: ids }).subscribe({
+        this.userService.saveGlobalPreferences({
+            widgetIds: ids,
+            refreshInterval: this.refreshInterval
+        }).subscribe({
             next: () => {
                 this.isEditing = false;
                 this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Global layout saved successfully.' });
@@ -195,7 +212,7 @@ export class DashboardComponent implements OnInit {
         });
     }
 
-    
+
     addToDash(widget: WidgetDefinition) {
         if (!this.displayedWidgets.find(w => w.id === widget.id)) {
             this.displayedWidgets.push(widget);

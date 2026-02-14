@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +63,7 @@ public class DataSourceServiceTest {
 
         // Verify
         assertTrue(deleted);
-        verify(syncService).deleteSyncCascade(10L);
+        verify(syncService).delete(10L);
         verify(repository).deleteById(1L);
     }
 

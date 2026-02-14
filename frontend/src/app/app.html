@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-@if (currentUser()) {
+@if (currentUser() || isAuthenticated()) {
 <app-ui-layout [currentUser]="currentUser()" [isAdmin]="isAdmin()" (logout)="logout()">
   <router-outlet></router-outlet>
 </app-ui-layout>

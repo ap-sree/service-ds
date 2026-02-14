@@ -2,15 +2,21 @@ package com.antigravity.servicedashboard.entity;
 
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "{user.username.required}")
     private String username;
 
     @Column
+    @NotBlank(message = "{user.role.required}")
+    @Pattern(regexp = "^(ADMIN|USER)$", message = "{user.role.pattern}")
     private String role;
 
     @Lob

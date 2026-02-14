@@ -1,20 +1,23 @@
 package com.antigravity.servicedashboard.controller;
 
+import com.antigravity.servicedashboard.dto.AppConfigDTO;
 import com.antigravity.servicedashboard.entity.AppConfig;
+import com.antigravity.servicedashboard.mapper.AppConfigMapper;
 import com.antigravity.servicedashboard.service.AppConfigService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/config")
+@RequestMapping("/config")
 public class ConfigController {
 
     private final AppConfigService service;
+    private final AppConfigMapper configMapper;
 
-    @Autowired
-    public ConfigController(AppConfigService service) {
+    public ConfigController(AppConfigService service, AppConfigMapper configMapper) {
         this.service = service;
+        this.configMapper = configMapper;
     }
 
     @GetMapping("/{key}")
@@ -24,7 +27,8 @@ public class ConfigController {
     }
 
     @PostMapping
-    public AppConfig setConfig(@RequestBody AppConfig config) {
-        return service.setConfigValue(config.getKey(), config.getValue());
+    public ResponseEntity<AppConfigDTO> setConfig(@Valid @RequestBody AppConfigDTO dto) {
+        AppConfig saved = service.setConfigValue(dto.getKey(), dto.getValue());
+        return ResponseEntity.ok(configMapper.toDTO(saved));
     }
 }

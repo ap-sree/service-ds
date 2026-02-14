@@ -11,6 +11,7 @@ public class AppConfig {
 
     @Id
     @Column(name = "key")
+    @jakarta.validation.constraints.NotBlank(message = "{config.key.required}")
     private String key;
 
     @Column(name = "value", length = 4000)

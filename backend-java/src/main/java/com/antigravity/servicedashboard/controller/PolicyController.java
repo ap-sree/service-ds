@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/api/policies")
+@RequestMapping("/policies")
 public class PolicyController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)

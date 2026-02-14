@@ -1,0 +1,89 @@
+<div class="p-4">
+    <p-card header="Natural Language Processing (OpenNLP)">
+        <div class="flex flex-col gap-4">
+            <textarea pInputTextarea [(ngModel)]="text" rows="5" class="w-full">
+            </textarea>
+
+            <div class="flex justify-end">
+                <p-button label="Analyze" icon="pi pi-bolt" (click)="analyze()" [loading]="loading"
+                    [disabled]="!text.trim()">
+                </p-button>
+            </div>
+        </div>
+    </p-card>
+
+    <div *ngIf="result" class="mt-4 flex flex-col gap-4">
+
+        <!-- Named Entities Summary -->
+        <p-card header="Named Entities" styleClass="h-full">
+            <p-table [value]="getAllEntities()" [tableStyle]="{ 'min-width': '20rem' }" styleClass="p-datatable-sm">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Entity</th>
+                        <th>Type</th>
+                        <th>Position</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-entity>
+                    <tr>
+                        <td class="font-bold">{{ entity.text }}</td>
+                        <td>
+                            <p-tag [value]="entity.type"
+                                [severity]="entity.type === 'Person' ? 'info' : (entity.type === 'Location' ? 'success' : 'warn')"></p-tag>
+                        </td>
+                        <td>{{ entity.start }} - {{ entity.end }}</td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="3">No named entities found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+
+        <p-tabs value="0">
+            <p-tablist>
+                <p-tab value="0">Sentences</p-tab>
+                <p-tab value="1">POS Tags (Detailed)</p-tab>
+            </p-tablist>
+            <p-tabpanels>
+                <!-- Sentences Tab -->
+                <p-tabpanel value="0">
+                    <p-table [value]="result.sentences" styleClass="p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>#</th>
+                                <th>Sentence</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-sentence let-rowIndex="rowIndex">
+                            <tr>
+                                <td class="w-16 text-gray-500">{{ rowIndex + 1 }}</td>
+                                <td>{{ sentence }}</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </p-tabpanel>
+
+                <!-- POS Tags Tab -->
+                <p-tabpanel value="1">
+                    <div class="flex flex-col gap-4">
+                        <div *ngFor="let analysis of result.analysis" class="border p-3 rounded surface-card">
+                            <div class="font-bold mb-2 text-gray-600">Sentence: "{{ analysis.text }}"</div>
+                            <div class="flex flex-wrap gap-2">
+                                <span *ngFor="let tag of analysis.posTags"
+                                    class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm border border-blue-100"
+                                    [pTooltip]="tag.tag" tooltipPosition="top">
+                                    <span class="font-semibold">{{ tag.token }}</span>
+                                    <span class="text-xs opacity-75 uppercase tracking-wide">[{{ tag.tag }}]</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </p-tabpanel>
+            </p-tabpanels>
+        </p-tabs>
+
+    </div>
+</div>

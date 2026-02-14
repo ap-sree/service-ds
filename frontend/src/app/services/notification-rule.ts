@@ -27,8 +27,7 @@ export class NotificationRuleService {
         return this.http.delete(`${this.apiUrl}/notification-rules/${id}`);
     }
 
-    getPendingNotifications(username: string): Observable<any[]> {
-        
-        return this.http.get<any[]>(`${this.apiUrl}/notifications?user=${username}`);
+    getPendingNotifications(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/notifications`);
     }
 }

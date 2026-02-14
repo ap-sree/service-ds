@@ -1,6 +1,7 @@
 <form [formGroup]="syncFormGroup" class="p-fluid">
     <div class="field grid">
-        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Source</label>
+        <label for="source" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Source <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="source" formControlName="sourceId" [options]="sources" optionLabel="name" optionValue="id"
                 (onChange)="onSyncSourceChange()" placeholder="Select a Source" styleClass="w-full"
@@ -9,7 +10,8 @@
     </div>
 
     <div class="field grid">
-        <label for="table" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Local Table Name</label>
+        <label for="table" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Local Table Name <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <input id="table" type="text" pInputText formControlName="targetTableName" placeholder="sync_tickets"
                 class="w-full" />
@@ -17,7 +19,8 @@
     </div>
 
     <div class="field grid">
-        <label for="mode" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Mode</label>
+        <label for="mode" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Mode <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="mode" formControlName="syncMode" [options]="modeOptions" optionLabel="label"
                 optionValue="value" styleClass="w-full" appendTo="body"></p-select>
@@ -34,8 +37,17 @@
     </div>
     }
     @if (syncFormGroup.get('sourceId')?.value) {
+    <div class="field grid" *ngIf="showMethodDropdown">
+        <label for="method" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">HTTP Method</label>
+        <div class="col-12 md:col-9">
+            <p-select id="method" formControlName="httpMethod" [options]="httpMethods" optionLabel="label"
+                optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+    </div>
+
     <div class="field grid">
-        <label for="query" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Query / Command</label>
+        <label for="query" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Query / Command <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <textarea id="query" pTextarea formControlName="fetchQuery" [autoResize]="true"
                 [placeholder]="syncQueryHint" class="w-full"></textarea>
@@ -45,8 +57,44 @@
             </div>
         </div>
     </div>
+
+    <div class="field grid">
+        <label for="body" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Request Body
+            (Optional)</label>
+        <div class="col-12 md:col-9">
+            <textarea id="body" pTextarea formControlName="requestBody" [autoResize]="true"
+                placeholder='{ "param": "value" }' class="w-full font-mono"></textarea>
+        </div>
+    </div>
+
+    <!-- Pagination Config -->
+    <div class="field grid">
+        <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Pagination</label>
+        <div class="col-12 md:col-9">
+            <p-select formControlName="paginationType" [options]="paginationOptions" optionLabel="label"
+                optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+        </div>
+    </div>
+
+    @if (syncFormGroup.get('paginationType')?.value !== 'NONE') {
+    <div class="field grid">
+        <div class="col-12 md:col-9 md:col-offset-3">
+            <div class="grid p-fluid">
+                <div class="col-6">
+                    <label class="block mb-1 text-sm font-bold">Next Key / Offset Param</label>
+                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. nextLink, offset"
+                        class="w-full" />
+                </div>
+                <div class="col-6">
+                    <label class="block mb-1 text-sm font-bold">Limit / Page Size</label>
+                    <input pInputText formControlName="paginationLimit" placeholder="e.g. 100" class="w-full" />
+                </div>
+            </div>
+        </div>
+    </div>
     }
-    
+    }
+
     @if (mappingRows.length > 0 || syncFormGroup.get('fetchQuery')?.value) {
     <div class="field grid">
         <label class="col-12 font-bold mb-2">Field Mapping</label>
@@ -66,7 +114,7 @@
                                 class="w-full text-sm" />
                         </td>
                         <td>
-                            
+
                             <p-select formControlName="source_path" [options]="availablePaths" [editable]="true"
                                 placeholder="Select or type..." appendTo="body" styleClass="w-full text-sm"></p-select>
                         </td>
@@ -89,9 +137,10 @@
     </div>
     }
 
-    
+
     <div class="field grid">
-        <label for="strategy" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Strategy</label>
+        <label for="strategy" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Sync Strategy <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="strategy" formControlName="syncStrategy" [options]="strategyOptions" optionLabel="label"
                 optionValue="value" styleClass="w-full" appendTo="body"></p-select>
@@ -100,9 +149,10 @@
 
     @if (syncFormGroup.get('syncStrategy')?.value === 'APPEND') {
     <div class="field grid">
-        <label for="pk" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Primary Key</label>
+        <label for="pk" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Primary Key <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
-            
+
             <p-select id="pk" formControlName="primaryKey" [options]="targetColumnOptions" optionLabel="label"
                 optionValue="value" placeholder="Select Primary Key Column" styleClass="w-full"
                 [disabled]="targetColumnOptions.length === 0" appendTo="body"></p-select>
@@ -117,7 +167,7 @@
     </div>
     }
 
-    
+
     @if (previewRows.length > 0) {
     <div class="field grid">
         <div class="col-12 flex justify-content-between align-items-center mb-2">

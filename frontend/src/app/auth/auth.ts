@@ -17,7 +17,7 @@ export class AuthService {
     currentUser = signal<User | null>(null);
 
     constructor(private oauthService: OAuthService) {
-        
+
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
             this.currentUser.set(JSON.parse(storedUser));
@@ -31,18 +31,22 @@ export class AuthService {
     logout() {
         this.currentUser.set(null);
         sessionStorage.removeItem('currentUser');
-        this.oauthService.logOut();
-        
-        this.router.navigate(['/login']);
+        this.oauthService.logOut(true);
+
+        this.router.navigate(['/logout']);
     }
 
-    syncUser(username: string): Observable<User> {
-        return this.http.post<User>(`${this.apiUrl}/auth/login`, { username }).pipe(
+    fetchCurrentUser(): Observable<User> {
+        return this.http.get<User>(`${this.apiUrl}/auth/me`).pipe(
             tap(user => {
                 this.currentUser.set(user);
                 sessionStorage.setItem('currentUser', JSON.stringify(user));
             })
         );
+    }
+
+    syncUser(username: string): Observable<User> {
+        return this.fetchCurrentUser();
     }
 
     get isAuthenticated(): boolean {

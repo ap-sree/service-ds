@@ -28,7 +28,7 @@ export class GenericWidgetComponent implements OnInit {
   loading = true;
   error = '';
 
-  
+
   cardValue: string | number = '-';
   cardColorClass = '';
 
@@ -38,7 +38,7 @@ export class GenericWidgetComponent implements OnInit {
   }
 
   assignCardColor() {
-    
+
     if (this.widgetDef.type === 'CARD') {
       const variants = ['bg-cyan', 'bg-purple', 'bg-orange', 'bg-blue'];
       const index = (this.widgetDef.title.length + (this.widgetDef.id || 0)) % variants.length;
@@ -48,11 +48,12 @@ export class GenericWidgetComponent implements OnInit {
 
   loadData() {
     this.loading = true;
+    this.error = '';
 
-    
+
     let currentUser = this.authService.currentUser();
 
-    
+
     if (!currentUser) {
       const stored = localStorage.getItem('currentUser');
       if (stored) {
@@ -75,25 +76,25 @@ export class GenericWidgetComponent implements OnInit {
     });
   }
 
-  
+
   statusGridItems: { label: string, status: string, color: string }[] = [];
   multiMetricItems: { label: string, value: number, operation: string }[] = [];
 
   processSmartData(res: WidgetDataResponse) {
-    
+
     if (!res || !res.type) return;
 
     const lowerType = res.type.toLowerCase();
 
     if (lowerType === 'card') {
-      
+
       this.cardValue = res.count ?? '-';
-      
+
     }
     else if (lowerType === 'table') {
       this.data = res.items || [];
       if (this.data.length > 0) {
-        
+
         let config = this.widgetDef.queryConfig;
         if (typeof config === 'string') {
           try {
@@ -104,16 +105,16 @@ export class GenericWidgetComponent implements OnInit {
         }
 
         if (config && Array.isArray(config.columns) && config.columns.length > 0) {
-          
+
           this.displayedColumns = config.columns;
         } else {
-          
+
           this.displayedColumns = Object.keys(this.data[0]).filter(k => !k.startsWith('_'));
         }
       }
     }
     else if (lowerType === 'grid' || lowerType === 'status_grid') {
-      
+
       this.statusGridItems = res.items || [];
     }
     else if (lowerType === 'multi_metric') {

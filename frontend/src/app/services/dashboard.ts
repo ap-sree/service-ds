@@ -9,15 +9,21 @@ export interface WidgetDefinition {
     type: 'CARD' | 'TABLE' | 'GRID' | 'STATUS_GRID' | 'MULTI_METRIC';
     dataSourceTable: string;
     refreshInterval?: number;
-    queryConfig?: any; 
+    queryConfig?: any;
     userColumn?: string;
-    settings?: string; 
+    settings?: string;
+}
+
+export interface DashboardConfig {
+    widgets: WidgetDefinition[];
+    refreshInterval?: number;
+    layout?: number[];
 }
 
 export interface WidgetDataResponse {
     type: string;
     count?: number;
-    items?: any[]; 
+    items?: any[];
     label?: string;
     limit?: number;
 }
@@ -43,22 +49,22 @@ export class DashboardService {
         return this.http.put(`${this.apiUrl}/widgets/${id}`, widget);
     }
 
-    
-    getWidgets(username: string): Observable<WidgetDefinition[]> {
-        return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widgets?username=${username}`);
+
+    getWidgets(): Observable<DashboardConfig> {
+        return this.http.get<DashboardConfig>(`${this.apiUrl}/widgets`);
     }
 
-    
+
     getWidgetCatalog(): Observable<WidgetDefinition[]> {
-        return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widget-catalog`);
+        return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widgets/catalog`);
     }
 
-    
+
     getAllWidgets(): Observable<WidgetDefinition[]> {
-        return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/admin/widgets`);
+        return this.http.get<WidgetDefinition[]>(`${this.apiUrl}/widgets/admin`);
     }
 
-    
+
     getWidgetData(widgetId: number, userId?: string | number): Observable<WidgetDataResponse> {
         let url = `${this.apiUrl}/widgets/${widgetId}/data`;
         if (userId) {
@@ -67,12 +73,12 @@ export class DashboardService {
         return this.http.get<WidgetDataResponse>(url);
     }
 
-    
+
     getData(tableName: string, limit: number = 10000): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/data/${tableName}?limit=${limit}`);
     }
 
-    
+
     getLayout(userId: string): Observable<any> {
         return this.http.get(`${this.apiUrl}/dashboard-layout/${userId}`);
     }

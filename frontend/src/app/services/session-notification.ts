@@ -11,7 +11,7 @@ export interface AppNotification {
     body: string;
     action_type: string;
     timestamp: Date;
-    severity?: string; 
+    severity?: string;
 }
 
 @Injectable({
@@ -24,17 +24,17 @@ export class SessionNotificationService implements OnDestroy {
     private readonly apiUrl = environment.apiUrl;
     private pollInterval: any;
 
-    
+
     notifications = signal<AppNotification[]>([]);
 
-    
+
     notificationReceived$ = new Subject<AppNotification>();
 
     constructor() { }
 
     startPolling() {
         if (this.pollInterval) clearInterval(this.pollInterval);
-        this.checkNotifications(); 
+        this.checkNotifications();
         this.pollInterval = setInterval(() => this.checkNotifications(), 10000);
     }
 
@@ -55,23 +55,18 @@ export class SessionNotificationService implements OnDestroy {
     }
 
     checkNotifications() {
-        const username = this.authService.getUsername();
-        const url = username
-            ? `${this.apiUrl}/notifications?user=${username}`
-            : `${this.apiUrl}/notifications`;
-
-        this.http.get<any[]>(url).subscribe({
+        this.http.get<any[]>(`${this.apiUrl}/notifications`).subscribe({
             next: (notifs) => {
                 if (notifs && notifs.length > 0) {
                     notifs.forEach(n => this.processNotification(n));
                 }
             },
-            error: () => {  }
+            error: () => { }
         });
     }
 
     private processNotification(raw: any) {
-        
+
         const notif: AppNotification = {
             title: raw.title,
             body: raw.body,
@@ -80,10 +75,10 @@ export class SessionNotificationService implements OnDestroy {
             severity: 'info'
         };
 
-        
+
         this.notifications.update(current => [notif, ...current]);
 
-        
+
         this.notificationReceived$.next(notif);
     }
 }

@@ -1,8 +1,8 @@
 <div class="layout-wrapper font-family-sans">
-    
+
     <div class="topbar">
         <div class="topbar-left flex align-items-center gap-3">
-            
+
             <p-button icon="pi pi-bars" styleClass="md:hidden" [text]="true" [rounded]="true"
                 (click)="toggleMobileMenu()"></p-button>
 
@@ -13,12 +13,12 @@
         </div>
 
         <div class="topbar-right flex align-items-center gap-2">
-            @if (currentUser) {
+            @if (currentUser || isAuthenticated) {
             <div class="user-profile flex align-items-center gap-2 cursor-pointer p-2 border-round hover:surface-100"
                 (click)="optionsMenu.toggle($event)">
                 <span
                     class="w-2rem h-2rem border-circle surface-200 flex align-items-center justify-content-center text-600 font-bold">
-                    {{ currentUser.username.charAt(0).toUpperCase() }}
+                    {{ (currentUser?.username || 'User').charAt(0).toUpperCase() }}
                 </span>
             </div>
             <p-menu #optionsMenu [popup]="true" [model]="userMenuItems"></p-menu>
@@ -26,13 +26,13 @@
         </div>
     </div>
 
-    
+
     <div class="layout-body">
-        
+
         <div class="sidebar-container" [class.mobile-visible]="mobileMenuVisible">
             <div class="sidebar-content">
 
-                
+
                 <div class="nav-group">
                     <a pRipple routerLink="/dashboard" routerLinkActive="active-item"
                         [routerLinkActiveOptions]="{exact: true}" class="nav-item">
@@ -43,7 +43,7 @@
 
                 <div class="separator"></div>
 
-                
+
                 <div class="nav-group">
                     <div class="nav-header">Utilities</div>
 
@@ -51,15 +51,18 @@
                         <i class="pi pi-file-edit"></i>
                         <span>Form Builder</span>
                     </a>
-
-                </div>
-
-                <div class="separator"></div>
-
-                
-                <div class="nav-group">
-                    <div class="nav-header">PingFederate</div>
-
+                    <a pRipple routerLink="/automation" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-bolt"></i>
+                        <span>Automation</span>
+                    </a>
+                    <a pRipple routerLink="/k8s" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-server"></i>
+                        <span>Kubernetes</span>
+                    </a>
+                    <a pRipple routerLink="/nlp" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-bolt"></i>
+                        <span>Natural Language</span>
+                    </a>
                     <a pRipple routerLink="/policy-visualizer" routerLinkActive="active-item" class="nav-item">
                         <i class="pi pi-sitemap"></i>
                         <span>Policy Visualizer</span>
@@ -68,8 +71,6 @@
                         <i class="pi pi-clone"></i>
                         <span>Policy Comparison</span>
                     </a>
-
-
                 </div>
 
                 @if (isAdmin) {
@@ -89,6 +90,10 @@
                         <i class="pi pi-th-large"></i>
                         <span>Widgets</span>
                     </a>
+                    <a pRipple routerLink="/admin/notifications" routerLinkActive="active-item" class="nav-item">
+                        <i class="pi pi-bell"></i>
+                        <span>Notification Rules</span>
+                    </a>
                     <a pRipple routerLink="/admin/users" routerLinkActive="active-item" class="nav-item">
                         <i class="pi pi-users"></i>
                         <span>Users</span>
@@ -98,7 +103,7 @@
             </div>
         </div>
 
-        
+
         <div class="main-content">
             <div class="content-container">
                 <ng-content></ng-content>

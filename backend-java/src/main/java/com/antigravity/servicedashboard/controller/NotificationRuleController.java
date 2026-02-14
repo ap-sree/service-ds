@@ -2,21 +2,23 @@ package com.antigravity.servicedashboard.controller;
 
 import com.antigravity.servicedashboard.entity.NotificationRule;
 import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/notification-rules")
+@RequestMapping("/notification-rules")
 public class NotificationRuleController {
 
     private final NotificationRuleRepository repository;
+    private final com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo;
 
-    @Autowired
-    public NotificationRuleController(NotificationRuleRepository repository) {
+    public NotificationRuleController(NotificationRuleRepository repository,
+            com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo) {
         this.repository = repository;
+        this.syncRepo = syncRepo;
     }
 
     @GetMapping
@@ -25,15 +27,23 @@ public class NotificationRuleController {
     }
 
     @PostMapping
-    public NotificationRule create(@RequestBody NotificationRule entity) {
+    public NotificationRule create(@Valid @RequestBody NotificationRule entity) {
+        if (entity.getLocalTableName() != null) {
+            syncRepo.findFirstByTargetTableName(entity.getLocalTableName())
+                    .ifPresent(entity::setSyncDefinition);
+        }
         return repository.save(entity);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<NotificationRule> update(@PathVariable Long id, @RequestBody NotificationRule entity) {
+    public ResponseEntity<NotificationRule> update(@PathVariable Long id, @Valid @RequestBody NotificationRule entity) {
         if (!repository.existsById(id))
             return ResponseEntity.notFound().build();
         entity.setId(id);
+        if (entity.getLocalTableName() != null) {
+            syncRepo.findFirstByTargetTableName(entity.getLocalTableName())
+                    .ifPresent(entity::setSyncDefinition);
+        }
         return ResponseEntity.ok(repository.save(entity));
     }
 

@@ -1,62 +1,103 @@
 package com.antigravity.servicedashboard.controller;
 
+import com.antigravity.servicedashboard.dto.DashboardConfigDTO;
+import com.antigravity.servicedashboard.dto.WidgetDefinitionDTO;
 import com.antigravity.servicedashboard.entity.WidgetDefinition;
+import com.antigravity.servicedashboard.mapper.WidgetDefinitionMapper;
+import com.antigravity.servicedashboard.model.UserPreferences;
+import com.antigravity.servicedashboard.service.AppConfigService;
+import com.antigravity.servicedashboard.service.UserService;
 import com.antigravity.servicedashboard.service.WidgetService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/widgets")
 public class WidgetDefinitionController {
 
     private final WidgetService service;
+    private final UserService userService;
+    private final AppConfigService appConfigService;
+    private final WidgetDefinitionMapper widgetMapper;
 
-    @Autowired
-    public WidgetDefinitionController(WidgetService service) {
+    public WidgetDefinitionController(WidgetService service, UserService userService,
+            AppConfigService appConfigService, WidgetDefinitionMapper widgetMapper) {
         this.service = service;
+        this.userService = userService;
+        this.appConfigService = appConfigService;
+        this.widgetMapper = widgetMapper;
     }
 
-    @GetMapping("/widgets")
-    public ResponseEntity<Object> getWidgets(@RequestParam(required = false) String username) {
-        if (username == null || username.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Username is required to fetch dashboard widgets.");
-        }
-
+    @GetMapping
+    public ResponseEntity<DashboardConfigDTO> getWidgets(@AuthenticationPrincipal Jwt jwt) {
         try {
-            List<WidgetDefinition> result = service.getWidgetsForUser(username);
-            return ResponseEntity.ok(result);
+            // Extract username from JWT subject claim
+            String username = jwt.getSubject();
+
+            List<WidgetDefinition> widgets = service.getWidgetsForUser(username);
+            List<WidgetDefinitionDTO> widgetDTOs = widgetMapper.toDTOList(widgets);
+
+            // Get user preferences
+            UserPreferences userPrefs = userService.getPreferences(username);
+
+            // Use user's refresh interval if set, otherwise fall back to global config
+            Integer refreshInterval = null;
+            List<Long> layout = null;
+
+            if (userPrefs != null) {
+                refreshInterval = userPrefs.getRefreshInterval();
+                layout = userPrefs.getWidgetIds();
+            }
+
+            // Fallback to global config if user hasn't set refresh interval
+            if (refreshInterval == null) {
+                UserPreferences globalPrefs = appConfigService.getGlobalDashboardLayout();
+                refreshInterval = globalPrefs.getRefreshInterval();
+            }
+
+            DashboardConfigDTO config = new DashboardConfigDTO(widgetDTOs, refreshInterval, layout);
+            return ResponseEntity.ok(config);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body("Error fetching widgets: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 
-    @GetMapping("/widget-catalog")
-    public ResponseEntity<List<WidgetDefinition>> getCatalog() {
-        return ResponseEntity.ok(service.getCatalog());
+    @GetMapping("/catalog")
+    public ResponseEntity<List<WidgetDefinitionDTO>> getCatalog() {
+        List<WidgetDefinition> entities = service.getCatalog();
+        return ResponseEntity.ok(widgetMapper.toDTOList(entities));
     }
 
-    @GetMapping("/admin/widgets")
-    public List<WidgetDefinition> getAllDefinitions() {
-        return service.getAllDefinitions();
+    @GetMapping("/admin")
+    public ResponseEntity<List<WidgetDefinitionDTO>> getAllDefinitions() {
+        List<WidgetDefinition> entities = service.getAllDefinitions();
+        return ResponseEntity.ok(widgetMapper.toDTOList(entities));
     }
 
-    @PostMapping("/widgets")
-    public WidgetDefinition create(@RequestBody WidgetDefinition entity) {
-        return service.create(entity);
+    @PostMapping
+    public ResponseEntity<WidgetDefinitionDTO> create(@Valid @RequestBody WidgetDefinitionDTO dto) {
+        WidgetDefinition entity = widgetMapper.toEntity(dto);
+        WidgetDefinition saved = service.create(entity);
+        return ResponseEntity.ok(widgetMapper.toDTO(saved));
     }
 
-    @PutMapping("/widgets/{id}")
-    public ResponseEntity<WidgetDefinition> update(@PathVariable Long id, @RequestBody WidgetDefinition entity) {
+    @PutMapping("/{id}")
+    public ResponseEntity<WidgetDefinitionDTO> update(@PathVariable Long id,
+            @Valid @RequestBody WidgetDefinitionDTO dto) {
+        WidgetDefinition entity = widgetMapper.toEntity(dto);
         return service.update(id, entity)
+                .map(widgetMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/widgets/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (service.delete(id)) {
             return ResponseEntity.ok().build();

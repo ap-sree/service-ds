@@ -185,6 +185,10 @@ export class UiLayoutComponent implements OnInit {
     @Input() isAdmin: boolean = false;
     @Output() logout = new EventEmitter<void>();
 
+    get isAuthenticated() {
+        return this.authService.isAuthenticated;
+    }
+
     mobileMenuVisible = false;
     userMenuItems: MenuItem[] = [];
 

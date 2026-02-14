@@ -1,6 +1,7 @@
 export interface UserPreferences {
     widgetIds?: number[];
     theme?: string;
+    refreshInterval?: number;
 }
 
 export interface User {

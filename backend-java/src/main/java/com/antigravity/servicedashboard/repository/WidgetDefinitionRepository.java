@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface WidgetDefinitionRepository extends JpaRepository<WidgetDefinition, Long> {
+    @Transactional
     void deleteByDataSourceTable(String dataSourceTable);
 
     @Transactional

@@ -2,6 +2,9 @@ package com.antigravity.servicedashboard.entity;
 
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
 @Entity
 @Table(name = "widget_definitions")
 public class WidgetDefinition {
@@ -11,12 +14,16 @@ public class WidgetDefinition {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "{widget.title.required}")
     private String title;
 
     @Column(nullable = false)
+    @NotBlank(message = "{widget.type.required}")
+    @Pattern(regexp = "^(TABLE|CARD|STATUS_GRID|MULTI_METRIC)$", message = "{widget.type.pattern}")
     private String type;
 
     @Column(name = "data_source_table", nullable = false)
+    @NotBlank(message = "{widget.dataSourceTable.required}")
     private String dataSourceTable;
 
     @Column(name = "query_config")
@@ -25,6 +32,18 @@ public class WidgetDefinition {
 
     @Column(name = "user_column")
     private String userColumn;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sync_id")
+    private SyncDefinition syncDefinition;
+
+    public SyncDefinition getSyncDefinition() {
+        return syncDefinition;
+    }
+
+    public void setSyncDefinition(SyncDefinition syncDefinition) {
+        this.syncDefinition = syncDefinition;
+    }
 
     public Long getId() {
         return id;

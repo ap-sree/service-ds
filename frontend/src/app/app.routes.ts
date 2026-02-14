@@ -3,10 +3,8 @@ import { DashboardComponent } from './components/dashboard/dashboard';
 import { AdminComponent } from './components/admin/admin';
 import { LoginComponent } from './components/login/login';
 import { authGuard, adminGuard } from './auth.guard';
-
 export const routes: Routes = [
-    { path: 'login', component: LoginComponent },
-
+    { path: 'logout', component: LoginComponent },
     { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
     {
         path: 'form-builder',
@@ -23,8 +21,21 @@ export const routes: Routes = [
         loadComponent: () => import('./components/policy-comparison/policy-comparison').then(m => m.PolicyComparisonComponent),
         canActivate: [authGuard]
     },
-
-    
+    {
+        path: 'automation',
+        loadComponent: () => import('./components/automation/automation-list/automation-list').then(m => m.AutomationListComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'k8s',
+        loadComponent: () => import('./components/k8s/k8s-dashboard').then(m => m.K8sDashboardComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'nlp',
+        loadComponent: () => import('./components/nlp/nlp').then(m => m.NLPComponent),
+        canActivate: [authGuard]
+    },
     {
         path: 'admin',
         component: AdminComponent,
@@ -52,7 +63,5 @@ export const routes: Routes = [
             }
         ]
     },
-
-    
     { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
 ];

@@ -1,0 +1,113 @@
+<div class="px-5 py-3 md:px-6 md:py-4">
+    <p-confirmDialog></p-confirmDialog>
+
+    <div class="split-layout">
+        <h2 class="text-2xl font-bold mb-4">Automation Tasks</h2>
+
+        <div class="flex justify-content-between align-items-center mb-3">
+            <p-iconfield iconPosition="left">
+                <p-inputicon styleClass="pi pi-search" />
+                <input type="text" pInputText (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                    placeholder="Search..." />
+            </p-iconfield>
+
+            <p-button label="New Task" icon="pi pi-plus" (click)="openTaskDialog()"></p-button>
+        </div>
+
+        <p-card header="Registered Tasks" styleClass="p-0">
+            <p-table #dt [value]="tasks" [rows]="10" [paginator]="true"
+                [globalFilterFields]="['name', 'id', 'lastStatus']" [rowHover]="true" dataKey="id"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [showCurrentPageReport]="true">
+
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="id" style="width: 10%">ID <p-sortIcon field="id"></p-sortIcon></th>
+                        <th pSortableColumn="name" style="width: 25%">Name <p-sortIcon field="name"></p-sortIcon></th>
+                        <th pSortableColumn="lastRunAt" style="width: 20%">Last Run <p-sortIcon
+                                field="lastRunAt"></p-sortIcon></th>
+                        <th pSortableColumn="lastStatus" style="width: 15%">Last Status <p-sortIcon
+                                field="lastStatus"></p-sortIcon></th>
+                        <th style="width: 30%">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-task>
+                    <tr>
+                        <td>{{ task.id }}</td>
+                        <td class="font-bold">{{ task.name }}</td>
+                        <td>{{ task.lastRunAt ? (task.lastRunAt | date:'short') : '-' }}</td>
+                        <td>
+                            <p-tag [value]="task.lastStatus || 'NEW'" [severity]="getSeverity(task.lastStatus)"></p-tag>
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="success"
+                                    (click)="runTask(task)" pTooltip="Run Task" tooltipPosition="top"></p-button>
+
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                                    (click)="openTaskDialog(task.id)" pTooltip="Edit"></p-button>
+
+                                <p-button icon="pi pi-history" [rounded]="true" [text]="true" severity="secondary"
+                                    (click)="openTaskDialog(task.id)" pTooltip="History (in Edit View)"></p-button>
+
+                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                    (click)="deleteTask(task)" pTooltip="Delete"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="5" class="text-center p-4">No automation tasks found.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </p-card>
+    </div>
+    <p-dialog header="Enter Runtime Parameters" [(visible)]="displayRuntimeParamsDialog" [modal]="true"
+        [style]="{width: '30vw'}" [resizable]="false" [draggable]="false" appendTo="body">
+
+        <div class="flex flex-column gap-3">
+            <p *ngIf="runtimeParams.length > 0">Please provide values for the following dynamic parameters:</p>
+            <div *ngFor="let param of runtimeParams" class="field">
+                <label class="block font-bold mb-2">{{ param }}</label>
+                <input pInputText [(ngModel)]="runtimeValues[param]" [name]="param" class="w-full" />
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancel" class="p-button-text" (click)="displayRuntimeParamsDialog = false"></button>
+            <button pButton label="Run" icon="pi pi-check" (click)="runWithParams()"></button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Execution Result Modal -->
+    <p-dialog [header]="'Execution Result #' + executionResult?.id" [(visible)]="displayResultDialog" [modal]="true"
+        [style]="{width: '50vw'}" [resizable]="false" [draggable]="false" appendTo="body"
+        (onHide)="executionResult = null">
+
+        <div *ngIf="executionResult">
+            <div class="mb-3">
+                <label class="font-bold block">Status</label>
+                <p-tag [value]="executionResult.status" [severity]="getSeverity(executionResult.status)"></p-tag>
+            </div>
+
+            <div class="mb-3">
+                <label class="font-bold block">Input Payload</label>
+                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
+                    style="white-space: pre-wrap; max-height: 200px;">{{ executionResult.inputPayload }}</pre>
+            </div>
+
+            <div class="mb-3">
+                <label class="font-bold block">Output Result</label>
+                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
+                    style="white-space: pre-wrap; max-height: 400px;">{{ executionResult.outputResult }}</pre>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton label="Close" icon="pi pi-times" (click)="displayResultDialog = false"></button>
+        </ng-template>
+    </p-dialog>
+
+    <p-toast></p-toast>
+</div>

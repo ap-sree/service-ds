@@ -1,0 +1,274 @@
+<div class="card p-0 m-0 border-none shadow-none relative h-full">
+    <p-tabs value="config">
+        <p-tablist>
+            <p-tab value="config">Configuration</p-tab>
+            <p-tab value="history" *ngIf="!isNew">Execution History</p-tab>
+        </p-tablist>
+        <p-tabpanels>
+            <p-tabpanel value="config">
+                <form [formGroup]="taskForm" class="grid p-fluid">
+                    <div class="col-12 md:col-6">
+                        <label class="font-bold block mb-2">Task Name</label>
+                        <input pInputText formControlName="name" placeholder="Enter task name" />
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label class="font-bold block mb-2">Data Source</label>
+                        <p-select [options]="sources" formControlName="sourceId" optionLabel="name" optionValue="id"
+                            placeholder="Select a Source" styleClass="w-full" (onChange)="onSourceChange()"
+                            appendTo="body"></p-select>
+                    </div>
+
+                    <div class="col-12" *ngIf="showMethodDropdown">
+                        <label class="font-bold block mb-2">HTTP Method</label>
+                        <p-select [options]="httpMethods" formControlName="httpMethod" placeholder="Select Method"
+                            styleClass="w-full">
+                        </p-select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="font-bold block mb-2">Fetch Query / Command</label>
+                        <div class="flex flex-column gap-2">
+                            <textarea pTextarea formControlName="fetchQuery" rows="3" class="font-mono w-full"
+                                [placeholder]="queryHint"></textarea>
+
+                            <!-- Root Path Extraction -->
+                            <div class="mt-2" *ngIf="taskForm.get('sourceId')?.value">
+                                <label class="font-bold block mb-1 text-sm">Root Path (Optional)</label>
+                                <div class="p-inputgroup">
+                                    <span class="p-inputgroup-addon text-sm"><i class="pi pi-sitemap"></i></span>
+                                    <input pInputText formControlName="rootPath" placeholder="e.g. value, data.items"
+                                        class="p-inputtext-sm" />
+                                </div>
+                                <small class="text-gray-500">Specify the key containing the list (e.g., 'value' for
+                                    Graph API).</small>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+                    <div class="col-12" *ngIf="mappingRows.length > 0 || taskForm.get('fetchQuery')?.value">
+                        <label class="font-bold block mb-2">Field Mapping</label>
+                        <p-table [value]="mappingRows.controls" styleClass="p-datatable-sm">
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th style="width: 40%">Target Field</th>
+                                    <th style="width: 40%">Source Path</th>
+                                    <th style="width: 20%">Action</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-control let-i="rowIndex">
+                                <tr [formGroup]="control">
+                                    <td>
+                                        <input pInputText formControlName="target" placeholder="e.g. user_id"
+                                            class="w-full" />
+                                    </td>
+                                    <td>
+                                        <input pInputText formControlName="source" placeholder="e.g. id, data.name"
+                                            class="w-full" />
+                                    </td>
+                                    <td>
+                                        <button pButton icon="pi pi-trash"
+                                            class="p-button-text p-button-danger p-button-sm"
+                                            (click)="removeMappingRow(i)"></button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="footer">
+                                <tr>
+                                    <td colspan="3">
+                                        <button pButton label="Add Field" icon="pi pi-plus"
+                                            class="p-button-text p-button-sm" (click)="addMappingRow()"></button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="flex align-items-center justify-content-between mb-2">
+                            <label class="font-bold">Request Body</label>
+                            <div class="flex gap-2">
+                                <button pButton label="Form" size="small"
+                                    [outlined]="taskForm.get('bodyType')?.value !== 'form'"
+                                    (click)="taskForm.patchValue({bodyType: 'form'})"></button>
+                                <button pButton label="JSON" size="small"
+                                    [outlined]="taskForm.get('bodyType')?.value !== 'json'"
+                                    (click)="taskForm.patchValue({bodyType: 'json'})"></button>
+                            </div>
+                        </div>
+
+                        <!-- JSON View -->
+                        <textarea *ngIf="taskForm.get('bodyType')?.value === 'json'" pTextarea formControlName="body"
+                            rows="5" class="font-mono w-full" placeholder='{ "param": "value" }'></textarea>
+
+                        <!-- Form View -->
+                        <div *ngIf="taskForm.get('bodyType')?.value === 'form'">
+                            <p-table [value]="bodyParams" styleClass="p-datatable-sm">
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th style="width: 30%">Key</th>
+                                        <th style="width: 20%">Type</th>
+                                        <th style="width: 40%">Value / Variable</th>
+                                        <th style="width: 10%">Action</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-control let-i="rowIndex">
+                                    <tr [formGroup]="control">
+                                        <td>
+                                            <input pInputText formControlName="key" placeholder="Key" class="w-full" />
+                                        </td>
+                                        <td>
+                                            <select formControlName="type"
+                                                class="w-full p-2 border-round surface-border">
+                                                <option value="static">Static</option>
+                                                <option value="dynamic">Dynamic</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input pInputText formControlName="value"
+                                                [placeholder]="control.get('type')?.value === 'dynamic' ? 'Variable Name' : 'Value'"
+                                                class="w-full" />
+                                        </td>
+                                        <td>
+                                            <button pButton icon="pi pi-trash"
+                                                class="p-button-text p-button-danger p-button-sm"
+                                                (click)="removeBodyParam(i)"></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="footer">
+                                    <tr>
+                                        <td colspan="4">
+                                            <button pButton label="Add Parameter" icon="pi pi-plus"
+                                                class="p-button-text p-button-sm" (click)="addBodyParam()"></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="col-12">
+                        <label class="font-bold block mb-2">Pagination</label>
+                        <div class="grid">
+                            <div class="col-12 md:col-4">
+                                <p-select formControlName="paginationType" [options]="paginationOptions"
+                                    optionLabel="label" optionValue="value" styleClass="w-full"
+                                    appendTo="body"></p-select>
+                            </div>
+                            <div class="col-12 md:col-8 grid" *ngIf="taskForm.get('paginationType')?.value !== 'NONE'">
+                                <div class="col-6">
+                                    <input pInputText formControlName="paginationNextKey"
+                                        placeholder="Next Key / Offset Param" class="w-full" />
+                                </div>
+                                <div class="col-6">
+                                    <input pInputText formControlName="paginationLimit" placeholder="Limit / Page Size"
+                                        class="w-full" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Preview Section -->
+                <div *ngIf="previewRows.length > 0" class="mt-4">
+                    <h4 class="mb-2">Preview Result</h4>
+                    <p-table [value]="previewRows" styleClass="p-datatable-sm p-datatable-gridlines">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th *ngFor="let col of getPreviewCols()">{{ col }}</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row>
+                            <tr>
+                                <td *ngFor="let col of getPreviewCols()">
+                                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis"
+                                        style="max-width: 200px">
+                                        {{ row[col] }}
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+
+            </p-tabpanel>
+
+            <p-tabpanel value="history" *ngIf="!isNew">
+                <p-table [value]="history" [loading]="loadingHistory" styleClass="p-datatable-sm" [rows]="5"
+                    [paginator]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Started</th>
+                            <th>Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-exec>
+                        <tr>
+                            <td>{{ exec.id }}</td>
+                            <td><p-tag [value]="exec.status" [severity]="getSeverity(exec.status)"></p-tag></td>
+                            <td>{{ exec.startedAt | date:'medium' }}</td>
+                            <td>
+                                <button pButton icon="pi pi-eye" class="p-button-text p-button-sm"
+                                    (click)="showExecution(exec)" pTooltip="View Details"></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+
+    <!-- Execution Result Modal -->
+    <p-dialog [header]="'Execution #' + selectedExecution?.id" [(visible)]="displayExecutionDialog" [modal]="true"
+        [style]="{width: '50vw'}" [resizable]="false" [draggable]="false" appendTo="body"
+        (onHide)="selectedExecution = null">
+
+        <div *ngIf="selectedExecution">
+            <div class="mb-3">
+                <label class="font-bold block">Status</label>
+                <p-tag [value]="selectedExecution.status" [severity]="getSeverity(selectedExecution.status)"></p-tag>
+            </div>
+
+            <div class="mb-3">
+                <label class="font-bold block">Input Payload</label>
+                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
+                    style="white-space: pre-wrap; max-height: 200px;">{{ selectedExecution.inputPayload }}</pre>
+            </div>
+
+            <div class="mb-3">
+                <label class="font-bold block">Output Result</label>
+                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
+                    style="white-space: pre-wrap; max-height: 300px;">{{ selectedExecution.outputResult }}</pre>
+            </div>
+        </div>
+
+    </p-dialog>
+
+    <!-- Runtime Parameters Dialog -->
+    <p-dialog header="Enter Runtime Parameters" [(visible)]="displayRuntimeParamsDialog" [modal]="true"
+        [style]="{width: '30vw'}" [resizable]="false" [draggable]="false" appendTo="body">
+
+        <div class="flex flex-column gap-3">
+            <p *ngIf="runtimeParams.length > 0">Please provide values for the following dynamic parameters:</p>
+            <div *ngFor="let param of runtimeParams" class="field">
+                <label class="block font-bold mb-2">{{ param }}</label>
+                <input pInputText [(ngModel)]="runtimeValues[param]" [name]="param" class="w-full" />
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button pButton label="Cancel" class="p-button-text" (click)="displayRuntimeParamsDialog = false"></button>
+            <button pButton label="Run" icon="pi pi-check" (click)="runWithParams(runtimeValues)"></button>
+        </ng-template>
+    </p-dialog>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton label="Cancel" class="p-button-secondary p-button-text" (click)="close()"></button>
+
+        <button pButton label="Save" icon="pi pi-save" class="p-button-primary" (click)="save()"></button>
+    </div>

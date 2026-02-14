@@ -8,4 +8,6 @@ public interface SyncDefinitionRepository extends JpaRepository<SyncDefinition, 
     List<SyncDefinition> findBySyncMode(String syncMode);
 
     List<SyncDefinition> findBySourceId(Long sourceId);
+
+    java.util.Optional<SyncDefinition> findFirstByTargetTableName(String targetTableName);
 }

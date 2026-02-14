@@ -1,53 +1,63 @@
 package com.antigravity.servicedashboard.controller;
 
+import com.antigravity.servicedashboard.dto.UserDTO;
 import com.antigravity.servicedashboard.entity.User;
+import com.antigravity.servicedashboard.mapper.UserMapper;
 import com.antigravity.servicedashboard.service.UserService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService service;
+    private final UserMapper userMapper;
 
-    public UserController(UserService service) {
+    public UserController(UserService service, UserMapper userMapper) {
         this.service = service;
+        this.userMapper = userMapper;
     }
 
-    @PostMapping("/auth/login")
-    public ResponseEntity<User> login(@RequestBody User user) {
-        if (user.getUsername() == null)
-            throw new IllegalArgumentException("Username required");
-
-        User verifiedUser = service.verifyOrCreate(user.getUsername());
-        return ResponseEntity.ok(verifiedUser);
+    @GetMapping
+    public ResponseEntity<List<UserDTO>> getUsers() {
+        List<User> users = service.getAll();
+        return ResponseEntity.ok(userMapper.toDTOList(users));
     }
 
-    @GetMapping("/users")
-    public List<User> getUsers() {
-        return service.getAll();
-    }
-
-    @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody User user) {
+    @PostMapping
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserDTO dto) {
+        User user = userMapper.toEntity(dto);
         return service.create(user)
+                .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new IllegalArgumentException("User already exists"));
     }
 
-    @PutMapping("/users/{username}/role")
-    public ResponseEntity<User> updateRole(@PathVariable String username,
-            @RequestBody User user) {
-        return service.updateRole(username, user.getRole())
+    @PutMapping("/{username}/role")
+    public ResponseEntity<UserDTO> updateRole(@PathVariable String username,
+            @Valid @RequestBody UserDTO dto) {
+        return service.updateRole(username, dto.getRole())
+                .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/users/{username}")
+    @PutMapping("/{username}")
+    public ResponseEntity<UserDTO> updateUser(@PathVariable String username, @Valid @RequestBody UserDTO dto) {
+        User user = userMapper.toEntity(dto);
+        return service.updateUser(username, user)
+                .map(userMapper::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{username}")
+
     public ResponseEntity<Void> deleteUser(@PathVariable String username) {
         if (service.delete(username)) {
             return ResponseEntity.ok().build();
@@ -55,17 +65,19 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/users/{username}/preferences")
+    @GetMapping("/{username}/preferences")
+
     public ResponseEntity<com.antigravity.servicedashboard.model.UserPreferences> getPreferences(
             @PathVariable String username) {
         com.antigravity.servicedashboard.model.UserPreferences prefs = service.getPreferences(username);
         return ResponseEntity.ok(prefs);
     }
 
-    @PostMapping("/users/{username}/preferences")
-    public ResponseEntity<User> updatePreferences(@PathVariable String username,
+    @PostMapping("/{username}/preferences")
+    public ResponseEntity<UserDTO> updatePreferences(@PathVariable String username,
             @RequestBody com.antigravity.servicedashboard.model.UserPreferences prefs) {
         return service.updatePreferences(username, prefs)
+                .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

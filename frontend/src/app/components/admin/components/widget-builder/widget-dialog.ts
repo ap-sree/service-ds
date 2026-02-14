@@ -82,20 +82,20 @@ export class WidgetDialogComponent implements OnInit {
         this.widgetForm = this.fb.group({
             title: ['', Validators.required],
             type: ['TABLE', Validators.required],
-            dataSourceTable: [''],
+            dataSourceTable: ['', Validators.required],
             userColumn: [''],
-            globalFilter: [''], 
-            
+            globalFilter: [''],
+
             selectedColumns: [[]],
-            
+
             statusLabelColumn: [''],
             statusValueColumn: [''],
             statusRules: this.fb.array([]),
-            
+
             metrics: this.fb.array([])
         });
 
-        
+
         if (!this.isEditing) {
             this.addStatusRule();
         }
@@ -161,7 +161,7 @@ export class WidgetDialogComponent implements OnInit {
             this.sourceService.getTableSchema(w.dataSourceTable).subscribe(cols => {
                 this.tableColumns = cols;
 
-                
+
                 if (w.queryConfig) {
                     try {
                         const c = typeof w.queryConfig === 'string' ? JSON.parse(w.queryConfig) : w.queryConfig;
@@ -212,9 +212,9 @@ export class WidgetDialogComponent implements OnInit {
         const formVal = this.widgetForm.getRawValue();
         this.loading = true;
 
-        
+
         let queryConfig: any = {
-            globalFilter: formVal.globalFilter 
+            globalFilter: formVal.globalFilter
         };
 
         if (formVal.type === 'TABLE' && formVal.selectedColumns?.length > 0) {
@@ -231,7 +231,7 @@ export class WidgetDialogComponent implements OnInit {
             ...formVal,
             queryConfig: JSON.stringify(queryConfig)
         };
-        
+
         delete payload.selectedColumns;
         delete payload.statusLabelColumn;
         delete payload.statusValueColumn;

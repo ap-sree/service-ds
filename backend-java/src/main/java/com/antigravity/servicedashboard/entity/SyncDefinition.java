@@ -1,6 +1,9 @@
 package com.antigravity.servicedashboard.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,24 +15,38 @@ public class SyncDefinition {
     private Long id;
 
     @Column(name = "source_id", nullable = false)
+    @NotNull(message = "{sync.sourceId.required}")
     private Long sourceId;
 
     @Column(name = "target_table_name", nullable = false)
+    @NotBlank(message = "{sync.targetTableName.required}")
+    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "{sync.targetTableName.pattern}")
     private String targetTableName;
 
     @Lob
     @Column(name = "fetch_query", nullable = false)
+    @NotBlank(message = "{sync.fetchQuery.required}")
     private String fetchQuery;
 
+    @Column(name = "http_method")
+    @Pattern(regexp = "^(GET|POST|PUT|DELETE|PATCH)$", message = "{sync.httpMethod.pattern}")
+    private String httpMethod = "GET";
+
+    @Lob
+    @Column(name = "request_body")
+    private String requestBody;
+
     @Column(name = "sync_mode", nullable = false)
-    private String syncMode; 
+    @NotBlank(message = "{sync.syncMode.required}")
+    @Pattern(regexp = "^(MANUAL|SCHEDULED)$", message = "{sync.syncMode.pattern}")
+    private String syncMode;
 
     @Column(name = "schedule_config")
     private String scheduleConfig;
 
     @Lob
     @Column(name = "field_mapping")
-    private String fieldMapping; 
+    private String fieldMapping;
 
     @Column(name = "last_run_at")
     private LocalDateTime lastRunAt;
@@ -38,12 +55,25 @@ public class SyncDefinition {
     private String lastStatus;
 
     @Column(name = "sync_strategy")
-    private String syncStrategy; 
+    @NotBlank(message = "{sync.syncStrategy.required}")
+    @Pattern(regexp = "^(RELOAD|APPEND)$", message = "{sync.syncStrategy.pattern}")
+    private String syncStrategy;
 
     @Column(name = "primary_key")
     private String primaryKey;
 
-    
+    @Lob
+    @Column(name = "pagination_config")
+    private String paginationConfig;
+
+    public String getPaginationConfig() {
+        return paginationConfig;
+    }
+
+    public void setPaginationConfig(String paginationConfig) {
+        this.paginationConfig = paginationConfig;
+    }
+
     public Long getId() {
         return id;
     }
@@ -74,6 +104,22 @@ public class SyncDefinition {
 
     public void setFetchQuery(String fetchQuery) {
         this.fetchQuery = fetchQuery;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
+    public void setHttpMethod(String httpMethod) {
+        this.httpMethod = httpMethod;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
     }
 
     public String getSyncMode() {
@@ -131,4 +177,27 @@ public class SyncDefinition {
     public void setPrimaryKey(String primaryKey) {
         this.primaryKey = primaryKey;
     }
+
+    @OneToMany(mappedBy = "syncDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<WidgetDefinition> widgets = new java.util.ArrayList<>();
+
+    public java.util.List<WidgetDefinition> getWidgets() {
+        return widgets;
+    }
+
+    public void setWidgets(java.util.List<WidgetDefinition> widgets) {
+        this.widgets = widgets;
+    }
+
+    @OneToMany(mappedBy = "syncDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<NotificationRule> notificationRules = new java.util.ArrayList<>();
+
+    public java.util.List<NotificationRule> getNotificationRules() {
+        return notificationRules;
+    }
+
+    public void setNotificationRules(java.util.List<NotificationRule> notificationRules) {
+        this.notificationRules = notificationRules;
+    }
+
 }

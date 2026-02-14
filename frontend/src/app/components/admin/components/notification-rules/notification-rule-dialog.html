@@ -1,7 +1,7 @@
 <form [formGroup]="ruleForm" class="p-fluid">
     <div class="field grid">
         <label for="localTableName" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Target Sync
-            Table</label>
+            Table <span class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <p-select id="localTableName" formControlName="localTableName" [options]="uniqueTables"
                 (onChange)="onRuleTableChange()" placeholder="Select Table" [editable]="true" styleClass="w-full"
@@ -28,13 +28,14 @@
         </div>
     </div>
 
-    
+
     <div class="field grid">
-        <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Condition</label>
+        <label class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Condition <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <div class="surface-ground p-3 border-round border-1 surface-border" [formGroup]="ruleConditionForm">
 
-                
+
                 <div class="flex gap-2 mb-2">
                     <div class="field flex-1 mb-0">
                         <label class="text-sm">Operation</label>
@@ -48,14 +49,14 @@
                     </div>
                 </div>
 
-                
+
                 <div class="field mb-2">
                     <label class="text-sm">Filter (SQL WHERE)</label>
                     <input type="text" pInputText formControlName="condition" placeholder="e.g. status='FAILED'"
                         class="w-full" />
                 </div>
 
-                
+
                 <div class="flex gap-2 align-items-end">
                     <span class="mb-2 font-bold">IF Result</span>
                     <div class="field flex-1 mb-0">
@@ -73,14 +74,16 @@
     </div>
 
     <div class="field grid">
-        <label for="titleTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Title Template</label>
+        <label for="titleTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Title Template <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <input id="titleTemplate" type="text" pInputText formControlName="titleTemplate" class="w-full" />
         </div>
     </div>
 
     <div class="field grid">
-        <label for="messageTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Message Template</label>
+        <label for="messageTemplate" class="col-12 mb-2 md:col-3 md:mb-0 font-bold">Message Template <span
+                class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
             <textarea id="messageTemplate" rows="2" pTextarea formControlName="messageTemplate"
                 class="w-full"></textarea>
@@ -93,12 +96,14 @@
         <div class="col-12 md:col-9">
             <div class="flex gap-3">
                 <div class="flex-1">
-                    <label for="actionType" class="block text-sm mb-1">Notification Type</label>
+                    <label for="actionType" class="block text-sm mb-1">Notification Type <span
+                            class="text-red-500">*</span></label>
                     <p-select id="actionType" formControlName="actionType" [options]="actionTypes" optionLabel="label"
                         optionValue="value" styleClass="w-full" appendTo="body"></p-select>
                 </div>
                 <div class="flex-1">
-                    <label for="scheduleType" class="block text-sm mb-1">Schedule Type</label>
+                    <label for="scheduleType" class="block text-sm mb-1">Schedule Type <span
+                            class="text-red-500">*</span></label>
                     <p-select id="scheduleType" formControlName="scheduleType" [options]="scheduleTypes"
                         optionLabel="label" optionValue="value" styleClass="w-full" appendTo="body"></p-select>
                 </div>

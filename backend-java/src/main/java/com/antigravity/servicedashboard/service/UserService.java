@@ -78,4 +78,13 @@ public class UserService {
             }
         });
     }
+
+    public Optional<User> updateUser(String username, User updatedUser) {
+        return repository.findById(username).map(user -> {
+            if (updatedUser.getRole() != null) {
+                user.setRole(updatedUser.getRole());
+            }
+            return repository.save(user);
+        });
+    }
 }
