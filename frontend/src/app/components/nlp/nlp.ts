@@ -7,7 +7,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { PanelModule } from 'primeng/panel';
-import { TabsModule } from 'primeng/tabs'; // Using TabsModule for now, or unified Tabs
+import { TabsModule } from 'primeng/tabs';
 import { Tabs } from 'primeng/tabs';
 import { TabList } from 'primeng/tabs';
 import { Tab } from 'primeng/tabs';

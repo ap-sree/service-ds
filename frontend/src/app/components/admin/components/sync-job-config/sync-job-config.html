@@ -33,7 +33,12 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-job>
                     <tr>
-                        <td class="font-bold">{{job.targetTableName}}</td>
+                        <td class="font-bold">
+                            @if (job.schemaChanged) {
+                            <i class="pi pi-exclamation-triangle text-orange-500 mr-1" pTooltip="Needs review"></i>
+                            }
+                            {{job.targetTableName}}
+                        </td>
                         <td>
                             {{job.syncMode}}
                             @if (job.scheduleConfig && job.syncMode !== 'MANUAL') {
@@ -42,7 +47,7 @@
                         </td>
                         <td>
                             <span class="font-bold"
-                                [ngClass]="{'text-green-500': job.lastStatus === 'SUCCESS', 'text-red-500': job.lastStatus && job.lastStatus !== 'SUCCESS', 'text-orange-500': !job.lastStatus}">
+                                [class]="{'text-green-500': job.lastStatus === 'SUCCESS', 'text-red-500': job.lastStatus && job.lastStatus !== 'SUCCESS', 'text-orange-500': !job.lastStatus}">
                                 {{job.lastStatus || 'Pending'}}
                             </span>
                         </td>

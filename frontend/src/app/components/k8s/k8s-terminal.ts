@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, AfterViewInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, input, OnDestroy, AfterViewInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
 import { Terminal } from '@xterm/xterm';
@@ -20,10 +20,10 @@ import { FitAddon } from '@xterm/addon-fit';
     encapsulation: ViewEncapsulation.None
 })
 export class K8sTerminalComponent implements AfterViewInit, OnDestroy {
-    @Input() namespace = 'default';
-    @Input() pod = '';
-    @Input() container = '';
-    @Input() command = '/bin/sh';
+    namespace = input<string>('default');
+    pod = input<string>('');
+    container = input<string>('');
+    command = input<string>('/bin/sh');
 
     @ViewChild('terminal') terminalDiv!: ElementRef;
 
@@ -48,16 +48,16 @@ export class K8sTerminalComponent implements AfterViewInit, OnDestroy {
 
         this.connect();
 
-        // Resize observer
+
         new ResizeObserver(() => this.fitAddon.fit()).observe(this.terminalDiv.nativeElement);
     }
 
     connect() {
-        if (!this.pod) return;
+        if (!this.pod()) return;
 
-        // Remove /api suffix from environment.apiUrl since WebSocket endpoint is at root
+
         const wsBase = environment.apiUrl.replace(/\/api$/, '').replace(/^http/, 'ws');
-        const url = `${wsBase}/ws/k8s/exec?namespace=${this.namespace}&pod=${this.pod}&command=${this.command}`;
+        const url = `${wsBase}/ws/k8s/exec?namespace=${this.namespace()}&pod=${this.pod()}&command=${this.command()}`;
 
         this.socket = new WebSocket(url);
 

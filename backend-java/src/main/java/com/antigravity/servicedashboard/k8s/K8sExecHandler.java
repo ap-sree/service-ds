@@ -13,14 +13,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class K8sExecHandler extends TextWebSocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(K8sExecHandler.class);
-    private static final long IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
-    private static final long MONITOR_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    private static final long IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+    private static final long MONITOR_INTERVAL_MS = 5 * 60 * 1000;
 
     private final K8sService service;
     private final Map<String, SessionInfo> sessions = new ConcurrentHashMap<>();
@@ -33,7 +37,7 @@ public class K8sExecHandler extends TextWebSocketHandler {
     }
 
     private void startMonitoring() {
-        // Periodic cleanup of idle sessions
+
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 long now = System.currentTimeMillis();
@@ -55,7 +59,7 @@ public class K8sExecHandler extends TextWebSocketHandler {
                     }
                 }
 
-                // Log connection stats
+
                 int activeCount = sessions.size();
                 logger.info("WebSocket Monitor - Active connections: {}, Closed idle: {}",
                         activeCount, closedCount);
@@ -81,7 +85,7 @@ public class K8sExecHandler extends TextWebSocketHandler {
             return;
         }
 
-        // Security Fix: Validate command against allowlist
+
         java.util.Set<String> allowedShells = java.util.Set.of("/bin/sh", "/bin/bash", "sh", "bash");
         if (!allowedShells.contains(command)) {
             logger.warn("Security: Rejected disallowed command '{}' for pod {}/{}", command, namespace, pod);
@@ -90,7 +94,7 @@ public class K8sExecHandler extends TextWebSocketHandler {
             return;
         }
 
-        // Security Fix: Validate namespace and pod format
+
         if (!namespace.matches("^[a-zA-Z0-9-]+$") || !pod.matches("^[a-zA-Z0-9-]+$")) {
             logger.warn("Security: Rejected invalid namespace/pod format: {}/{}", namespace, pod);
             session.close(CloseStatus.BAD_DATA);
@@ -106,9 +110,9 @@ public class K8sExecHandler extends TextWebSocketHandler {
             SessionInfo info = new SessionInfo(session, proc, namespace, pod);
             sessions.put(session.getId(), info);
 
-            // Output Reader Thread
+
             executor.submit(() -> pipeStream(proc.getInputStream(), session));
-            // Error Reader Thread
+
             executor.submit(() -> pipeStream(proc.getErrorStream(), session));
 
             logger.info("Total active WebSocket connections: {}", sessions.size());
@@ -152,14 +156,14 @@ public class K8sExecHandler extends TextWebSocketHandler {
                     break;
                 session.sendMessage(new TextMessage(new String(buffer, 0, read)));
 
-                // Update activity on output (shows pod is responsive)
+
                 SessionInfo info = sessions.get(session.getId());
                 if (info != null) {
                     info.updateActivity();
                 }
             }
         } catch (IOException e) {
-            // Stream closed or session closed
+
         }
     }
 

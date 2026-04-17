@@ -7,9 +7,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
+import org.springframework.boot.ssl.SslBundles;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.ResponseEntity;
+
+import com.antigravity.servicedashboard.util.MessageUtils;
+
+import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +27,43 @@ public class RestClientService {
 
     private static final Logger logger = LoggerFactory.getLogger(RestClientService.class);
 
-    private final RestClient restClient;
-
+    private volatile RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final SslBundles sslBundles;
+    private final RestClient.Builder restClientBuilder;
 
-    public RestClientService(RestClient.Builder builder, ObjectMapper objectMapper) {
-        this.restClient = builder.build();
+    public RestClientService(RestClient.Builder builder, SslBundles sslBundles, ObjectMapper objectMapper) {
+        this.restClientBuilder = builder;
+        this.sslBundles = sslBundles;
         this.objectMapper = objectMapper;
+
+        buildClient();
+
+        try {
+            this.sslBundles.addBundleUpdateHandler("server", bundle -> {
+                logger.info("SSL Bundle 'server' updated. Rebuilding RestClient...");
+                buildClient();
+            });
+        } catch (UnsupportedOperationException | NoSuchMethodError e) {
+            logger.warn("Dynamic SSL reload not supported by this SslBundles implementation: {}", e.getMessage());
+        }
+    }
+
+    private void buildClient() {
+        try {
+            var bundle = sslBundles.getBundle("server");
+            var httpClient = HttpClient.newBuilder()
+                    .sslContext(bundle.createSslContext())
+                    .build();
+            var factory = new JdkClientHttpRequestFactory(httpClient);
+
+            this.restClient = restClientBuilder.clone()
+                    .requestFactory(factory)
+                    .build();
+            logger.info("RestClient built with current SSL context.");
+        } catch (Exception e) {
+            logger.error("Failed to build RestClient", e);
+        }
     }
 
     public List<Map<String, Object>> fetchData(String url, String method, Map<String, String> headersMap) {
@@ -33,26 +71,9 @@ public class RestClientService {
     }
 
     public List<Map<String, Object>> fetchData(String url, String method, Map<String, String> headersMap, Object body) {
-        logger.info("Fetching data from URL: {}", url);
+        ResponseEntity<String> response = fetchResponse(url, method, headersMap, body);
+        String jsonBody = response.getBody();
         try {
-            // Build request
-            RestClient.RequestBodySpec request = restClient.method(HttpMethod.valueOf(method.toUpperCase()))
-                    .uri(url)
-                    .contentType(MediaType.APPLICATION_JSON);
-
-            // Add custom headers
-            if (headersMap != null) {
-                headersMap.forEach(request::header);
-            }
-
-            // Execute request
-            String jsonBody;
-            if (body != null) {
-                jsonBody = request.body(body).retrieve().body(String.class);
-            } else {
-                jsonBody = request.retrieve().body(String.class);
-            }
-
             if (jsonBody != null && !jsonBody.isEmpty()) {
                 if (jsonBody.trim().startsWith("[")) {
                     return objectMapper.readValue(jsonBody, new TypeReference<List<Map<String, Object>>>() {
@@ -69,28 +90,42 @@ public class RestClientService {
             }
         } catch (JsonProcessingException e) {
             logger.error("Error parsing JSON response", e);
-            throw new RuntimeException("Failed to parse API response", e);
+            throw new RuntimeException(MessageUtils.get("error.api.parse"), e);
+        }
+    }
+
+    public ResponseEntity<String> fetchResponse(String url, String method, Map<String, String> headersMap, Object body) {
+        logger.info("Fetching response from URL: {}", url);
+        try {
+            RestClient.RequestBodySpec request = restClient.method(HttpMethod.valueOf(method.toUpperCase()))
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON);
+
+            if (headersMap != null) {
+                headersMap.forEach(request::header);
+            }
+
+            if (body != null) {
+                return request.body(body).retrieve().toEntity(String.class);
+            } else {
+                return request.retrieve().toEntity(String.class);
+            }
         } catch (org.springframework.web.client.ResourceAccessException e) {
             if (e.getCause() instanceof javax.net.ssl.SSLException) {
                 logger.error("SSL error connecting to: {}", url, e);
-                throw new SslCertificateException(
-                        "SSL Certificate Error: Unable to establish secure connection. Please import the server's certificate into the application truststore.",
-                        e);
+                throw new SslCertificateException(MessageUtils.get("error.api.ssl"), e);
             }
             logger.error("Connection error for URL: {}", url, e);
-            throw new ApiConnectionException(
-                    "Connection Error: Unable to reach the server at " + url, e);
+            throw new ApiConnectionException(MessageUtils.get("error.api.connection", url), e);
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             logger.error("HTTP {} error calling {}: {}", e.getStatusCode(), url, e.getMessage());
-            throw new ApiConnectionException(
-                    "HTTP Error " + e.getStatusCode() + ": " + e.getStatusText(), e);
+            throw new ApiConnectionException(MessageUtils.get("error.api.http", e.getStatusCode(), e.getStatusText()), e);
         } catch (org.springframework.web.client.HttpServerErrorException e) {
             logger.error("Server error {} calling {}: {}", e.getStatusCode(), url, e.getMessage());
-            throw new ApiConnectionException(
-                    "Server Error " + e.getStatusCode() + ": The remote server encountered an error", e);
+            throw new ApiConnectionException(MessageUtils.get("error.api.server", e.getStatusCode()), e);
         } catch (Exception e) {
             logger.error("Unexpected error calling API: {}", url, e);
-            throw new RuntimeException("API Call Failed: " + e.getMessage(), e);
+            throw new RuntimeException(MessageUtils.get("error.api.call", e.getMessage()), e);
         }
     }
 }

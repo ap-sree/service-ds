@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 import { FormElement } from '../../../../models/form-builder';
@@ -15,28 +15,28 @@ import { DatePickerModule } from 'primeng/datepicker';
     selector: 'app-form-element',
     standalone: true,
     imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputTextModule,
-    InputNumberModule,
-    TextareaModule,
-    CheckboxModule,
-    RadioButtonModule,
-    SelectModule,
-    DatePickerModule
-],
+        ReactiveFormsModule,
+        ButtonModule,
+        InputTextModule,
+        InputNumberModule,
+        TextareaModule,
+        CheckboxModule,
+        RadioButtonModule,
+        SelectModule,
+        DatePickerModule
+    ],
     templateUrl: './form-element.html',
     styleUrls: ['./form-element.scss']
 })
 export class FormElementComponent {
-    @Input() element!: FormElement;
-    @Input() group!: FormGroup;
-    @Input() isPreview = false;
-    @Input() isSelected = false;
-    @Output() deleteElement = new EventEmitter<string>();
+    element = input.required<FormElement>();
+    group = input.required<FormGroup>();
+    isPreview = input(false);
+    isSelected = input(false);
+    deleteElement = output<string>();
 
     onDelete(event: Event): void {
         event.stopPropagation();
-        this.deleteElement.emit(this.element.id);
+        this.deleteElement.emit(this.element().id);
     }
 }

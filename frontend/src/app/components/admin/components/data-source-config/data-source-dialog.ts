@@ -42,15 +42,18 @@ export class DataSourceDialogComponent implements OnInit {
     isEditing = false;
     sourceData: DataSource | undefined;
 
-    private SQL_TEMPLATE = `{\n  "server": "localhost",\n  "database": "testdb",\n  "user": "sa",\n  "password": "yourPassword",\n  "options": { "encrypt": true, "trustServerCertificate": true }\n}`;
+    private SQL_TEMPLATE = `{\n  "server": "localhost",\n  "database": "testdb",\n  "authentication": "ActiveDirectoryManagedIdentity",\n  "clientId": "your-mi-client-id",\n  "options": { "encrypt": true, "trustServerCertificate": true }\n}`;
 
     private REST_TEMPLATE = `{\n  "baseUrl": "",\n  "headers": { "Authorization": "Bearer token" }, \n  "dataPropertyPath": "data",\n  "pagination": {\n    "type": "PAGE_PARAM",\n    "key": "page",\n    "limit": 100\n  }\n}`;
 
     private CMD_TEMPLATE = `{\n  "format": "json" \n}`;
 
     private FILE_TEMPLATE = `{\n  "path": "C:\\\\Data\\\\file.csv",\n  "format": "auto"\n}`;
+    private LDAP_TEMPLATE = `{\n  "url": "ldap://localhost:389",\n  "baseDn": "dc=example,dc=com",\n  "userDn": "cn=admin,dc=example,dc=com",\n  "password": "secret"\n}`;
+
     sourceTypes = [
         { label: 'SQL Server', value: 'SQL_SERVER' },
+        { label: 'LDAP/AD Directory', value: 'LDAP' },
         { label: 'REST API', value: 'REST_API' },
         { label: 'Local Command / Script', value: 'LOCAL_COMMAND' },
         { label: 'Local File (CSV/JSON)', value: 'LOCAL_FILE' }
@@ -61,6 +64,7 @@ export class DataSourceDialogComponent implements OnInit {
         { label: 'Next URL', value: 'NEXT_URL' }
     ];
     sqlForm!: FormGroup;
+    ldapForm!: FormGroup;
     restForm!: FormGroup;
     viewMode: 'SIMPLE' | 'JSON' = 'SIMPLE';
     authTypes = [
@@ -78,10 +82,16 @@ export class DataSourceDialogComponent implements OnInit {
         });
         this.sqlForm = this.fb.group({
             server: ['localhost', Validators.required],
+            port: [1433, [Validators.required, Validators.min(1), Validators.max(65535)]],
             database: ['', Validators.required],
-            user: ['sa', Validators.required],
-            password: ['', Validators.required],
+            clientId: ['', Validators.required],
             encrypt: [true]
+        });
+        this.ldapForm = this.fb.group({
+            url: ['ldap://localhost:389', Validators.required],
+            baseDn: ['', Validators.required],
+            userDn: ['', Validators.required],
+            password: ['', Validators.required]
         });
         this.restForm = this.fb.group({
             baseUrl: ['https://', Validators.required],
@@ -132,6 +142,7 @@ export class DataSourceDialogComponent implements OnInit {
             this.onTypeChange();
         }
     }
+
     parseConfigToForms() {
         try {
             const json = JSON.parse(this.sourceForm.get('config')?.value || '{}');
@@ -140,9 +151,15 @@ export class DataSourceDialogComponent implements OnInit {
                 this.sqlForm.patchValue({
                     server: json.server,
                     database: json.database,
-                    user: json.user,
-                    password: json.password,
+                    clientId: json.clientId,
                     encrypt: json.options?.encrypt ?? true
+                });
+            } else if (type === 'LDAP') {
+                this.ldapForm.patchValue({
+                    url: json.url,
+                    baseDn: json.baseDn,
+                    userDn: json.userDn,
+                    password: json.password
                 });
             } else if (type === 'REST_API') {
                 let authType = 'NONE';
@@ -194,10 +211,19 @@ export class DataSourceDialogComponent implements OnInit {
         if (type === 'SQL_SERVER') {
             const val = this.sqlForm.value;
             configObj.server = val.server;
+            configObj.port = val.port;
             configObj.database = val.database;
-            configObj.user = val.user;
-            configObj.password = val.password;
+            configObj.authentication = 'ActiveDirectoryManagedIdentity';
+            configObj.clientId = val.clientId;
+            delete configObj.user;
+            delete configObj.password;
             configObj.options = { ...configObj.options, encrypt: val.encrypt };
+        } else if (type === 'LDAP') {
+            const val = this.ldapForm.value;
+            configObj.url = val.url;
+            configObj.baseDn = val.baseDn;
+            configObj.userDn = val.userDn;
+            configObj.password = val.password;
         } else if (type === 'REST_API') {
             const val = this.restForm.value;
             configObj.baseUrl = val.baseUrl;
@@ -252,6 +278,7 @@ export class DataSourceDialogComponent implements OnInit {
             const type = this.sourceForm.get('type')?.value;
             let template = '';
             if (type === 'SQL_SERVER') template = this.SQL_TEMPLATE;
+            else if (type === 'LDAP') template = this.LDAP_TEMPLATE;
             else if (type === 'LOCAL_COMMAND') template = this.CMD_TEMPLATE;
             else if (type === 'LOCAL_FILE') template = this.FILE_TEMPLATE;
             else template = this.REST_TEMPLATE;
@@ -261,6 +288,9 @@ export class DataSourceDialogComponent implements OnInit {
     }
     save() {
         if (this.viewMode === 'SIMPLE') {
+            const type = this.sourceForm.get('type')?.value;
+            if (type === 'SQL_SERVER' && this.sqlForm.invalid) return;
+            if (type === 'REST_API' && this.restForm.invalid) return;
             this.syncFormsToConfig();
         }
         if (this.sourceForm.invalid) return;

@@ -3,19 +3,48 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface MetricConfig {
+    label: string;
+    operation: string;
+    column: string;
+    condition?: string;
+}
+
+export interface StatusRule {
+    value: string;
+    color: string;
+}
+
+export interface QueryConfig {
+    globalFilter?: string;
+    columns?: string[];
+    labelColumn?: string;
+    statusColumn?: string;
+    rules?: StatusRule[];
+    metrics?: MetricConfig[];
+}
+
 export interface WidgetDefinition {
     id?: number;
     title: string;
     type: 'CARD' | 'TABLE' | 'GRID' | 'STATUS_GRID' | 'MULTI_METRIC';
     dataSourceTable: string;
     refreshInterval?: number;
-    queryConfig?: any;
+    queryConfig?: string | QueryConfig;
     userColumn?: string;
     settings?: string;
+    schemaChanged?: boolean;
+}
+
+export interface WidgetSummary {
+    id: number;
+    title: string;
+    type: string;
+    schemaChanged?: boolean;
 }
 
 export interface DashboardConfig {
-    widgets: WidgetDefinition[];
+    widgets: WidgetSummary[];
     refreshInterval?: number;
     layout?: number[];
 }
@@ -65,12 +94,8 @@ export class DashboardService {
     }
 
 
-    getWidgetData(widgetId: number, userId?: string | number): Observable<WidgetDataResponse> {
-        let url = `${this.apiUrl}/widgets/${widgetId}/data`;
-        if (userId) {
-            url += `?userId=${userId}`;
-        }
-        return this.http.get<WidgetDataResponse>(url);
+    getWidgetData(widgetId: number): Observable<WidgetDataResponse> {
+        return this.http.get<WidgetDataResponse>(`${this.apiUrl}/widgets/${widgetId}/data`);
     }
 
 

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import com.antigravity.servicedashboard.util.MessageUtils;
+
 @Service
 public class TableManagerService {
 
@@ -27,7 +29,7 @@ public class TableManagerService {
                     "Security Alert: Table name must start with 'sync_'. Provided: " + tableName);
         }
         if (!tableName.matches("^[\\w]+$")) {
-            throw new IllegalArgumentException("Security Alert: Invalid table name format. Provided: " + tableName);
+            throw new IllegalArgumentException(MessageUtils.get("error.table.invalidformat", tableName));
         }
     }
 
@@ -43,14 +45,12 @@ public class TableManagerService {
         // Check if table exists
         boolean tableExists = false;
         try {
-            // SQL Server specific check using SP
-            // Expecting SP to return a single row with 1 (exists) or 0 (not exists)
             Integer result = jdbcTemplate.queryForObject(
-                    "EXEC app.sp_CheckTableExists ?",
+                    "{call app.sp_CheckTableExists(?)}",
                     Integer.class, tableName);
             tableExists = result != null && result == 1;
         } catch (Exception e) {
-            // Fallback or ignore
+            logger.warn("Table existence check failed for {}: {}", tableName, e.getMessage());
         }
 
         if (tableExists && "APPEND".equalsIgnoreCase(strategy)) {
@@ -79,7 +79,7 @@ public class TableManagerService {
         }
 
         logger.info("Calling sp_CreateDynamicTable for {}", tableName);
-        jdbcTemplate.update("EXEC sp_CreateDynamicTable ?, ?", tableName, colDefs.toString());
+        jdbcTemplate.update("{call app.sp_CreateDynamicTable(?, ?)}", tableName, colDefs.toString());
     }
 
     @Transactional
@@ -93,7 +93,7 @@ public class TableManagerService {
             upsertData(tableName, dataRowList, primaryKey);
         } else {
             logger.info("Strategy RELOAD: Clearing table {}", tableName);
-            jdbcTemplate.execute("DELETE FROM app." + tableName);
+            jdbcTemplate.execute("DELETE FROM \"app\".\"" + tableName + "\"");
             batchInsert(tableName, dataRowList);
         }
     }
@@ -105,7 +105,7 @@ public class TableManagerService {
         Set<String> columns = firstRow.keySet();
         if (columns.isEmpty())
             return;
-        StringBuilder sql = new StringBuilder("INSERT INTO app.").append(tableName).append(" (");
+        StringBuilder sql = new StringBuilder("INSERT INTO \"app\".\"" + tableName + "\" (");
         StringJoiner colNames = new StringJoiner(", ");
         StringJoiner placeHolders = new StringJoiner(", ");
         for (String col : columns) {
@@ -131,7 +131,7 @@ public class TableManagerService {
         Map<String, Object> firstRow = dataRowList.get(0);
         Set<String> columns = firstRow.keySet();
         List<Map<String, Object>> existing = jdbcTemplate
-                .queryForList("SELECT _id, " + primaryKey + " FROM app." + tableName);
+                .queryForList("SELECT _id, " + primaryKey + " FROM \"app\".\"" + tableName + "\"");
         Map<String, Integer> existingMap = new java.util.HashMap<>();
         for (Map<String, Object> row : existing) {
             Object pkVal = row.get(primaryKey);
@@ -173,7 +173,7 @@ public class TableManagerService {
     }
 
     private String buildInsertSql(String tableName, Set<String> columns) {
-        StringBuilder sql = new StringBuilder("INSERT INTO app.").append(tableName).append(" (");
+        StringBuilder sql = new StringBuilder("INSERT INTO \"app\".\"" + tableName + "\" (");
         StringJoiner colNames = new StringJoiner(", ");
         StringJoiner placeHolders = new StringJoiner(", ");
         for (String col : columns) {
@@ -185,7 +185,7 @@ public class TableManagerService {
     }
 
     private String buildUpdateSql(String tableName, Set<String> columns, String idCol) {
-        StringBuilder sql = new StringBuilder("UPDATE app.").append(tableName).append(" SET ");
+        StringBuilder sql = new StringBuilder("UPDATE \"app\".\"" + tableName + "\" SET ");
         StringJoiner updates = new StringJoiner(", ");
         for (String col : columns) {
             updates.add(col + " = ?");
@@ -197,6 +197,6 @@ public class TableManagerService {
     public void dropTable(String tableName) {
         validateTableName(tableName);
         logger.info("Dropping table: {}", tableName);
-        jdbcTemplate.update("EXEC sp_DropDynamicTable ?", tableName);
+        jdbcTemplate.update("{call app.sp_DropDynamicTable(?)}", tableName);
     }
 }

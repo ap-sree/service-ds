@@ -33,7 +33,12 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-rule>
                     <tr>
-                        <td class="font-bold">{{rule.localTableName}}</td>
+                        <td class="font-bold">
+                            @if (rule.schemaChanged) {
+                            <i class="pi pi-exclamation-triangle text-orange-500 mr-1" pTooltip="Needs review"></i>
+                            }
+                            {{rule.localTableName}}
+                        </td>
                         <td><code class="code-badge">{{formatCondition(rule.condition)}}</code></td>
                         <td><p-tag [value]="rule.actionType"
                                 [severity]="rule.actionType === 'TOAST' ? 'info' : (rule.actionType === 'EMAIL' ? 'warn' : 'danger')"></p-tag>

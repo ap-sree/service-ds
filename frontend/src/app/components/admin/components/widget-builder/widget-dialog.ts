@@ -10,8 +10,9 @@ import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TagModule } from 'primeng/tag';
 import { MessageService } from 'primeng/api';
-import { DashboardService, WidgetDefinition } from '../../../../services/dashboard';
+import { DashboardService, WidgetDefinition, QueryConfig, MetricConfig, StatusRule } from '../../../../services/dashboard';
 import { SourceService } from '../../../../services/source';
+import { SyncDefinition } from '../../../../models/sync';
 
 @Component({
     selector: 'app-widget-dialog',
@@ -42,7 +43,7 @@ export class WidgetDialogComponent implements OnInit {
     widgetForm!: FormGroup;
     loading = false;
     isEditing = false;
-    uniqueTables: string[] = [];
+    uniqueSyncs: SyncDefinition[] = [];
     tableColumns: string[] = [];
     widgetData: WidgetDefinition | undefined;
 
@@ -142,67 +143,72 @@ export class WidgetDialogComponent implements OnInit {
     loadTables() {
         this.sourceService.getSyncDefs().subscribe({
             next: (data) => {
-                this.uniqueTables = [...new Set(data.map(d => d.targetTableName))];
+                this.uniqueSyncs = data;
             }
         });
     }
 
     onTableChange() {
         const tableName = this.widgetForm.get('dataSourceTable')?.value;
-        if (tableName) {
-            this.sourceService.getTableSchema(tableName).subscribe(cols => {
-                this.tableColumns = cols;
+        const sync = this.uniqueSyncs.find(s => s.targetTableName === tableName);
+
+        if (sync && sync.id) {
+            this.sourceService.getSyncSchema(sync.id).subscribe({
+                next: cols => this.tableColumns = cols,
+                error: () => this.tableColumns = []
             });
         }
     }
 
     restoreConfigForEdit(w: WidgetDefinition) {
-        if (w.dataSourceTable) {
-            this.sourceService.getTableSchema(w.dataSourceTable).subscribe(cols => {
-                this.tableColumns = cols;
+        if (w.id) {
+            this.sourceService.getWidgetSchema(w.id).subscribe({
+                next: cols => {
+                    this.tableColumns = cols;
+                    if (w.queryConfig) {
+                        try {
+                            const c: QueryConfig = typeof w.queryConfig === 'string' ? JSON.parse(w.queryConfig) : w.queryConfig;
 
+                            if (c.globalFilter) {
+                                this.widgetForm.patchValue({ globalFilter: c.globalFilter });
+                            }
 
-                if (w.queryConfig) {
-                    try {
-                        const c = typeof w.queryConfig === 'string' ? JSON.parse(w.queryConfig) : w.queryConfig;
+                            if (w.type === 'TABLE' && c.columns) {
+                                this.widgetForm.patchValue({ selectedColumns: c.columns });
+                            }
 
-                        if (c.globalFilter) {
-                            this.widgetForm.patchValue({ globalFilter: c.globalFilter });
-                        }
+                            if (w.type === 'STATUS_GRID') {
+                                this.widgetForm.patchValue({
+                                    statusLabelColumn: c.labelColumn,
+                                    statusValueColumn: c.statusColumn
+                                });
+                                if (c.rules && Array.isArray(c.rules)) {
+                                    this.statusRules.clear();
+                                    c.rules.forEach((r: StatusRule) => {
+                                        this.statusRules.push(this.fb.group({
+                                            value: [r.value],
+                                            color: [r.color]
+                                        }));
+                                    });
+                                }
+                            }
 
-                        if (w.type === 'TABLE' && c.columns) {
-                            this.widgetForm.patchValue({ selectedColumns: c.columns });
-                        }
-
-                        if (w.type === 'STATUS_GRID') {
-                            this.widgetForm.patchValue({
-                                statusLabelColumn: c.labelColumn,
-                                statusValueColumn: c.statusColumn
-                            });
-                            if (c.rules && Array.isArray(c.rules)) {
-                                this.statusRules.clear();
-                                c.rules.forEach((r: any) => {
-                                    this.statusRules.push(this.fb.group({
-                                        value: [r.value],
-                                        color: [r.color]
+                            if (w.type === 'MULTI_METRIC' && c.metrics && Array.isArray(c.metrics)) {
+                                this.metrics.clear();
+                                c.metrics.forEach((m: MetricConfig) => {
+                                    this.metrics.push(this.fb.group({
+                                        label: [m.label || '', Validators.required],
+                                        operation: [m.operation || 'COUNT', Validators.required],
+                                        column: [m.column || '*', Validators.required],
+                                        condition: [m.condition || '']
                                     }));
                                 });
                             }
-                        }
 
-                        if (w.type === 'MULTI_METRIC' && c.metrics && Array.isArray(c.metrics)) {
-                            c.metrics.forEach((m: any) => {
-                                this.metrics.push(this.fb.group({
-                                    label: [m.label || '', Validators.required],
-                                    operation: [m.operation || 'COUNT', Validators.required],
-                                    column: [m.column || '*', Validators.required],
-                                    condition: [m.condition || '']
-                                }));
-                            });
-                        }
-
-                    } catch (e) { console.error(e); }
-                }
+                        } catch (e) { console.error(e); }
+                    }
+                },
+                error: () => this.tableColumns = []
             });
         }
     }
@@ -213,7 +219,7 @@ export class WidgetDialogComponent implements OnInit {
         this.loading = true;
 
 
-        let queryConfig: any = {
+        let queryConfig: QueryConfig = {
             globalFilter: formVal.globalFilter
         };
 
@@ -227,21 +233,23 @@ export class WidgetDialogComponent implements OnInit {
             queryConfig.metrics = formVal.metrics;
         }
 
-        const payload = {
+        const payload: WidgetDefinition = {
             ...formVal,
             queryConfig: JSON.stringify(queryConfig)
         };
 
-        delete payload.selectedColumns;
-        delete payload.statusLabelColumn;
-        delete payload.statusValueColumn;
-        delete payload.statusRules;
-        delete payload.metrics;
-        delete payload.globalFilter;
+
+        const cleanPayload = { ...payload } as any;
+        delete cleanPayload.selectedColumns;
+        delete cleanPayload.statusLabelColumn;
+        delete cleanPayload.statusValueColumn;
+        delete cleanPayload.statusRules;
+        delete cleanPayload.metrics;
+        delete cleanPayload.globalFilter;
 
 
         if (this.isEditing) {
-            this.dashboardService.updateWidget(this.widgetData!.id!, payload).subscribe({
+            this.dashboardService.updateWidget(this.widgetData!.id!, cleanPayload).subscribe({
                 next: () => this.ref.close(true),
                 error: (err) => {
                     this.loading = false;
@@ -249,7 +257,7 @@ export class WidgetDialogComponent implements OnInit {
                 }
             });
         } else {
-            this.dashboardService.createWidget(payload).subscribe({
+            this.dashboardService.createWidget(cleanPayload).subscribe({
                 next: () => this.ref.close(true),
                 error: (err) => {
                     this.loading = false;

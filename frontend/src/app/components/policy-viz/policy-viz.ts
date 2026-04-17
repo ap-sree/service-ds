@@ -1,5 +1,5 @@
 
-import { Component, ElementRef, Input, OnChanges, ViewChild, ViewEncapsulation, Output, EventEmitter, SimpleChanges, signal, computed } from '@angular/core';
+import { Component, ElementRef, input, OnChanges, ViewChild, ViewEncapsulation, output, SimpleChanges, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DiffNode } from '../../services/policy-diff';
 import * as d3 from 'd3';
@@ -30,18 +30,18 @@ interface FlowLink {
     styleUrl: './policy-viz.scss',
     encapsulation: ViewEncapsulation.None
 })
-export class PolicyVizComponent implements OnChanges {
-    @Input() data: DiffNode | null = null;
-    @Input() mode: 'compare' | 'view' = 'compare';
-    @Output() nodeSelected = new EventEmitter<DiffNode>();
+export class PolicyVizComponent {
+    data = input<DiffNode | null>(null);
+    mode = input<'compare' | 'view'>('compare');
+    nodeSelected = output<DiffNode>();
 
     @ViewChild('container', { static: true }) containerRef!: ElementRef;
 
-    
+
     nodes = signal<FlowNode[]>([]);
     links = signal<FlowLink[]>([]);
 
-    
+
     transform = signal<{ k: number, x: number, y: number }>({ k: 1, x: 0, y: 0 });
 
     transformStyle = computed(() =>
@@ -55,19 +55,18 @@ export class PolicyVizComponent implements OnChanges {
     private zoomBehavior: any;
     private selection: any;
 
-    constructor() { }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['data']) {
-            console.log('PolicyViz: data changed', this.data);
-            if (this.data) {
-                
-                this.calculateLayout(this.data);
-                
+    constructor() {
+        effect(() => {
+            const currentData = this.data();
+            if (currentData) {
+                console.log('PolicyViz: data changed', currentData);
+                this.calculateLayout(currentData);
                 setTimeout(() => this.setupZoom(), 0);
             }
-        }
+        });
     }
+
+
 
     private setupZoom() {
         const el = this.containerRef.nativeElement;
@@ -82,7 +81,7 @@ export class PolicyVizComponent implements OnChanges {
 
         this.selection.call(this.zoomBehavior);
 
-        
+
         this.centerView();
     }
 
@@ -93,7 +92,7 @@ export class PolicyVizComponent implements OnChanges {
         const width = el.offsetWidth;
         const height = el.offsetHeight;
 
-        
+
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         this.nodes().forEach(n => {
             minX = Math.min(minX, n.x - n.width / 2);
@@ -122,32 +121,32 @@ export class PolicyVizComponent implements OnChanges {
     }
 
     private calculateLayout(data: DiffNode) {
-        
+
         const root = d3.hierarchy(data);
 
-        
+
         const nodeW = 200;
         const nodeH = 80;
 
-        
+
         const treeMap = d3.tree()
-            .nodeSize([nodeH + 40, nodeW + 60]); 
+            .nodeSize([nodeH + 40, nodeW + 60]);
 
         const treeData = treeMap(root as any);
 
-        
+
         const newNodes: FlowNode[] = [];
 
-        
-        
-        
-        
-        
+
+
+
+
+
 
         treeData.descendants().forEach((d: any) => {
             newNodes.push({
                 id: d.data.id,
-                x: d.y, 
+                x: d.y,
                 y: d.x,
                 data: d.data,
                 width: 180,
@@ -155,19 +154,19 @@ export class PolicyVizComponent implements OnChanges {
             });
         });
 
-        
+
         const newLinks: FlowLink[] = [];
         const linkGen = d3.linkHorizontal()
-            .x((d: any) => d.y) 
+            .x((d: any) => d.y)
             .y((d: any) => d.x);
 
         treeData.links().forEach((l: any, i: number) => {
-            
+
             let label = '';
             if (l.target.data.name && l.target.data.name.includes(' -> ')) {
                 const parts = l.target.data.name.split(' -> ');
                 label = parts[0];
-                
+
             }
 
             newLinks.push({
@@ -199,9 +198,9 @@ export class PolicyVizComponent implements OnChanges {
     }
 
     getLabelTransform(link: FlowLink): string {
-        
-        
-        
+
+
+
         const mx = (link.source.x + link.target.x) / 2;
         const my = (link.source.y + link.target.y) / 2;
         return `translate(${mx}, ${my})`;

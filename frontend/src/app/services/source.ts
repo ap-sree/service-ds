@@ -46,11 +46,11 @@ export class SourceService {
     }
 
     triggerSync(id: number): Observable<any> {
-        return this.http.post(`${this.apiUrl}/sync/${id}`, {});
+        return this.http.post(`${this.apiUrl}/sync-defs/sync/${id}`, {});
     }
 
     previewData(sourceId: number, fetchQuery: string, method?: string, body?: any, rootPath?: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/preview`, {
+        return this.http.post(`${this.apiUrl}/sync-defs/preview`, {
             source_id: sourceId,
             fetch_query: fetchQuery,
             method: method,
@@ -60,7 +60,11 @@ export class SourceService {
     }
 
 
-    getTableSchema(tableName: string): Observable<string[]> {
-        return this.http.get<string[]>(`${this.apiUrl}/schema/${tableName}`);
+    getWidgetSchema(widgetId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.apiUrl}/widgets/${widgetId}/schema`);
+    }
+
+    getSyncSchema(syncId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.apiUrl}/sync-defs/${syncId}/schema`);
     }
 }

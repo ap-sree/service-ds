@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -15,8 +15,9 @@ export interface K8sPod {
 @Injectable({ providedIn: 'root' })
 export class K8sService {
     private apiUrl = environment.apiUrl;
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) { }
+    constructor() { }
 
     saveConfig(type: 'FILE' | 'TOKEN', value: string) {
         return this.http.post(`${this.apiUrl}/k8s/config`, { type, value });

@@ -7,6 +7,7 @@ public class WidgetDefinitionDTO {
     private String dataSourceTable;
     private String queryConfig;
     private String userColumn;
+    private boolean schemaChanged;
 
     public Long getId() {
         return id;
@@ -54,5 +55,13 @@ public class WidgetDefinitionDTO {
 
     public void setUserColumn(String userColumn) {
         this.userColumn = userColumn;
+    }
+
+    public boolean isSchemaChanged() {
+        return schemaChanged;
+    }
+
+    public void setSchemaChanged(boolean schemaChanged) {
+        this.schemaChanged = schemaChanged;
     }
 }

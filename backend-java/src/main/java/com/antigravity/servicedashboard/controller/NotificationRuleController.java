@@ -1,9 +1,16 @@
 package com.antigravity.servicedashboard.controller;
 
 import com.antigravity.servicedashboard.entity.NotificationRule;
-import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
+import com.antigravity.servicedashboard.service.NotificationRuleService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import jakarta.validation.Valid;
@@ -12,46 +19,33 @@ import jakarta.validation.Valid;
 @RequestMapping("/notification-rules")
 public class NotificationRuleController {
 
-    private final NotificationRuleRepository repository;
-    private final com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo;
+    private final NotificationRuleService service;
 
-    public NotificationRuleController(NotificationRuleRepository repository,
-            com.antigravity.servicedashboard.repository.SyncDefinitionRepository syncRepo) {
-        this.repository = repository;
-        this.syncRepo = syncRepo;
+    public NotificationRuleController(NotificationRuleService service) {
+        this.service = service;
     }
 
     @GetMapping
     public List<NotificationRule> getAll() {
-        return repository.findAll();
+        return service.getAll();
     }
 
     @PostMapping
     public NotificationRule create(@Valid @RequestBody NotificationRule entity) {
-        if (entity.getLocalTableName() != null) {
-            syncRepo.findFirstByTargetTableName(entity.getLocalTableName())
-                    .ifPresent(entity::setSyncDefinition);
-        }
-        return repository.save(entity);
+        return service.create(entity);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<NotificationRule> update(@PathVariable Long id, @Valid @RequestBody NotificationRule entity) {
-        if (!repository.existsById(id))
-            return ResponseEntity.notFound().build();
-        entity.setId(id);
-        if (entity.getLocalTableName() != null) {
-            syncRepo.findFirstByTargetTableName(entity.getLocalTableName())
-                    .ifPresent(entity::setSyncDefinition);
-        }
-        return ResponseEntity.ok(repository.save(entity));
+        return service.update(id, entity)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!repository.existsById(id))
+        if (!service.delete(id))
             return ResponseEntity.notFound().build();
-        repository.deleteById(id);
         return ResponseEntity.ok().build();
     }
 }

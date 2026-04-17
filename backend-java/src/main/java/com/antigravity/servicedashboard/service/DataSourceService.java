@@ -41,10 +41,18 @@ public class DataSourceService {
         if (!repository.existsById(id))
             return false;
 
+
         List<SyncDefinition> syncs = syncRepo.findBySourceId(id);
         for (SyncDefinition sync : syncs) {
-            syncService.delete(sync.getId());
+            sync.setSchemaChanged(true);
+            for (com.antigravity.servicedashboard.entity.WidgetDefinition w : sync.getWidgets()) {
+                w.setSchemaChanged(true);
+            }
+            for (com.antigravity.servicedashboard.entity.NotificationRule n : sync.getNotificationRules()) {
+                n.setSchemaChanged(true);
+            }
         }
+        syncRepo.saveAll(syncs);
 
         repository.deleteById(id);
         return true;

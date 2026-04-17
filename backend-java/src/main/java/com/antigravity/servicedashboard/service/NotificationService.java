@@ -46,6 +46,7 @@ public class NotificationService {
         logger.info("Triggering EVENT rules for table: {}", tableName);
         List<NotificationRule> rules = ruleRepo.findAll();
         for (NotificationRule rule : rules) {
+            if (rule.isSchemaChanged()) continue;
             if ("EVENT".equals(rule.getScheduleType()) && tableName.equals(rule.getLocalTableName())) {
                 evaluateRule(rule);
             }

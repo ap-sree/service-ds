@@ -69,10 +69,17 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", msg));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Object> handleRuntimeException(RuntimeException ex) {
-        logger.error("Runtime Exception during API request:", ex);
+    @ExceptionHandler(SyncException.class)
+    public ResponseEntity<Object> handleSyncException(SyncException ex) {
+        logger.error("Sync Job Failed:", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Internal Server Error"));
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleGlobalException(Exception ex) {
+        logger.error("Unhandled Exception:", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "An unexpected error occurred. Please contact support."));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.antigravity.servicedashboard.util.MessageUtils;
 
 @Service
 public class ShellService {
@@ -59,11 +60,11 @@ public class ShellService {
             boolean finished = process.waitFor(30, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
-                throw new RuntimeException("Command timed out");
+                throw new RuntimeException(MessageUtils.get("error.shell.timeout"));
             }
 
             if (process.exitValue() != 0) {
-                throw new RuntimeException("Command exited with code " + process.exitValue());
+                throw new RuntimeException(MessageUtils.get("error.shell.exitcode", process.exitValue()));
             }
 
             return parseOutput(outputLines);
@@ -72,13 +73,13 @@ public class ShellService {
             throw e;
         } catch (Exception e) {
             logger.error("Shell Execution Failed", e);
-            throw new RuntimeException("Command execution failed", e);
+            throw new RuntimeException(MessageUtils.get("error.shell.execution"), e);
         }
     }
 
     private void validateCommand(String command) {
         if (command == null || command.isBlank()) {
-            throw new SecurityException("Command cannot be empty");
+            throw new SecurityException(MessageUtils.get("error.shell.empty"));
         }
 
         String baseCommand = command.trim().split("\\s+")[0];
@@ -88,12 +89,12 @@ public class ShellService {
         }
 
         if (!ALLOWED_COMMANDS.contains(baseCommand.toLowerCase())) {
-            throw new SecurityException("Command not allowed: " + baseCommand);
+            throw new SecurityException(MessageUtils.get("error.shell.notallowed", baseCommand));
         }
 
         for (char c : DANGEROUS_CHARS.toCharArray()) {
             if (command.indexOf(c) >= 0) {
-                throw new SecurityException("Command contains forbidden character: " + c);
+                throw new SecurityException(MessageUtils.get("error.shell.forbiddenchar", String.valueOf(c)));
             }
         }
     }

@@ -3,9 +3,9 @@
         <label for="localTableName" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Target Sync
             Table <span class="text-red-500">*</span></label>
         <div class="col-12 md:col-9">
-            <p-select id="localTableName" formControlName="localTableName" [options]="uniqueTables"
-                (onChange)="onRuleTableChange()" placeholder="Select Table" [editable]="true" styleClass="w-full"
-                appendTo="body"></p-select>
+            <p-select id="localTableName" formControlName="localTableName" [options]="uniqueSyncs"
+                optionLabel="targetTableName" optionValue="targetTableName" (onChange)="onRuleTableChange()"
+                placeholder="Select Table" styleClass="w-full" appendTo="body"></p-select>
         </div>
     </div>
 

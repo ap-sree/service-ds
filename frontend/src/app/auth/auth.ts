@@ -16,8 +16,9 @@ export class AuthService {
 
     currentUser = signal<User | null>(null);
 
-    constructor(private oauthService: OAuthService) {
+    private oauthService = inject(OAuthService);
 
+    constructor() {
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
             this.currentUser.set(JSON.parse(storedUser));

@@ -1,6 +1,17 @@
 package com.antigravity.servicedashboard.entity;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -9,6 +20,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "sync_definitions")
 public class SyncDefinition {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -66,12 +78,26 @@ public class SyncDefinition {
     @Column(name = "pagination_config")
     private String paginationConfig;
 
+    @Column(name = "root_path")
+    private String rootPath;
+
+    @Column(name = "schema_changed")
+    private boolean schemaChanged = false;
+
     public String getPaginationConfig() {
         return paginationConfig;
     }
 
     public void setPaginationConfig(String paginationConfig) {
         this.paginationConfig = paginationConfig;
+    }
+
+    public String getRootPath() {
+        return rootPath;
+    }
+
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
     }
 
     public Long getId() {
@@ -178,7 +204,8 @@ public class SyncDefinition {
         this.primaryKey = primaryKey;
     }
 
-    @OneToMany(mappedBy = "syncDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "syncDefinition", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private java.util.List<WidgetDefinition> widgets = new java.util.ArrayList<>();
 
     public java.util.List<WidgetDefinition> getWidgets() {
@@ -189,7 +216,8 @@ public class SyncDefinition {
         this.widgets = widgets;
     }
 
-    @OneToMany(mappedBy = "syncDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @OneToMany(mappedBy = "syncDefinition", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private java.util.List<NotificationRule> notificationRules = new java.util.ArrayList<>();
 
     public java.util.List<NotificationRule> getNotificationRules() {
@@ -198,6 +226,14 @@ public class SyncDefinition {
 
     public void setNotificationRules(java.util.List<NotificationRule> notificationRules) {
         this.notificationRules = notificationRules;
+    }
+
+    public boolean isSchemaChanged() {
+        return schemaChanged;
+    }
+
+    public void setSchemaChanged(boolean schemaChanged) {
+        this.schemaChanged = schemaChanged;
     }
 
 }

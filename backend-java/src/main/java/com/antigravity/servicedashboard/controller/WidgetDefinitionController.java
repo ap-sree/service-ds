@@ -11,7 +11,16 @@ import com.antigravity.servicedashboard.service.WidgetService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import jakarta.validation.Valid;
@@ -19,6 +28,8 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/widgets")
 public class WidgetDefinitionController {
+
+    private static final Logger logger = LoggerFactory.getLogger(WidgetDefinitionController.class);
 
     private final WidgetService service;
     private final UserService userService;
@@ -54,16 +65,23 @@ public class WidgetDefinitionController {
                 layout = userPrefs.getWidgetIds();
             }
 
-            // Fallback to global config if user hasn't set refresh interval
-            if (refreshInterval == null) {
+            // Fallback to global config if any preferences are missing
+            if (refreshInterval == null || layout == null || layout.isEmpty()) {
                 UserPreferences globalPrefs = appConfigService.getGlobalDashboardLayout();
-                refreshInterval = globalPrefs.getRefreshInterval();
+                if (globalPrefs != null) {
+                    if (refreshInterval == null) {
+                        refreshInterval = globalPrefs.getRefreshInterval();
+                    }
+                    if (layout == null || layout.isEmpty()) {
+                        layout = globalPrefs.getWidgetIds();
+                    }
+                }
             }
 
             DashboardConfigDTO config = new DashboardConfigDTO(widgetDTOs, refreshInterval, layout);
             return ResponseEntity.ok(config);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error fetching widgets", e);
             return ResponseEntity.internalServerError().build();
         }
     }

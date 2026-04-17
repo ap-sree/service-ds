@@ -10,7 +10,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.antigravity.servicedashboard.util.MessageUtils;
 
 @Service
 public class FileService {
@@ -21,7 +26,7 @@ public class FileService {
     public List<Map<String, Object>> readFile(String filePath, String format) throws IOException {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
-            throw new IOException("File not found: " + filePath);
+            throw new IOException(MessageUtils.get("error.file.notfound", filePath));
         }
 
         String determinedFormat = format;
@@ -62,7 +67,7 @@ public class FileService {
                     });
                     result.add(row);
                 } catch (Exception ex) {
-                    throw new IOException("Invalid JSON format in file", ex);
+                    throw new IOException(MessageUtils.get("error.file.invalidjson"), ex);
                 }
             }
             return result;

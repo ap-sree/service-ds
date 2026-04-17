@@ -32,7 +32,7 @@ public class NLPService {
 
     @PostConstruct
     public void init() throws IOException {
-        // Load Models
+
         try (InputStream is = new ClassPathResource("models/en-sent.bin").getInputStream()) {
             sentenceDetector = new SentenceDetectorME(new SentenceModel(is));
         }
@@ -61,7 +61,7 @@ public class NLPService {
         NLPResult result = new NLPResult();
         result.setOriginalText(text);
 
-        // 1. Detect Sentences
+
         String[] sentences = sentenceDetector.sentDetect(text);
         result.setSentences(Arrays.asList(sentences));
 
@@ -71,20 +71,20 @@ public class NLPService {
             NLPResult.SentenceAnalysis analysis = new NLPResult.SentenceAnalysis();
             analysis.setText(sentence);
 
-            // 2. Tokenize
+
             String[] tokens = tokenizer.tokenize(sentence);
             analysis.setTokens(Arrays.asList(tokens));
 
-            // 3. POS Tagging
+
             String[] tags = posTagger.tag(tokens);
-            // Combine token + tag
+
             List<NLPResult.TokenTag> tokenTags = new ArrayList<>();
             for (int i = 0; i < tokens.length; i++) {
                 tokenTags.add(new NLPResult.TokenTag(tokens[i], tags[i]));
             }
             analysis.setPosTags(tokenTags);
 
-            // 4. NER
+
             List<NLPResult.Entity> entities = new ArrayList<>();
             entities.addAll(findEntities(personFinder, tokens, "Person"));
             entities.addAll(findEntities(locationFinder, tokens, "Location"));
@@ -109,13 +109,13 @@ public class NLPService {
         return entities;
     }
 
-    // DTOs
+
     public static class NLPResult {
         private String originalText;
         private List<String> sentences;
         private List<SentenceAnalysis> analysis;
 
-        // Getters and Setters
+
         public String getOriginalText() {
             return originalText;
         }
@@ -146,7 +146,7 @@ public class NLPService {
             private List<TokenTag> posTags;
             private List<Entity> entities;
 
-            // Getters/Setters
+
             public String getText() {
                 return text;
             }

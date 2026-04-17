@@ -6,8 +6,7 @@ import { TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
-import { DashboardService, WidgetDefinition, WidgetDataResponse } from '../../services/dashboard';
-import { AuthService } from '../../auth/auth';
+import { DashboardService, WidgetDefinition, WidgetDataResponse, QueryConfig } from '../../services/dashboard';
 
 @Component({
   selector: 'app-generic-widget',
@@ -21,7 +20,6 @@ export class GenericWidgetComponent implements OnInit {
   @Input() isEditing = false;
 
   protected dashboardService = inject(DashboardService);
-  protected authService = inject(AuthService);
 
   data: any[] = [];
   displayedColumns: string[] = [];
@@ -50,20 +48,13 @@ export class GenericWidgetComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-
-    let currentUser = this.authService.currentUser();
-
-
-    if (!currentUser) {
-      const stored = localStorage.getItem('currentUser');
-      if (stored) {
-        currentUser = JSON.parse(stored);
-      }
+    if (this.widgetDef.schemaChanged) {
+      this.loading = false;
+      this.error = 'Check widget configuration';
+      return;
     }
 
-    const userId = currentUser ? currentUser.username : undefined;
-
-    this.dashboardService.getWidgetData(this.widgetDef.id!, userId).subscribe({
+    this.dashboardService.getWidgetData(this.widgetDef.id!).subscribe({
       next: (res) => {
         this.processSmartData(res);
         this.loading = false;
@@ -95,20 +86,22 @@ export class GenericWidgetComponent implements OnInit {
       this.data = res.items || [];
       if (this.data.length > 0) {
 
-        let config = this.widgetDef.queryConfig;
-        if (typeof config === 'string') {
+        let config: QueryConfig | undefined;
+        const rawConfig = this.widgetDef.queryConfig;
+
+        if (typeof rawConfig === 'string') {
           try {
-            config = JSON.parse(config);
+            config = JSON.parse(rawConfig);
           } catch (e) {
-            config = {};
+            config = undefined;
           }
+        } else {
+          config = rawConfig;
         }
 
         if (config && Array.isArray(config.columns) && config.columns.length > 0) {
-
           this.displayedColumns = config.columns;
         } else {
-
           this.displayedColumns = Object.keys(this.data[0]).filter(k => !k.startsWith('_'));
         }
       }

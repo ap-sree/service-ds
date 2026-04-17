@@ -17,4 +17,5 @@ export interface NotificationRule {
     scheduleConfig?: string;
     userColumn?: string;
     targetRole?: string;
+    schemaChanged?: boolean;
 }

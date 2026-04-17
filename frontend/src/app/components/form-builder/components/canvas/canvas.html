@@ -1,45 +1,42 @@
 @if (formSchema$ | async; as formSchema) {
-  <div class="canvas h-full">
-    <div class="text-center mb-4">
-      <h2 class="text-2xl font-bold m-0">{{ formSchema.name }}</h2>
-    </div>
-    <div cdkDropList [id]="canvasListId" [cdkDropListData]="formSchema.elements"
-      [cdkDropListConnectedTo]="['element-palette-list']" (cdkDropListDropped)="drop($event)"
-      class="form-elements-container min-h-screen p-4 border-2 border-dashed border-primary-100 border-round bg-white transition-colors"
-      [class.preview-mode]="isPreviewMode$ | async" [class.empty]="formSchema.elements.length === 0"
-      (click)="onCanvasClick($event)">
-      
-      @if (formSchema.elements.length === 0) {
-        <div
-          class="empty-state flex flex-column align-items-center justify-content-center text-500 p-8">
-          <i class="pi pi-box text-5xl mb-3"></i>
-          <p class="text-xl">Drag form elements here</p>
-        </div>
-      }
-      
-      @for (element of formSchema.elements; track trackByElementId($index, element)) {
-        <div cdkDrag [cdkDragData]="element"
-          [cdkDragDisabled]="isPreviewMode$ | async"
-          [ngClass]="{'surface-card shadow-2 p-3 border-round': !(isPreviewMode$ | async), 'mb-3': true}"
-          class="form-element-wrapper relative"
-          [class.border-blue-500]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
-          [class.border-2]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
-          (click)="selectElement(element); $event.stopPropagation()">
-          
-          @if (!(isPreviewMode$ | async)) {
-            <div class="drag-handle absolute top-0 left-0 p-2 cursor-move text-500 hover:text-primary z-5"
-              cdkDragHandle>
-              <i class="pi pi-bars"></i>
-            </div>
-          }
-          
-          <app-form-element [element]="element" [group]="form" [isPreview]="(isPreviewMode$ | async) || false"
-            [isSelected]="(selectedElement$ | async)?.id === element.id" (deleteElement)="deleteElement($event)">
-          </app-form-element>
-          
-          <div *cdkDragPlaceholder class="drag-placeholder h-4rem surface-200 border-round mb-3"></div>
-        </div>
-      }
-    </div>
+<div class="canvas h-full">
+  <div class="text-center mb-4">
+    <h2 class="text-2xl font-bold m-0">{{ formSchema.name }}</h2>
   </div>
+  <div cdkDropList [id]="canvasListId" [cdkDropListData]="formSchema.elements"
+    [cdkDropListConnectedTo]="['element-palette-list']" (cdkDropListDropped)="drop($event)"
+    class="form-elements-container min-h-screen p-4 border-2 border-dashed border-primary-100 border-round bg-white transition-colors"
+    [class.preview-mode]="isPreviewMode$ | async" [class.empty]="formSchema.elements.length === 0"
+    (click)="onCanvasClick($event)">
+
+    @if (formSchema.elements.length === 0) {
+    <div class="empty-state flex flex-column align-items-center justify-content-center text-500 p-8">
+      <i class="pi pi-box text-5xl mb-3"></i>
+      <p class="text-xl">Drag form elements here</p>
+    </div>
+    }
+
+    @for (element of formSchema.elements; track trackByElementId($index, element)) {
+    <div cdkDrag [cdkDragData]="element" [cdkDragDisabled]="isPreviewMode$ | async"
+      [class]="{'surface-card shadow-2 p-3 border-round': !(isPreviewMode$ | async), 'mb-3': true}"
+      class="form-element-wrapper relative"
+      [class.border-blue-500]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
+      [class.border-2]="!(isPreviewMode$ | async) && (selectedElement$ | async)?.id === element.id"
+      (click)="selectElement(element); $event.stopPropagation()">
+
+      @if (!(isPreviewMode$ | async)) {
+      <div class="drag-handle absolute top-0 left-0 p-2 cursor-move text-500 hover:text-primary z-5" cdkDragHandle>
+        <i class="pi pi-bars"></i>
+      </div>
+      }
+
+      <app-form-element [element]="element" [group]="form" [isPreview]="(isPreviewMode$ | async) || false"
+        [isSelected]="(selectedElement$ | async)?.id === element.id" (deleteElement)="deleteElement($event)">
+      </app-form-element>
+
+      <div *cdkDragPlaceholder class="drag-placeholder h-4rem surface-200 border-round mb-3"></div>
+    </div>
+    }
+  </div>
+</div>
 }

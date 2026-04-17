@@ -1,111 +1,109 @@
-<div class="form-element relative p-3 border-1 border-transparent border-round" [class.preview-mode]="isPreview"
-  [class.pl-6]="!isPreview" [class.pr-6]="!isPreview">
+<div class="form-element relative p-3 border-1 border-transparent border-round" [class.preview-mode]="isPreview()"
+  [class.pl-6]="!isPreview()" [class.pr-6]="!isPreview()">
 
-  
-  @if (!isPreview) {
-    <div class="element-actions absolute top-0 right-0 p-2 z-2">
-      <p-button icon="pi pi-trash" rounded="true" text="true" severity="danger"
-      (onClick)="onDelete($event)"></p-button>
-    </div>
+
+  @if (!isPreview()) {
+  <div class="element-actions absolute top-0 right-0 p-2 z-2">
+    <p-button icon="pi pi-trash" rounded="true" text="true" severity="danger" (onClick)="onDelete($event)"></p-button>
+  </div>
   }
 
-  <div class="w-100" [formGroup]="group">
-    @switch (element.type) {
-      
-      @case ('text') {
-        <div class="mb-3">
-          <label class="form-label">{{ element.label }}</label>
-          <input type="text" [placeholder]="element.placeholder || ''" [required]="element.required"
-            class="form-control" [formControlName]="element.id">
-          </div>
-        }
-        @case ('email') {
-          <div class="mb-3">
-            <label class="form-label">{{ element.label }}</label>
-            <input type="email" [placeholder]="element.placeholder || ''" [required]="element.required"
-              class="form-control" [formControlName]="element.id">
-            </div>
-          }
-          @case ('password') {
-            <div class="mb-3">
-              <label class="form-label">{{ element.label }}</label>
-              <input type="password" [placeholder]="element.placeholder || ''" [required]="element.required"
-                class="form-control" [formControlName]="element.id">
-              </div>
-            }
-            @case ('number') {
-              <div class="mb-3">
-                <label class="form-label">{{ element.label }}</label>
-                <input type="number" [placeholder]="element.placeholder || ''" [required]="element.required"
-                  [min]="element.min!" [max]="element.max!" [step]="element.step!" class="form-control"
-                  [formControlName]="element.id">
-                </div>
-              }
-              
-              @case ('textarea') {
-                <div class="mb-3">
-                  <label class="form-label">{{ element.label }}</label>
-                  <textarea [rows]="element.rows || 4" [placeholder]="element.placeholder || ''" [required]="element.required"
-                    class="form-control" [formControlName]="element.id">
+  <div class="w-100" [formGroup]="group()">
+    @switch (element().type) {
+
+    @case ('text') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <input type="text" [placeholder]="element().placeholder || ''" [required]="element().required"
+        class="form-control" [formControlName]="element().id">
+    </div>
+    }
+    @case ('email') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <input type="email" [placeholder]="element().placeholder || ''" [required]="element().required"
+        class="form-control" [formControlName]="element().id">
+    </div>
+    }
+    @case ('password') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <input type="password" [placeholder]="element().placeholder || ''" [required]="element().required"
+        class="form-control" [formControlName]="element().id">
+    </div>
+    }
+    @case ('number') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <input type="number" [placeholder]="element().placeholder || ''" [required]="element().required"
+        [min]="element().min!" [max]="element().max!" [step]="element().step!" class="form-control"
+        [formControlName]="element().id">
+    </div>
+    }
+
+    @case ('textarea') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <textarea [rows]="element().rows || 4" [placeholder]="element().placeholder || ''" [required]="element().required"
+        class="form-control" [formControlName]="element().id">
                   </textarea>
-                </div>
-              }
-              
-              @case ('select') {
-                <div class="mb-3">
-                  <label class="form-label">{{ element.label }}</label>
-                  <select class="form-select" [required]="element.required" [formControlName]="element.id">
-                    <option value="" disabled selected>Select an option</option>
-                    @for (option of element.options; track option) {
-                      <option [value]="option">{{ option }}</option>
-                    }
-                  </select>
-                </div>
-              }
-              
-              @case ('checkbox') {
-                <div class="mb-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" [id]="element.id" [formControlName]="element.id">
-                    <label class="form-check-label" [for]="element.id">
-                      {{ element.label }}
-                    </label>
-                  </div>
-                </div>
-              }
-              
-              @case ('radio') {
-                <div class="mb-3">
-                  <label class="form-label d-block">{{ element.label }}</label>
-                  @for (option of element.options; track option) {
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio" [value]="option" [id]="option"
-                        [formControlName]="element.id">
-                        <label class="form-check-label" [for]="option">
-                          {{ option }}
-                        </label>
-                      </div>
-                    }
-                  </div>
-                }
-                
-                @case ('date') {
-                  <div class="mb-3">
-                    <label class="form-label">{{ element.label }}</label>
-                    <input type="date" class="form-control" [required]="element.required" [formControlName]="element.id">
-                  </div>
-                }
-                
-                @case ('button') {
-                  <div class="mb-3">
-                    <button type="button" class="btn btn-primary w-100">{{ element.label }}</button>
-                  </div>
-                }
-                @case ('submit') {
-                  <div class="mb-3">
-                    <button type="submit" class="btn btn-primary w-100">{{ element.label }}</button>
-                  </div>
-                }
-              }
-            </div>
-          </div>
+    </div>
+    }
+
+    @case ('select') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <select class="form-select" [required]="element().required" [formControlName]="element().id">
+        <option value="" disabled selected>Select an option</option>
+        @for (option of element().options; track option) {
+        <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </div>
+    }
+
+    @case ('checkbox') {
+    <div class="mb-3">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" [id]="element().id" [formControlName]="element().id">
+        <label class="form-check-label" [for]="element().id">
+          {{ element().label }}
+        </label>
+      </div>
+    </div>
+    }
+
+    @case ('radio') {
+    <div class="mb-3">
+      <label class="form-label d-block">{{ element().label }}</label>
+      @for (option of element().options; track option) {
+      <div class="form-check">
+        <input class="form-check-input" type="radio" [value]="option" [id]="option" [formControlName]="element().id">
+        <label class="form-check-label" [for]="option">
+          {{ option }}
+        </label>
+      </div>
+      }
+    </div>
+    }
+
+    @case ('date') {
+    <div class="mb-3">
+      <label class="form-label">{{ element().label }}</label>
+      <input type="date" class="form-control" [required]="element().required" [formControlName]="element().id">
+    </div>
+    }
+
+    @case ('button') {
+    <div class="mb-3">
+      <button type="button" class="btn btn-primary w-100">{{ element().label }}</button>
+    </div>
+    }
+    @case ('submit') {
+    <div class="mb-3">
+      <button type="submit" class="btn btn-primary w-100">{{ element().label }}</button>
+    </div>
+    }
+    }
+  </div>
+</div>

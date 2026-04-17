@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AccordionModule } from 'primeng/accordion';
 import { TagModule } from 'primeng/tag';
@@ -10,11 +10,11 @@ import { ComparisonCard } from './policy-comparison.model';
     standalone: true,
     imports: [CommonModule, AccordionModule, TagModule, TooltipModule],
     template: `
-        <p-accordion-panel [value]="card.context">
+        <p-accordion-panel [value]="card().context">
             <p-accordion-header>
                 <div class="flex align-items-center justify-content-between w-full pr-3">
-                    <span class="font-semibold">{{ card.context }}</span>
-                    <p-tag [value]="getStatusLabel(card.status)" [severity]="getSeverity(card.status)" [rounded]="true"></p-tag>
+                    <span class="font-semibold">{{ card().context }}</span>
+                    <p-tag [value]="getStatusLabel(card().status)" [severity]="getSeverity(card().status)" [rounded]="true"></p-tag>
                 </div>
             </p-accordion-header>
             <p-accordion-content>
@@ -34,12 +34,12 @@ import { ComparisonCard } from './policy-comparison.model';
                         </div>
                         <pre class="text-sm mt-1 bg-gray-50 p-2 rounded">{{ getMappings() }}</pre>
                     </div>
-                    <div class="mt-3" *ngIf="card.children.length > 0">
+                    <div class="mt-3" *ngIf="card().children.length > 0">
                         <strong>Children:</strong>
                         <p-accordion [multiple]="true" styleClass="mt-2">
-                            <app-policy-comparison-card *ngFor="let child of card.children" 
-                                                        [card]="child" 
-                                                        [column]="column">
+                            <app-policy-comparison-card *ngFor="let child of card().children" 
+                                                         [card]="child" 
+                                                         [column]="column()">
                             </app-policy-comparison-card>
                         </p-accordion>
                     </div>
@@ -54,26 +54,26 @@ import { ComparisonCard } from './policy-comparison.model';
     `]
 })
 export class PolicyComparisonCardComponent {
-    @Input() card!: ComparisonCard;
-    @Input() column!: 'a' | 'b' | 'c';
+    card = input.required<ComparisonCard>();
+    column = input.required<'a' | 'b' | 'c'>();
 
     getType(): string {
-        return this.card.details.type[this.column];
+        return this.card().details.type[this.column()];
     }
 
     getAction(): string {
-        return this.card.details.action[this.column];
+        return this.card().details.action[this.column()];
     }
 
     getMappings(): string {
-        return this.card.details.mappings[this.column];
+        return this.card().details.mappings[this.column()];
     }
 
     hasDiff(field: 'type' | 'action' | 'mappings'): boolean {
-        
-        const vals = this.card.details[field];
-        
-        
+
+        const vals = this.card().details[field];
+
+
         return vals.a !== vals.b;
     }
 

@@ -63,6 +63,7 @@ export class SyncJobDialogComponent implements OnInit {
         { label: 'DELETE', value: 'DELETE' }
     ];
     showMethodDropdown = false;
+    showHttpOptions = false;
     paginationOptions = [
         { label: 'None', value: 'NONE' },
         { label: 'Offset & Limit', value: 'OFFSET' },
@@ -90,6 +91,7 @@ export class SyncJobDialogComponent implements OnInit {
             paginationType: ['NONE'],
             paginationNextKey: [''],
             paginationLimit: [''],
+            rootPath: [''],
             mappingRows: this.fb.array([])
         });
         this.syncFormGroup.get('syncStrategy')?.valueChanges.subscribe(val => {
@@ -114,7 +116,8 @@ export class SyncJobDialogComponent implements OnInit {
                 syncMode: this.syncData.syncMode,
                 scheduleConfig: this.syncData.scheduleConfig,
                 syncStrategy: (this.syncData as any).syncStrategy || 'RELOAD',
-                primaryKey: (this.syncData as any).primaryKey
+                primaryKey: (this.syncData as any).primaryKey,
+                rootPath: (this.syncData as any).rootPath || ''
             });
             if (this.syncData.paginationConfig) {
                 try {
@@ -177,12 +180,29 @@ export class SyncJobDialogComponent implements OnInit {
             if (selectedSource.type === 'SQL_SERVER') {
                 this.syncQueryHint = 'Example: SELECT * FROM Users WHERE Active = 1';
                 this.showMethodDropdown = false;
+                this.showHttpOptions = false;
             } else if (selectedSource.type === 'LOCAL_COMMAND') {
                 this.syncQueryHint = 'Enter Command (e.g. "docker ps --format json")';
                 this.showMethodDropdown = false;
+                this.showHttpOptions = false;
             } else {
                 this.syncQueryHint = 'Example: /users (Relative to Base URL)';
                 this.showMethodDropdown = true;
+                this.showHttpOptions = true;
+
+
+                if (!this.isEditing) {
+                    try {
+                        const cfg = JSON.parse(selectedSource.config || '{}');
+                        if (cfg.pagination && cfg.pagination.type && cfg.pagination.type !== 'NONE') {
+                            this.syncFormGroup.patchValue({
+                                paginationType: cfg.pagination.type === 'PAGE_PARAM' ? 'PAGE' : cfg.pagination.type,
+                                paginationNextKey: cfg.pagination.key || cfg.pagination.nextPath || '',
+                                paginationLimit: cfg.pagination.limit || ''
+                            });
+                        }
+                    } catch (e) { }
+                }
             }
         }
     }

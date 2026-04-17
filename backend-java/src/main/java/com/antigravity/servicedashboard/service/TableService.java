@@ -1,26 +1,44 @@
 package com.antigravity.servicedashboard.service;
 
+import com.antigravity.servicedashboard.entity.SyncDefinition;
 import com.antigravity.servicedashboard.entity.WidgetDefinition;
+import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
 import com.antigravity.servicedashboard.repository.WidgetDefinitionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
 import com.antigravity.servicedashboard.constant.AppConstants;
 import com.antigravity.servicedashboard.util.AppUtils;
+import com.antigravity.servicedashboard.util.MessageUtils;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 
 @Service
 public class TableService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TableService.class);
+
     private final WidgetDefinitionRepository widgetRepo;
+    private final SyncDefinitionRepository syncRepo;
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
 
     private static final String KEY_ITEMS = "items";
+    private static final Set<String> SYSTEM_COLUMNS = Set.of("_id", "_synced_at");
 
-    public TableService(WidgetDefinitionRepository widgetRepo, JdbcTemplate jdbcTemplate) {
+    public TableService(WidgetDefinitionRepository widgetRepo, SyncDefinitionRepository syncRepo, JdbcTemplate jdbcTemplate) {
         this.widgetRepo = widgetRepo;
+        this.syncRepo = syncRepo;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -32,13 +50,13 @@ public class TableService {
         WidgetDefinition widget = widgetOpt.get();
         String tableName = widget.getDataSourceTable();
         if (!tableName.matches("^\\w+$")) {
-            throw new IllegalArgumentException("Invalid table name");
+            throw new IllegalArgumentException(MessageUtils.get("error.table.invalid"));
         }
 
         String type = widget.getType().toLowerCase();
         String userColumn = widget.getUserColumn();
 
-        StringBuilder sql = new StringBuilder("SELECT * FROM \"").append(tableName).append("\"");
+        StringBuilder sql = new StringBuilder("SELECT TOP(").append(limit).append(") * FROM \"app\".\"").append(tableName).append("\"");
         List<Object> params = new ArrayList<>();
 
         if (userId != null && userColumn != null && !userColumn.isEmpty()) {
@@ -69,24 +87,25 @@ public class TableService {
             return fetchMultiMetricData(sql.toString(), params, widget);
         }
 
-        else if (AppConstants.WIDGET_TYPE_GRID.equals(type) || AppConstants.WIDGET_TYPE_STATUS_GRID.equals(type))
-
-        {
-
-            sql.append(" LIMIT ?");
-            params.add(limit);
+        else if (AppConstants.WIDGET_TYPE_GRID.equals(type) || AppConstants.WIDGET_TYPE_STATUS_GRID.equals(type)) {
             return fetchGridData(sql.toString(), params, widget, limit, type);
         }
 
-        sql.append(" LIMIT ?");
-        params.add(limit);
-
         try {
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql.toString(), params.toArray());
-            return Map.of("type", type, KEY_ITEMS, rows, "limit", limit);
+            return Map.of("type", type, KEY_ITEMS, stripSystemColumns(rows), "limit", limit);
         } catch (Exception e) {
-            throw new IllegalStateException("Data unreachable: " + e.getMessage());
+            logger.error("Data fetch failed for widget {} (table: {})", widgetId, tableName, e);
+            throw new IllegalStateException(MessageUtils.get("error.table.unreachable", tableName), e);
         }
+    }
+
+    private List<Map<String, Object>> stripSystemColumns(List<Map<String, Object>> rows) {
+        return rows.stream().map(row -> {
+            Map<String, Object> filtered = new LinkedHashMap<>(row);
+            SYSTEM_COLUMNS.forEach(filtered::remove);
+            return filtered;
+        }).toList();
     }
 
     @SuppressWarnings("unchecked")
@@ -99,10 +118,7 @@ public class TableService {
     }
 
     private Map<String, Object> fetchCardData(String baseSql, List<Object> params, WidgetDefinition widget) {
-        String countSql = baseSql.replaceFirst("SELECT \\* FROM \"? \\w+ \"?",
-                "SELECT COUNT(*) as count FROM " + getQuotedTableName(widget.getDataSourceTable()));
-
-        countSql = "SELECT COUNT(*) as count FROM \"" + widget.getDataSourceTable() + "\"";
+        String countSql = "SELECT COUNT(*) as count FROM \"app\"." + getQuotedTableName(widget.getDataSourceTable());
         if (baseSql.contains(" WHERE ")) {
             countSql += baseSql.substring(baseSql.indexOf(" WHERE "));
         }
@@ -114,7 +130,8 @@ public class TableService {
                     "count", count != null ? count : 0,
                     "label", widget.getTitle());
         } catch (Exception e) {
-            throw new IllegalStateException("Table not ready");
+            logger.error("Card data fetch failed for table: {}", widget.getDataSourceTable(), e);
+            throw new IllegalStateException(MessageUtils.get("error.table.notready", widget.getDataSourceTable()), e);
         }
     }
 
@@ -158,7 +175,7 @@ public class TableService {
 
             String tableName = widget.getDataSourceTable();
             StringBuilder aggSql = new StringBuilder("SELECT ").append(String.join(", ", selects))
-                    .append(" FROM \"").append(tableName).append("\"");
+                    .append(" FROM \"app\".\"").append(tableName).append("\"");
             if (baseSql.contains(" WHERE ")) {
                 aggSql.append(baseSql.substring(baseSql.indexOf(" WHERE ")));
             }
@@ -175,7 +192,8 @@ public class TableService {
             }
             return Map.of("type", AppConstants.WIDGET_TYPE_MULTI_METRIC, KEY_ITEMS, items);
         } catch (Exception e) {
-            throw new IllegalStateException("Aggregation failed: " + e.getMessage());
+            logger.error("Multi-metric aggregation failed for widget: {}", widget.getTitle(), e);
+            throw new IllegalStateException(MessageUtils.get("error.table.aggregation"), e);
         }
     }
 
@@ -219,28 +237,43 @@ public class TableService {
 
             return Map.of("type", type, KEY_ITEMS, items, "limit", limit);
         } catch (Exception e) {
-            throw new IllegalStateException("Grid fetch failed: " + e.getMessage());
+            logger.error("Grid fetch failed for widget: {}", widget.getTitle(), e);
+            throw new IllegalStateException(MessageUtils.get("error.table.gridfetch"), e);
         }
     }
 
-    public List<String> getTableSchema(String tableName) {
+    public List<String> getTableSchema(Long widgetId) {
+        WidgetDefinition widget = widgetRepo.findById(widgetId)
+                .orElseThrow(() -> new IllegalArgumentException("Widget not found"));
+
+        return fetchColumns(widget.getDataSourceTable());
+    }
+
+    public List<String> getSyncSchema(Long syncId) {
+        SyncDefinition sync = syncRepo.findById(syncId)
+                .orElseThrow(() -> new IllegalArgumentException("Sync definition not found"));
+
+        return fetchColumns(sync.getTargetTableName());
+    }
+
+    private List<String> fetchColumns(String tableName) {
         if (!AppUtils.isValidTableName(tableName)) {
-            throw new IllegalArgumentException("Invalid table name");
+            throw new IllegalArgumentException(MessageUtils.get("error.table.invalid.param", tableName));
         }
 
-        List<Map<String, Object>> columns = jdbcTemplate.queryForList(
-                "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
-                tableName);
+        try {
+            List<Map<String, Object>> columns = jdbcTemplate.queryForList(
+                    "{call app.sp_GetTableColumns(?)}",
+                    tableName);
 
-        if (columns.isEmpty()) {
-            columns = jdbcTemplate.queryForList(
-                    "SELECT COLUMN_NAME as \"name\" FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ?",
-                    tableName.toUpperCase());
+            return columns.stream()
+                    .map(row -> (String) row.get("name"))
+                    .filter(name -> !SYSTEM_COLUMNS.contains(name))
+                    .toList();
+        } catch (Exception e) {
+            logger.error("Schema fetch failed for table: {}", tableName, e);
+            throw new IllegalStateException(MessageUtils.get("error.table.schemafetch"), e);
         }
-
-        return columns.stream()
-                .map(row -> (String) row.get("name"))
-                .toList();
     }
 
     private String getQuotedTableName(String tableName) {
@@ -259,14 +292,13 @@ public class TableService {
 
         for (String keyword : blockedKeywords) {
             if (upper.contains(keyword)) {
-                throw new IllegalArgumentException("SQL Filter contains forbidden keyword: " + keyword);
+                throw new IllegalArgumentException(MessageUtils.get("error.sql.forbidden.keyword", keyword));
             }
         }
 
-        // Basic character check to prevent most injection attempts while allowing
-        // normal conditions
+
         if (filter.contains(";") || filter.contains("\\")) {
-            throw new IllegalArgumentException("SQL Filter contains forbidden characters");
+            throw new IllegalArgumentException(MessageUtils.get("error.sql.forbidden.chars"));
         }
     }
 }

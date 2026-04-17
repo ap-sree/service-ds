@@ -31,7 +31,7 @@ public class K8sService {
         this.appConfigRepository = appConfigRepository;
     }
 
-    // Initialize client from stored config
+
     public synchronized boolean connect() {
         try {
             String type = getConfigValue("k8s_config_type");
@@ -43,13 +43,10 @@ public class K8sService {
             }
 
             if ("FILE".equalsIgnoreCase(type)) {
-                // Load from KubeConfig file path
+
                 client = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new FileReader(value))).build();
             } else if ("TOKEN".equalsIgnoreCase(type)) {
-                // Token based auth (assuming default cluster or needs host url too?
-                // For simplicity, Token usually requires more Context.
-                // Let's support Raw KubeConfig Content as "TOKEN" or "CONTENT" for now if user
-                // pastes file content)
+
                 client = ClientBuilder.kubeconfig(KubeConfig.loadKubeConfig(new StringReader(value))).build();
             } else {
                 return false;
@@ -68,7 +65,7 @@ public class K8sService {
     public void saveConfig(String type, String value) {
         saveConfigValue("k8s_config_type", type);
         saveConfigValue("k8s_config_value", value);
-        connect(); // Reconnect
+        connect();
     }
 
     public List<K8sPodDto> listPods(String namespace) {
@@ -78,7 +75,7 @@ public class K8sService {
         }
 
         try {
-            // List all pods in all namespaces if namespace is null/empty
+
             String ns = (namespace == null || namespace.isEmpty()) ? "" : namespace;
 
             V1PodList list;

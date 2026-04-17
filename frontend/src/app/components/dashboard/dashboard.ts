@@ -65,38 +65,46 @@ export class DashboardComponent implements OnInit {
 
     loadData() {
         this.loading = true;
-        this.dashboardService.getWidgets().subscribe({
-            next: (config) => {
-                const widgets = config.widgets || [];
 
-                const typeOrder: { [key: string]: number } = {
-                    'CARD': 1,
-                    'MULTI_METRIC': 2,
-                    'STATUS_GRID': 3,
-                    'TABLE': 4
-                };
-
-                this.displayedWidgets = widgets.sort((a, b) => {
-                    const orderA = typeOrder[a.type] || 99;
-                    const orderB = typeOrder[b.type] || 99;
-                    if (orderA !== orderB) return orderA - orderB;
-
-                    return (a.id || 0) - (b.id || 0);
-                });
-
-                // Set refresh interval from response
-                if (config.refreshInterval !== undefined && config.refreshInterval !== null) {
-                    this.refreshInterval = config.refreshInterval;
-                    this.onIntervalChange(this.refreshInterval);
+        this.authService.fetchCurrentUser().subscribe({
+            next: (user) => {
+                if (user && user.dashboardConfig) {
+                    this.applyDashboardConfig(user.dashboardConfig);
+                } else {
+                    console.warn('Dashboard config not found in user details.');
+                    this.applyDashboardConfig({ widgets: [], refreshInterval: 0, layout: [] });
                 }
-
                 this.loading = false;
             },
             error: (err) => {
-                console.error('Failed to load dashboard', err);
+                console.error('Failed to load user dashboard config', err);
                 this.loading = false;
             }
         });
+    }
+
+    private applyDashboardConfig(config: any) {
+        const widgets = config.widgets || [];
+
+        const typeOrder: { [key: string]: number } = {
+            'CARD': 1,
+            'MULTI_METRIC': 2,
+            'STATUS_GRID': 3,
+            'TABLE': 4
+        };
+
+        this.displayedWidgets = widgets.sort((a: any, b: any) => {
+            const orderA = typeOrder[a.type] || 99;
+            const orderB = typeOrder[b.type] || 99;
+            if (orderA !== orderB) return orderA - orderB;
+            return (a.id || 0) - (b.id || 0);
+        });
+
+
+        if (config.refreshInterval !== undefined && config.refreshInterval !== null) {
+            this.refreshInterval = config.refreshInterval;
+            this.onIntervalChange(this.refreshInterval);
+        }
     }
 
 

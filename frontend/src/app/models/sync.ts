@@ -18,6 +18,8 @@ export interface SyncDefinition {
     syncStrategy?: string;
     primaryKey?: string;
     paginationConfig?: string;
+    rootPath?: string;
     lastRunAt?: string;
     lastStatus?: string;
+    schemaChanged?: boolean;
 }

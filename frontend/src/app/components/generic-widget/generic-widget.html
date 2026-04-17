@@ -1,7 +1,7 @@
 <p-card
     [styleClass]="'widget-card h-full flex flex-column type-' + (widgetDef.type | lowercase) + ' ' + (cardColorClass ? cardColorClass : '')">
     <div class="flex flex-column h-full">
-        
+
         @if (widgetDef.type !== 'CARD' || isEditing) {
         <div class="px-3 pt-3 pb-2 font-bold text-lg text-900 flex justify-content-between align-items-center">
             <span>{{ widgetDef.title }}</span>
@@ -9,7 +9,14 @@
         </div>
         }
 
-        <div class="flex-grow-1 flex flex-column relative px-3 pb-3"> 
+        <div class="flex-grow-1 flex flex-column relative px-3 pb-3">
+
+            @if (widgetDef.schemaChanged) {
+            <div class="flex align-items-center gap-2 p-3 border-round surface-200 text-orange-700 mb-2">
+                <i class="pi pi-exclamation-triangle text-xl"></i>
+                <span class="text-sm">Data source has changed. Please review this widget.</span>
+            </div>
+            }
 
             @if (loading) {
             <div class="flex justify-content-center align-items-center flex-grow-1 loading-placeholder">
@@ -23,7 +30,7 @@
 
             @if (!loading && !error) {
 
-            
+
             @if (widgetDef.type === 'TABLE') {
             <div class="h-full w-full overflow-hidden flex flex-column">
                 <p-table [value]="data" [scrollable]="true" scrollHeight="400px"
@@ -57,7 +64,7 @@
             </div>
             }
 
-            
+
             @if (widgetDef.type === 'CARD') {
             <div class="flex flex-column align-items-center justify-content-center flex-grow-1">
                 <div class="text-5xl font-bold mb-1 line-height-2">{{ cardValue }}</div>
@@ -65,7 +72,7 @@
             </div>
             }
 
-            
+
             @if (widgetDef.type === 'STATUS_GRID') {
             <div class="grid grid-nogutter w-full overflow-y-auto max-h-15rem">
                 @for (item of statusGridItems; track item.label) {
@@ -74,7 +81,7 @@
                         class="flex align-items-center justify-content-between p-2 border-1 surface-border border-round surface-0 h-full">
                         <div class="flex align-items-center gap-2 overflow-hidden">
                             <span class="w-1rem h-1rem border-circle flex-shrink-0"
-                                [ngClass]="getBadgeClass(item.color)"></span>
+                                [class]="getBadgeClass(item.color)"></span>
                             <span
                                 class="text-900 font-medium text-sm white-space-nowrap overflow-hidden text-overflow-ellipsis">{{
                                 item.label }}</span>
@@ -89,7 +96,7 @@
             </div>
             }
 
-            
+
             @if (widgetDef.type === 'MULTI_METRIC') {
             <div class="flex flex-row flex-wrap gap-3 align-items-center justify-content-center h-full">
                 @for (item of multiMetricItems; track item.label) {

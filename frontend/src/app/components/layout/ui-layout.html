@@ -13,12 +13,12 @@
         </div>
 
         <div class="topbar-right flex align-items-center gap-2">
-            @if (currentUser || isAuthenticated) {
+            @if (currentUser() || isAuthenticated) {
             <div class="user-profile flex align-items-center gap-2 cursor-pointer p-2 border-round hover:surface-100"
                 (click)="optionsMenu.toggle($event)">
                 <span
                     class="w-2rem h-2rem border-circle surface-200 flex align-items-center justify-content-center text-600 font-bold">
-                    {{ (currentUser?.username || 'User').charAt(0).toUpperCase() }}
+                    {{ (currentUser()?.username || 'User').charAt(0).toUpperCase() }}
                 </span>
             </div>
             <p-menu #optionsMenu [popup]="true" [model]="userMenuItems"></p-menu>
@@ -31,74 +31,35 @@
 
         <div class="sidebar-container" [class.mobile-visible]="mobileMenuVisible">
             <div class="sidebar-content">
-
-
-                <div class="nav-group">
-                    <a pRipple routerLink="/dashboard" routerLinkActive="active-item"
-                        [routerLinkActiveOptions]="{exact: true}" class="nav-item">
-                        <i class="pi pi-home"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </div>
-
+                @for (section of menuSections; track section.title; let first = $first; let last = $last) {
+                @if (!section.isAdminOnly || isAdmin()) {
+                @if (!first) {
                 <div class="separator"></div>
-
+                }
 
                 <div class="nav-group">
-                    <div class="nav-header">Utilities</div>
+                    @if (section.title) {
+                    <div class="nav-header flex align-items-center justify-content-between cursor-pointer select-none"
+                        (click)="toggleSection(section)">
+                        <span>{{ section.title }}</span>
+                        <i class="pi pi-chevron-down transition-transform duration-200 text-sm"
+                            [class.rotate-180]="!section.expanded"></i>
+                    </div>
+                    }
 
-                    <a pRipple routerLink="/form-builder" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-file-edit"></i>
-                        <span>Form Builder</span>
-                    </a>
-                    <a pRipple routerLink="/automation" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-bolt"></i>
-                        <span>Automation</span>
-                    </a>
-                    <a pRipple routerLink="/k8s" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-server"></i>
-                        <span>Kubernetes</span>
-                    </a>
-                    <a pRipple routerLink="/nlp" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-bolt"></i>
-                        <span>Natural Language</span>
-                    </a>
-                    <a pRipple routerLink="/policy-visualizer" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-sitemap"></i>
-                        <span>Policy Visualizer</span>
-                    </a>
-                    <a pRipple routerLink="/policy-comparison" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-clone"></i>
-                        <span>Policy Comparison</span>
-                    </a>
+                    @if (section.expanded) {
+                    <div class="flex flex-column gap-1">
+                        @for (item of section.items; track item.label) {
+                        <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-item"
+                            [routerLinkActiveOptions]="item.routerLinkActiveOptions || {exact: false}" class="nav-item">
+                            <i [class]="item.icon"></i>
+                            <span>{{ item.label }}</span>
+                        </a>
+                        }
+                    </div>
+                    }
                 </div>
-
-                @if (isAdmin) {
-                <div class="separator"></div>
-                <div class="nav-group">
-                    <div class="nav-header">Administration</div>
-
-                    <a pRipple routerLink="/admin/data-sources" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-database"></i>
-                        <span>Data Sources</span>
-                    </a>
-                    <a pRipple routerLink="/admin/sync-jobs" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-sync"></i>
-                        <span>Sync Jobs</span>
-                    </a>
-                    <a pRipple routerLink="/admin/widgets" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-th-large"></i>
-                        <span>Widgets</span>
-                    </a>
-                    <a pRipple routerLink="/admin/notifications" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-bell"></i>
-                        <span>Notification Rules</span>
-                    </a>
-                    <a pRipple routerLink="/admin/users" routerLinkActive="active-item" class="nav-item">
-                        <i class="pi pi-users"></i>
-                        <span>Users</span>
-                    </a>
-                </div>
+                }
                 }
             </div>
         </div>

@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class WidgetService {
@@ -42,18 +44,18 @@ public class WidgetService {
 
         List<Long> activeIds = parseWidgetIds(null);
 
+        boolean hasCustomLayout = false;
+
         if (username != null) {
             User user = userRepository.findById(username).orElse(null);
             if (user != null && user.getPreferences() != null && !user.getPreferences().isEmpty()) {
-                List<Long> userIds = parseWidgetIds(user.getPreferences());
-                if (!userIds.isEmpty()) {
-                    activeIds = userIds;
-                    logger.debug("DEBUG: Used User Layout");
-                }
+                activeIds = parseWidgetIds(user.getPreferences());
+                hasCustomLayout = true;
+                logger.debug("DEBUG: Used User Layout");
             }
         }
 
-        if (activeIds.isEmpty()) {
+        if (!hasCustomLayout) {
             AppConfig globalConf = appConfigRepository.findById("global_dashboard_layout").orElse(null);
             if (globalConf != null) {
                 activeIds = parseWidgetIds(globalConf.getValue());
@@ -93,6 +95,7 @@ public class WidgetService {
         if (!repository.existsById(id))
             return Optional.empty();
         entity.setId(id);
+        entity.setSchemaChanged(false);
         if (entity.getDataSourceTable() != null) {
             syncRepo.findFirstByTargetTableName(entity.getDataSourceTable())
                     .ifPresent(entity::setSyncDefinition);

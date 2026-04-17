@@ -2,14 +2,24 @@ package com.antigravity.servicedashboard.controller;
 
 import com.antigravity.servicedashboard.service.TableService;
 import com.antigravity.servicedashboard.constant.AppConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping
+@RequestMapping("/widgets")
 public class WidgetDataController {
+
+    private static final Logger logger = LoggerFactory.getLogger(WidgetDataController.class);
 
     private final TableService service;
 
@@ -19,9 +29,11 @@ public class WidgetDataController {
 
     @GetMapping("/{id}/data")
     public ResponseEntity<Object> getWidgetData(
-            @PathVariable Long id,
-            @RequestParam(required = false) String userId,
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "100") int limit) {
+
+        String userId = jwt.getSubject();
 
         try {
             Map<String, Object> data = service.fetchWidgetData(id, userId, limit);
@@ -31,21 +43,21 @@ public class WidgetDataController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(AppConstants.KEY_ERROR, e.getMessage()));
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains("Table not ready")) {
-                return ResponseEntity.status(404).body(Map.of(AppConstants.KEY_ERROR, "Table not ready"));
-            }
-            return ResponseEntity.internalServerError().body(Map.of(AppConstants.KEY_ERROR, e.getMessage()));
+            logger.error("Widget data fetch error for id={}", id, e);
+            return ResponseEntity.internalServerError().body(Map.of(AppConstants.KEY_ERROR, "An error occurred while fetching widget data."));
         }
     }
 
-    @GetMapping("/schema/{tableName}")
-    public ResponseEntity<Object> getTableSchema(@PathVariable String tableName) {
+    @GetMapping("/{id}/schema")
+    public ResponseEntity<Object> getTableSchema(@PathVariable("id") Long id) {
         try {
-            return ResponseEntity.ok(service.getTableSchema(tableName));
+            return ResponseEntity.ok(service.getTableSchema(id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(AppConstants.KEY_ERROR, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of(AppConstants.KEY_ERROR, e.getMessage()));
+            logger.error("Schema fetch error for widget id={}", id, e);
+            return ResponseEntity.internalServerError().body(Map.of(AppConstants.KEY_ERROR, "Failed to retrieve schema."));
         }
     }
 }
+

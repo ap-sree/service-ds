@@ -1,3 +1,5 @@
+import { DashboardConfig } from '../services/dashboard';
+
 export interface UserPreferences {
     widgetIds?: number[];
     theme?: string;
@@ -9,4 +11,5 @@ export interface User {
     username: string;
     role: 'ADMIN' | 'USER';
     preferences?: UserPreferences;
+    dashboardConfig?: DashboardConfig;
 }

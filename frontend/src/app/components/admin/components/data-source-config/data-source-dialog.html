@@ -27,20 +27,23 @@
   <ng-container [formGroup]="sqlForm">
     <div class="field grid">
       <label class="col-12 md:col-3 font-bold">Server <span class="text-red-500">*</span></label>
-      <div class="col-12 md:col-9"><input pInputText formControlName="server" class="w-full" /></div>
+      <div class="col-12 md:col-9"><input pInputText formControlName="server" class="w-full"
+          placeholder="hostname or IP" /></div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Port</label>
+      <div class="col-12 md:col-9"><input pInputText type="number" formControlName="port" class="w-full"
+          placeholder="1433" /></div>
     </div>
     <div class="field grid">
       <label class="col-12 md:col-3 font-bold">Database <span class="text-red-500">*</span></label>
-      <div class="col-12 md:col-9"><input pInputText formControlName="database" class="w-full" /></div>
+      <div class="col-12 md:col-9"><input pInputText formControlName="database" class="w-full"
+          placeholder="Database Name" /></div>
     </div>
     <div class="field grid">
-      <label class="col-12 md:col-3 font-bold">User <span class="text-red-500">*</span></label>
-      <div class="col-12 md:col-9"><input pInputText formControlName="user" class="w-full" /></div>
-    </div>
-    <div class="field grid">
-      <label class="col-12 md:col-3 font-bold">Password <span class="text-red-500">*</span></label>
-      <div class="col-12 md:col-9"><input type="password" pInputText formControlName="password" class="w-full" />
-      </div>
+      <label class="col-12 md:col-3 font-bold">Client ID (MI) <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9"><input pInputText formControlName="clientId" class="w-full"
+          placeholder="User-Assigned Managed Identity Client ID" /></div>
     </div>
     <div class="field grid">
       <label class="col-12 md:col-3 font-bold">Encrypt</label>
@@ -60,28 +63,6 @@
         <input pInputText formControlName="baseUrl" class="w-full" placeholder="https://api.example.com" />
       </div>
     </div>
-    <div class="field grid">
-      <label class="col-12 md:col-3 font-bold">Data Path</label>
-      <div class="col-12 md:col-9">
-        <input pInputText formControlName="dataPropertyPath" class="w-full" placeholder="data (leave empty if array)" />
-        <small class="block text-gray-500">Path to the array in response JSON</small>
-      </div>
-    </div>
-    <h4 class="mt-4 mb-2">Pagination</h4>
-    <div class="field grid">
-      <label class="col-12 md:col-3 font-bold">Type</label>
-      <div class="col-12 md:col-9">
-        <p-select formControlName="paginationType" [options]="paginationTypes" optionLabel="label" optionValue="value"
-          styleClass="w-full" appendTo="body"></p-select>
-      </div>
-    </div>
-    @if (restForm.get('paginationType')?.value === 'PAGE_PARAM') {
-    <div class="field grid">
-      <label class="col-12 md:col-3 font-bold">Page Param Name</label>
-      <div class="col-12 md:col-9"><input pInputText formControlName="paginationKey" class="w-full"
-          placeholder="page" /></div>
-    </div>
-    }
     <div class="field grid">
       <label class="col-12 md:col-3 font-bold">Static Headers (JSON)</label>
       <div class="col-12 md:col-9">
@@ -172,6 +153,9 @@
 
   <div class="flex justify-content-end gap-2 mt-4">
     <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
-    <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="sourceForm.invalid"></p-button>
+    <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="sourceForm.invalid || 
+      (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'SQL_SERVER' && sqlForm.invalid) || 
+      (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'REST_API' && restForm.invalid)">
+    </p-button>
   </div>
 </form>

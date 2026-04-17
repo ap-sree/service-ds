@@ -1,6 +1,15 @@
 package com.antigravity.servicedashboard.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -36,6 +45,9 @@ public class WidgetDefinition {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sync_id")
     private SyncDefinition syncDefinition;
+
+    @Column(name = "schema_changed")
+    private boolean schemaChanged = false;
 
     public SyncDefinition getSyncDefinition() {
         return syncDefinition;
@@ -93,5 +105,13 @@ public class WidgetDefinition {
 
     public void setUserColumn(String userColumn) {
         this.userColumn = userColumn;
+    }
+
+    public boolean isSchemaChanged() {
+        return schemaChanged;
+    }
+
+    public void setSchemaChanged(boolean schemaChanged) {
+        this.schemaChanged = schemaChanged;
     }
 }

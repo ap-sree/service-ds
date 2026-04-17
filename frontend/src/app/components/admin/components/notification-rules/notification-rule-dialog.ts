@@ -10,17 +10,18 @@ import { MessageService } from 'primeng/api';
 import { NotificationRuleService } from '../../../../services/notification-rule';
 import { NotificationRule } from '../../../../models/notification';
 import { SourceService } from '../../../../services/source';
+import { SyncDefinition } from '../../../../models/sync';
 
 @Component({
     selector: 'app-notification-rule-dialog',
     standalone: true,
     imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputTextModule,
-    TextareaModule,
-    SelectModule
-],
+        ReactiveFormsModule,
+        ButtonModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule
+    ],
     templateUrl: './notification-rule-dialog.html',
     styles: [`
     .field { margin-bottom: 1rem; }
@@ -38,13 +39,11 @@ export class NotificationRuleDialogComponent implements OnInit {
     ruleConditionForm!: FormGroup;
     loading = false;
     isEditing = false;
+    uniqueSyncs: SyncDefinition[] = [];
     uniqueTables: string[] = [];
     tableColumns: string[] = [];
     ruleData: NotificationRule | undefined;
 
-    
-
-    
     roles = [
         { label: '-- All Roles --', value: '' },
         { label: 'Admin', value: 'ADMIN' },
@@ -91,7 +90,7 @@ export class NotificationRuleDialogComponent implements OnInit {
             localTableName: ['', Validators.required],
             userColumn: [''],
             targetRole: [''],
-            
+
             actionType: ['TOAST', Validators.required],
             titleTemplate: ['Service Alert', Validators.required],
             messageTemplate: ['Alert: Value is {{value}}', Validators.required],
@@ -99,11 +98,11 @@ export class NotificationRuleDialogComponent implements OnInit {
             scheduleConfig: ['']
         });
 
-        
+
         this.ruleConditionForm = this.fb.group({
             operation: ['COUNT', Validators.required],
             column: ['*', Validators.required],
-            condition: [''], 
+            condition: [''],
             thresholdOperator: ['>', Validators.required],
             thresholdValue: ['0', Validators.required]
         });
@@ -113,17 +112,18 @@ export class NotificationRuleDialogComponent implements OnInit {
             this.onRuleTableChange();
 
             if (this.ruleData.condition) {
-                
+
                 const cond = this.ruleData.condition;
                 this.ruleConditionForm.patchValue(cond);
             }
         }
     }
 
-    
+
     loadTables() {
         this.sourceService.getSyncDefs().subscribe({
             next: (data) => {
+                this.uniqueSyncs = data;
                 this.uniqueTables = [...new Set(data.map(d => d.targetTableName))];
             }
         });
@@ -131,8 +131,12 @@ export class NotificationRuleDialogComponent implements OnInit {
 
     onRuleTableChange() {
         const table = this.ruleForm.get('localTableName')?.value;
-        if (table) {
-            this.sourceService.getTableSchema(table).subscribe(cols => this.tableColumns = cols);
+        const sync = this.uniqueSyncs.find(s => s.targetTableName === table);
+        if (sync && sync.id) {
+            this.sourceService.getSyncSchema(sync.id).subscribe({
+                next: cols => this.tableColumns = cols,
+                error: () => this.tableColumns = []
+            });
         }
     }
 
@@ -142,7 +146,7 @@ export class NotificationRuleDialogComponent implements OnInit {
 
         const ruleVal = this.ruleForm.getRawValue();
         const conditionVal = this.ruleConditionForm.getRawValue();
-        
+
         ruleVal.condition = conditionVal;
 
         if (this.isEditing) {

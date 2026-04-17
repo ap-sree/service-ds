@@ -1,5 +1,5 @@
 
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -37,26 +37,28 @@ import { ComparisonCard } from './policy-comparison.model';
 })
 export class PolicyComparisonComponent {
 
-    
+
     policiesA = signal<PolicySummary[]>([]);
     policiesB = signal<PolicySummary[]>([]);
 
-    
+
     selectedPolicyA: PolicySummary | null = null;
     selectedPolicyB: PolicySummary | null = null;
 
     diffTree = signal<DiffNode | null>(null);
     selectedNode = signal<DiffNode | null>(null);
 
-    showDetails = false; 
+    showDetails = false;
 
-    constructor(private diffService: PolicyDiffService) { }
+    private diffService = inject(PolicyDiffService);
+
+    constructor() { }
 
     onUploadA(event: any) {
         this.processFile(event.files[0], (policies) => {
             this.policiesA.set(policies);
             if (policies.length === 1) this.selectedPolicyA = policies[0];
-            
+
             if (event.originalEvent) event.originalEvent.target.value = '';
         });
     }
@@ -84,7 +86,7 @@ export class PolicyComparisonComponent {
         reader.onload = (e: any) => {
             try {
                 const json = JSON.parse(e.target.result);
-                
+
                 const extracted = this.diffService.extractPolicies(json);
                 callback(extracted);
             } catch (error) {
@@ -116,7 +118,7 @@ export class PolicyComparisonComponent {
 
     onNodeSelected(node: DiffNode) {
         this.selectedNode.set(node);
-        this.showDetails = true; 
+        this.showDetails = true;
     }
 
     getSeverity(status: string): any {
@@ -139,7 +141,7 @@ export class PolicyComparisonComponent {
 
         if (Array.isArray(val)) {
             if (val.length === 0) return '(empty)';
-            
+
             if (val.every(v => typeof v !== 'object')) {
                 return '[' + val.join(', ') + ']';
             }
@@ -152,7 +154,7 @@ export class PolicyComparisonComponent {
             return Object.entries(val)
                 .map(([k, v]) => {
                     const valStr = this.formatDiffValue(v, level + 1);
-                    
+
                     if (valStr.includes('\n') || (typeof v === 'object' && v !== null)) {
                         return `${k}:\n${indent}  ${valStr.replace(/\n/g, '\n' + indent + '  ')}`;
                     }
@@ -165,7 +167,7 @@ export class PolicyComparisonComponent {
     }
 
 
-    
+
 
     getComparisonCard(node: DiffNode): ComparisonCard | null {
         if (!node || !node.comparison) return null;
@@ -209,7 +211,7 @@ export class PolicyComparisonComponent {
         if (!node) return '-';
         const parts: string[] = [];
 
-        
+
         const action = node.action || node.rootNode?.action;
         if (!action) return '-';
 
@@ -222,7 +224,7 @@ export class PolicyComparisonComponent {
         const apcMap = this.getAPCMappings(action);
         if (apcMap) parts.push('APC:\n' + apcMap);
 
-        
+
         if (action.inputUserIdMapping) {
             parts.push('User Key:\n' + this.formatMapping({ "USER_KEY": action.inputUserIdMapping }));
         }
@@ -248,7 +250,7 @@ export class PolicyComparisonComponent {
     }
 
     private getFragmentMappings(action: any): string {
-        
+
         let mapping = action?.fragmentMapping?.attributeContractFulfillment;
         if (!mapping) mapping = action?.fragment?.attributeMapping?.attributeContractFulfillment;
         if (!mapping) mapping = action?.fragment?.attributeMapping;
@@ -256,7 +258,7 @@ export class PolicyComparisonComponent {
     }
 
     private getAPCMappings(action: any): string {
-        
+
         let mapping = action?.attributeContractFulfillment;
         if (!mapping) mapping = action?.attributeMapping?.attributeContractFulfillment;
         if (!mapping) mapping = action?.attributeMapping;
@@ -268,7 +270,7 @@ export class PolicyComparisonComponent {
         return Object.keys(fulfillment).map(key => {
             const item = fulfillment[key];
             const source = item.source;
-            const val = source?.value || item.value; 
+            const val = source?.value || item.value;
 
             if (source?.type === 'NO_MAPPING') return `${key}: [No Mapping]`;
             const sourceId = source?.id ? ` (${source.id})` : '';
@@ -283,6 +285,6 @@ export class PolicyComparisonComponent {
         if (action.authenticationSelectorRef?.id) return action.authenticationSelectorRef.id;
         if (action.authenticationSource?.sourceRef?.id) return action.authenticationSource.sourceRef.id;
         if (action.authenticationPolicyContractRef?.id) return action.authenticationPolicyContractRef.id;
-        return null; 
+        return null;
     }
 }

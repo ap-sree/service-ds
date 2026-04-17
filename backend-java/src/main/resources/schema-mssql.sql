@@ -137,6 +137,8 @@ CREATE TABLE app.sync_definitions
     sync_mode VARCHAR(255) NOT NULL,
     sync_strategy VARCHAR(255) NOT NULL,
     target_table_name VARCHAR(255) NOT NULL,
+    root_path VARCHAR(500),
+    schema_changed BIT DEFAULT 0,
     PRIMARY KEY (id)
 );
 
@@ -150,6 +152,7 @@ CREATE TABLE app.widget_definitions
     type VARCHAR(255) NOT NULL,
     user_column VARCHAR(255),
     sync_id BIGINT,
+    schema_changed BIT DEFAULT 0,
     PRIMARY KEY (id),
     CONSTRAINT FK_widget_sync FOREIGN KEY (sync_id) REFERENCES app.sync_definitions (id)
 );
@@ -168,6 +171,7 @@ CREATE TABLE app.notification_rules
     title_template VARCHAR(255) NOT NULL,
     user_column VARCHAR(255),
     sync_id BIGINT,
+    schema_changed BIT DEFAULT 0,
     PRIMARY KEY (id),
     CONSTRAINT FK_notification_sync FOREIGN KEY (sync_id) REFERENCES app.sync_definitions (id)
 );
@@ -263,4 +267,26 @@ BEGIN
     BEGIN
         SELECT 0;
     END
+END
+
+GO
+
+CREATE OR ALTER PROCEDURE app.sp_GetTableColumns
+    @TableName NVARCHAR(128)
+WITH
+    EXECUTE AS OWNER
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @TableName LIKE '%[^a-zA-Z0-9_]%'
+    BEGIN
+        RAISERROR('Invalid table name', 16, 1);
+        RETURN;
+    END
+
+    SELECT COLUMN_NAME as [name]
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'app' AND TABLE_NAME = @TableName
+    ORDER BY ORDINAL_POSITION;
 END

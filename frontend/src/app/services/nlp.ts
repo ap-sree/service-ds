@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -33,8 +33,9 @@ export interface Entity {
 })
 export class NLPService {
     private apiUrl = `${environment.apiUrl}/nlp`;
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) { }
+    constructor() { }
 
     analyze(text: string): Observable<NLPResult> {
         return this.http.post<NLPResult>(`${this.apiUrl}/analyze`, { text });

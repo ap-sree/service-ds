@@ -48,10 +48,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
 
 
-    if (this.authService.isAuthenticated && !this.authService.currentUser()) {
-      this.authService.fetchCurrentUser().subscribe();
-    }
-
+    this.authService.loadDiscoveryDocument().then(() => {
+      this.authService.tryLogin().then(() => {
+        if (this.authService.isAuthenticated) {
+          this.authService.fetchCurrentUser().subscribe();
+        }
+      });
+    });
 
     this.sessionNotifService.notificationReceived$.subscribe(n => {
       this.triggerAlert(n);

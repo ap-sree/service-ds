@@ -34,8 +34,8 @@ export class SessionNotificationService implements OnDestroy {
 
     startPolling() {
         if (this.pollInterval) clearInterval(this.pollInterval);
-        this.checkNotifications();
-        this.pollInterval = setInterval(() => this.checkNotifications(), 10000);
+        //this.checkNotifications();
+        //this.pollInterval = setInterval(() => this.checkNotifications(), 10000);
     }
 
     stopPolling() {

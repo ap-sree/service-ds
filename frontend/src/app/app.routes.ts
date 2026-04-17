@@ -60,6 +60,10 @@ export const routes: Routes = [
             {
                 path: 'users',
                 loadComponent: () => import('./components/admin/components/user-directory/user-directory').then(m => m.UserDirectoryComponent)
+            },
+            {
+                path: 'certificates',
+                loadComponent: () => import('./components/admin/components/certificate-mgmt/certificate-mgmt').then(m => m.CertificateMgmtComponent)
             }
         ]
     },

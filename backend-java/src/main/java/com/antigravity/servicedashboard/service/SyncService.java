@@ -16,9 +16,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
 import com.antigravity.servicedashboard.constant.AppConstants;
+import javax.naming.NamingException;
+import org.springframework.ldap.core.AttributesMapper;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.core.support.LdapContextSource;
 import com.antigravity.servicedashboard.entity.DataSource;
+import com.antigravity.servicedashboard.entity.NotificationRule;
+import com.antigravity.servicedashboard.util.MessageUtils;
 import com.antigravity.servicedashboard.entity.SyncDefinition;
+import com.antigravity.servicedashboard.entity.WidgetDefinition;
 import com.antigravity.servicedashboard.exception.SyncException;
 import com.antigravity.servicedashboard.repository.DataSourceRepository;
 import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
@@ -26,6 +38,13 @@ import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
 import com.antigravity.servicedashboard.repository.WidgetDefinitionRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.azure.identity.DefaultAzureCredential;
+import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 
 @Service
 public class SyncService {
@@ -99,6 +118,7 @@ public class SyncService {
     }
 
     private boolean shouldRun(SyncDefinition sync) {
+        if (sync.isSchemaChanged()) return false;
         String mode = sync.getSyncMode();
         return mode == null || !"MANUAL".equalsIgnoreCase(mode.trim());
     }
@@ -113,13 +133,13 @@ public class SyncService {
         logger.info("Starting Sync Job: {}", sync.getTargetTableName());
         Optional<DataSource> sourceOpt = sourceRepo.findById(sync.getSourceId());
         if (sourceOpt.isEmpty()) {
-            throw new IllegalArgumentException("DataSource not found ID: " + sync.getSourceId());
+            throw new IllegalArgumentException(MessageUtils.get("error.datasource.notfound", sync.getSourceId()));
         }
         DataSource source = sourceOpt.get();
         try {
             String method = sync.getHttpMethod() != null ? sync.getHttpMethod() : "GET";
             Object body = sync.getRequestBody();
-            List<Map<String, Object>> rawData = fetchData(source, sync.getFetchQuery(), method, body, null,
+            List<Map<String, Object>> rawData = fetchData(source, sync.getFetchQuery(), method, body, sync.getRootPath(),
                     sync.getPaginationConfig());
             if (rawData.isEmpty()) {
                 updateStatus(sync, "SUCCESS (No Data)");
@@ -136,7 +156,8 @@ public class SyncService {
             }
             updateStatus(sync, "SUCCESS");
         } catch (Exception e) {
-            throw new SyncException("Sync job failed for " + sync.getTargetTableName(), e);
+            logger.error("Sync Job Failed", e);
+            throw new SyncException(MessageUtils.get("error.sync.jobfailed", sync.getTargetTableName()), e);
         }
     }
 
@@ -159,7 +180,7 @@ public class SyncService {
             String rootPath) {
         Optional<DataSource> sourceOpt = sourceRepo.findById(sourceId);
         if (sourceOpt.isEmpty()) {
-            throw new IllegalArgumentException("DataSource not found ID: " + sourceId);
+            throw new IllegalArgumentException(MessageUtils.get("error.datasource.notfound", sourceId));
         }
         List<Map<String, Object>> data = fetchData(sourceOpt.get(), fetchQuery, method, body, rootPath, null);
         if (data.size() > 5) {
@@ -181,20 +202,161 @@ public class SyncService {
         try {
             List<Map<String, Object>> result = Collections.emptyList();
             if (AppConstants.DS_TYPE_REST_API.equals(source.getType())) {
-                result = fetchFromRestApi(source, fetchQuery, method, body, paginationConfig);
+                result = fetchFromRestApi(source, fetchQuery, method, body, paginationConfig, rootPath);
+                rootPath = null;
+            } else if (AppConstants.DS_TYPE_SQL_SERVER.equals(source.getType())) {
+                result = fetchFromSql(source, fetchQuery);
+            } else if (AppConstants.DS_TYPE_LDAP.equals(source.getType())) {
+                result = fetchFromLdap(source, fetchQuery);
             } else if (AppConstants.DS_TYPE_LOCAL_COMMAND.equals(source.getType())) {
                 result = shellService.executeCommand(fetchQuery, ".");
             } else if (AppConstants.DS_TYPE_LOCAL_FILE.equals(source.getType())) {
                 result = fetchFromFile(source, fetchQuery);
             }
+
             if (rootPath != null && !rootPath.trim().isEmpty() && !result.isEmpty()) {
                 return extractRootPath(result, rootPath);
             }
             return result;
-        } catch (SyncException e) {
-            throw e;
         } catch (Exception e) {
-            throw new SyncException("Failed to fetch data from source " + source.getName(), e);
+            logger.error("Error fetching data", e);
+            throw new SyncException(MessageUtils.get("error.sync.datafetch", e.getMessage()), e);
+        }
+    }
+
+    private List<Map<String, Object>> fetchFromLdap(DataSource source, String fetchQuery) {
+        try {
+            Map<String, Object> config = objectMapper.readValue(source.getConfig(), new TypeReference<>() {
+            });
+            String url = (String) config.get("url");
+            String baseDn = (String) config.get("baseDn");
+            String userDn = (String) config.get("userDn");
+            String password = (String) config.get("password");
+
+            LdapContextSource contextSource = new LdapContextSource();
+            contextSource.setUrl(url);
+            contextSource.setBase(baseDn);
+            contextSource.setUserDn(userDn);
+            contextSource.setPassword(password);
+            contextSource.afterPropertiesSet();
+
+            LdapTemplate ldapTemplate = new LdapTemplate(contextSource);
+
+            AttributesMapper<Map<String, Object>> mapper = (attrs) -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                try {
+                    javax.naming.NamingEnumeration<? extends javax.naming.directory.Attribute> all = attrs.getAll();
+                    while (all.hasMore()) {
+                        javax.naming.directory.Attribute attr = all.next();
+                        String id = attr.getID();
+                        if (attr.size() > 1) {
+                            List<Object> values = new ArrayList<>();
+                            javax.naming.NamingEnumeration<?> vals = attr.getAll();
+                            while (vals.hasMore()) {
+                                values.add(vals.next());
+                            }
+                            map.put(id, values);
+                        } else {
+                            map.put(id, attr.get());
+                        }
+                    }
+                } catch (NamingException e) {
+                    throw new RuntimeException(e);
+                }
+                return map;
+            };
+
+            return ldapTemplate.search("", fetchQuery, mapper);
+
+        } catch (Exception e) {
+            throw new SyncException(MessageUtils.get("error.sync.ldapfetch", e.getMessage()), e);
+        }
+    }
+
+    private List<Map<String, Object>> fetchFromSql(DataSource source, String fetchQuery) {
+        try {
+            Map<String, Object> config = objectMapper.readValue(source.getConfig(), new TypeReference<>() {
+            });
+
+            SQLServerDataSource ds = new SQLServerDataSource();
+            ds.setServerName((String) config.get("server"));
+            ds.setDatabaseName((String) config.get("database"));
+
+            Object portObj = config.get("port");
+            if (portObj instanceof Number) {
+                ds.setPortNumber(((Number) portObj).intValue());
+            } else if (portObj instanceof String) {
+                try {
+                    ds.setPortNumber(Integer.parseInt((String) portObj));
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid port number: {}", portObj);
+                }
+            }
+
+            String clientId = (String) config.get("clientId");
+            if (clientId != null && !clientId.isEmpty()) {
+                logger.info("Connecting to SQL Server using User-Assigned Managed Identity: {}", clientId);
+                DefaultAzureCredential credential = new DefaultAzureCredentialBuilder()
+                        .managedIdentityClientId(clientId)
+                        .build();
+
+                com.azure.core.credential.AccessToken token = credential.getToken(
+                        new com.azure.core.credential.TokenRequestContext()
+                                .addScopes("https://database.windows.net/.default"))
+                        .block();
+
+                if (token != null) {
+                    ds.setAccessToken(token.getToken());
+                } else {
+                    throw new SyncException(MessageUtils.get("error.sync.auth.mi"));
+                }
+            } else {
+                // Fallback (though UI removed user/pass, maybe older configs exist?)
+                // Or maybe system assigned MI?
+                // If System Assigned MI, clientID could be null but we still use
+                // DefaultAzureCredential?
+                // But user explicitly asked for User Assigned Client ID.
+                logger.warn("No Client ID provided for SQL Server source {}. Attempting System-Assigned MI or failure.",
+                        source.getName());
+                DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
+                com.azure.core.credential.AccessToken token = credential.getToken(
+                        new com.azure.core.credential.TokenRequestContext()
+                                .addScopes("https://database.windows.net/.default"))
+                        .block();
+                if (token != null)
+                    ds.setAccessToken(token.getToken());
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> options = (Map<String, Object>) config.get("options");
+            if (options != null) {
+                if (options.containsKey("encrypt"))
+                    ds.setEncrypt(Boolean.TRUE.equals(options.get("encrypt")));
+                if (options.containsKey("trustServerCertificate"))
+                    ds.setTrustServerCertificate(Boolean.TRUE.equals(options.get("trustServerCertificate")));
+            }
+
+            List<Map<String, Object>> results = new ArrayList<>();
+            try (Connection conn = ds.getConnection();
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery(fetchQuery)) {
+
+                ResultSetMetaData meta = rs.getMetaData();
+                int colCount = meta.getColumnCount();
+
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    for (int i = 1; i <= colCount; i++) {
+                        String label = meta.getColumnLabel(i);
+                        Object val = rs.getObject(i);
+                        row.put(label, val);
+                    }
+                    results.add(row);
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            throw new SyncException(MessageUtils.get("error.sync.sqlfetch", e.getMessage()), e);
         }
     }
 
@@ -214,7 +376,7 @@ public class SyncService {
     }
 
     private List<Map<String, Object>> fetchFromRestApi(DataSource source, String fetchQuery, String method,
-            Object body, String paginationConfig) {
+            Object body, String paginationConfig, String rootPath) {
         try {
             Map<String, Object> config = objectMapper.readValue(source.getConfig(), new TypeReference<>() {
             });
@@ -242,29 +404,144 @@ public class SyncService {
                     }
                 } catch (Exception e) {
                     logger.error("Failed to fetch dynamic token", e);
-                    throw new SyncException("Failed to fetch dynamic token: " + e.getMessage(), e);
+                    throw new SyncException(MessageUtils.get("error.sync.auth.dynamic", e.getMessage()), e);
                 }
             }
 
             if (method == null || method.isEmpty())
                 method = "GET";
-            logger.info("Executing REST Request: Method={}, URL={}", method, url);
-            logger.debug("Request Headers: {}", headers.keySet());
-            if (body != null) {
-                logger.debug("Request Body: {}", body);
-            }
+
+            int maxPages = 100;
+            int pageCount = 0;
+            boolean hasNextPage = true;
+            String paginationType = "NONE";
+            String nextKeyParam = null;
+            String nextKeyValue = null;
+            int limit = 100;
+            int offset = 0;
+            int pageNum = 1;
+
             if (paginationConfig != null && !paginationConfig.isEmpty()) {
-                logger.info("Pagination Enabled: {}", paginationConfig);
-                // TODO: Implement full pagination loop
-                // 1. Parse config
-                // 2. Loop while next page exists
-                // 3. Merge results
-                // For now, fetching first page
+                logger.info("Pagination Config: {}", paginationConfig);
+                Map<String, String> pConfig = objectMapper.readValue(paginationConfig, new TypeReference<>() {});
+                paginationType = pConfig.getOrDefault("type", "NONE");
+                nextKeyParam = pConfig.get("nextKey");
+                try {
+                    limit = Integer.parseInt(pConfig.getOrDefault("limit", "100"));
+                } catch (NumberFormatException e) {
+                    limit = 100;
+                }
             }
-            return restClient.fetchData(url, method, headers, body);
+
+            List<Map<String, Object>> allResults = new ArrayList<>();
+            String currentUrl = url;
+
+            while (hasNextPage && pageCount < maxPages) {
+                pageCount++;
+
+                if (pageCount > 1) {
+                    if ("OFFSET".equalsIgnoreCase(paginationType)) {
+                        offset += limit;
+                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(offset));
+                    } else if ("PAGE".equalsIgnoreCase(paginationType)) {
+                        pageNum++;
+                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(pageNum));
+                    } else if ("CURSOR".equalsIgnoreCase(paginationType)) {
+                        if (nextKeyValue == null || nextKeyValue.isEmpty()) {
+                            hasNextPage = false;
+                            break;
+                        }
+                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, nextKeyValue);
+                    } else if ("LINK_HEADER".equalsIgnoreCase(paginationType)) {
+                        if (nextKeyValue == null || nextKeyValue.isEmpty()) {
+                            hasNextPage = false;
+                            break;
+                        }
+                        currentUrl = nextKeyValue;
+                    }
+                } else if (!"NONE".equalsIgnoreCase(paginationType) && !"LINK_HEADER".equalsIgnoreCase(paginationType) && !"CURSOR".equalsIgnoreCase(paginationType)) {
+                    if ("OFFSET".equalsIgnoreCase(paginationType)) {
+                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(offset));
+                        currentUrl = updateQueryParam(currentUrl, "limit", String.valueOf(limit));
+                    } else if ("PAGE".equalsIgnoreCase(paginationType)) {
+                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(pageNum));
+                    }
+                }
+
+                logger.info("Executing REST Request Page {}: Method={}, URL={}", pageCount, method, currentUrl);
+                ResponseEntity<String> response = restClient.fetchResponse(currentUrl, method, headers, body);
+                String jsonBody = response.getBody();
+
+                List<Map<String, Object>> pageResults = Collections.emptyList();
+                Map<String, Object> singleObj = null;
+
+                if (jsonBody != null && !jsonBody.isEmpty()) {
+                    if (jsonBody.trim().startsWith("[")) {
+                        pageResults = objectMapper.readValue(jsonBody, new TypeReference<List<Map<String, Object>>>() {});
+                    } else {
+                        singleObj = objectMapper.readValue(jsonBody, new TypeReference<Map<String, Object>>() {});
+                        pageResults = Collections.singletonList(singleObj);
+                    }
+                }
+
+                if (pageResults.isEmpty()) {
+                    hasNextPage = false;
+                    break;
+                }
+
+                if ("CURSOR".equalsIgnoreCase(paginationType)) {
+                    if (singleObj != null && nextKeyParam != null) {
+                        Object cursorObj = resolvePath(singleObj, nextKeyParam);
+                        nextKeyValue = cursorObj != null ? String.valueOf(cursorObj) : null;
+                    }
+                } else if ("LINK_HEADER".equalsIgnoreCase(paginationType)) {
+                    List<String> linkHeaders = response.getHeaders().get("Link");
+                    nextKeyValue = extractNextLink(linkHeaders);
+                }
+
+                if (rootPath != null && !rootPath.trim().isEmpty()) {
+                    pageResults = extractRootPath(pageResults, rootPath);
+                }
+
+                allResults.addAll(pageResults);
+
+                if ("NONE".equalsIgnoreCase(paginationType)) {
+                    hasNextPage = false;
+                } else if ("OFFSET".equalsIgnoreCase(paginationType) || "PAGE".equalsIgnoreCase(paginationType)) {
+                    if (pageResults.size() < limit) {
+                        hasNextPage = false;
+                    }
+                }
+            }
+            logger.info("Pagination finished. Total records: {}", allResults.size());
+            return allResults;
         } catch (Exception e) {
-            throw new SyncException("Rest API fetch failed", e);
+            throw new SyncException(MessageUtils.get("error.sync.restfetch"), e);
         }
+    }
+
+    private String extractNextLink(List<String> linkHeaders) {
+        if (linkHeaders == null) return null;
+        for (String header : linkHeaders) {
+            String[] parts = header.split(",");
+            for (String part : parts) {
+                if (part.contains("rel=\"next\"") || part.contains("rel=next")) {
+                    int start = part.indexOf('<');
+                    int end = part.indexOf('>');
+                    if (start != -1 && end != -1 && start < end) {
+                        return part.substring(start + 1, end);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private String updateQueryParam(String url, String paramName, String paramValue) {
+        if (paramName == null || paramName.isEmpty() || paramValue == null) return url;
+        return UriComponentsBuilder.fromUriString(url)
+                .replaceQueryParam(paramName, paramValue)
+                .toUriString();
     }
 
     @SuppressWarnings("unchecked")
@@ -281,9 +558,9 @@ public class SyncService {
                 headers.putAll(configuredHeaders);
             }
         }
-        if (!headers.containsKey(org.springframework.http.HttpHeaders.CONTENT_TYPE)) {
-            headers.put(org.springframework.http.HttpHeaders.CONTENT_TYPE,
-                    org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+        if (!headers.containsKey(HttpHeaders.CONTENT_TYPE)) {
+            headers.put(HttpHeaders.CONTENT_TYPE,
+                    MediaType.APPLICATION_FORM_URLENCODED_VALUE);
         }
         Object bodyObj = authConfig.get("body");
         Object requestBody = bodyObj;
@@ -340,7 +617,7 @@ public class SyncService {
             String targetPath = (fetchQuery != null && !fetchQuery.trim().isEmpty()) ? fetchQuery : path;
             return fileService.readFile(targetPath, format);
         } catch (Exception e) {
-            throw new SyncException("File fetch failed", e);
+            throw new SyncException(MessageUtils.get("error.sync.filefetch"), e);
         }
     }
 
@@ -450,7 +727,6 @@ public class SyncService {
     }
 
     @Transactional
-
     public Optional<SyncDefinition> update(Long id, SyncDefinition entity) {
         Optional<SyncDefinition> existingOpt = syncRepo.findById(id);
         if (existingOpt.isEmpty())
@@ -463,6 +739,17 @@ public class SyncService {
         if (entity.getLastStatus() == null)
             entity.setLastStatus(existing.getLastStatus());
         entity.setId(id);
+
+
+        for (WidgetDefinition w : existing.getWidgets()) {
+            w.setSchemaChanged(true);
+        }
+        widgetRepo.saveAll(existing.getWidgets());
+        for (NotificationRule n : existing.getNotificationRules()) {
+            n.setSchemaChanged(true);
+        }
+        notifRepo.saveAll(existing.getNotificationRules());
+
         SyncDefinition saved = syncRepo.save(entity);
         if (newName != null && !newName.equals(oldName)) {
             logger.info("Renaming detected: Updating dependencies from {} to {}", oldName, newName);
@@ -498,21 +785,32 @@ public class SyncService {
             return;
         }
         String tableName = sync.getTargetTableName();
-        logger.info("Deleting dependent Widgets for table: {}", tableName);
-        widgetRepo.deleteByDataSourceTable(tableName);
-        logger.info("Deleting dependent Notification Rules for table: {}", tableName);
-        notifRepo.deleteByLocalTableName(tableName);
-        logger.info("Deleting Sync Definition record ID: {}", id);
+
+
+        for (WidgetDefinition w : sync.getWidgets()) {
+            w.setSchemaChanged(true);
+            w.setSyncDefinition(null);
+        }
+        widgetRepo.saveAll(sync.getWidgets());
+
+        logger.info("Marking dependent Notification Rules as schema-changed for table: {}", tableName);
+        for (NotificationRule n : sync.getNotificationRules()) {
+            n.setSchemaChanged(true);
+            n.setSyncDefinition(null);
+        }
+        notifRepo.saveAll(sync.getNotificationRules());
+
+
         syncRepo.deleteById(id);
 
-        // Drop the actual H2 table
+
         try {
             tableManager.dropTable(tableName);
         } catch (Exception e) {
             logger.warn("Failed to drop table {}: {}", tableName, e.getMessage());
         }
 
-        logger.info("Metadata delete transaction completed successfully for ID: {}", id);
+
     }
 
     public SyncDefinition getById(Long id) {

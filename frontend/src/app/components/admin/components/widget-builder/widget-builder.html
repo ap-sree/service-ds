@@ -32,7 +32,12 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-widget>
                     <tr>
-                        <td class="font-bold">{{widget.title}}</td>
+                        <td class="font-bold">
+                            @if (widget.schemaChanged) {
+                            <i class="pi pi-exclamation-triangle text-orange-500 mr-1" pTooltip="Needs review"></i>
+                            }
+                            {{widget.title}}
+                        </td>
                         <td><p-tag [value]="widget.type"
                                 [severity]="widget.type === 'TABLE' ? 'info' : (widget.type === 'CARD' ? 'success' : 'warn')"></p-tag>
                         </td>
