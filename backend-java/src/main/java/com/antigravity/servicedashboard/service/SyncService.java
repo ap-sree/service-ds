@@ -8,6 +8,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +152,29 @@ public class SyncService {
             mappedData = sanitizeDataKeys(mappedData);
             if (!mappedData.isEmpty()) {
                 Map<String, String> schema = inferSchema(mappedData.get(0));
+
+                boolean schemaChanged = tableManager.isSchemaDifferent(sync.getTargetTableName(), schema);
+                if (schemaChanged) {
+                    logger.info("Schema change detected for table: {}", sync.getTargetTableName());
+                    sync.setSchemaChanged(true);
+                    syncRepo.save(sync);
+
+                    for (WidgetDefinition w : sync.getWidgets()) {
+                        w.setSchemaChanged(true);
+                    }
+                    widgetRepo.saveAll(sync.getWidgets());
+
+                    for (NotificationRule n : sync.getNotificationRules()) {
+                        n.setSchemaChanged(true);
+                    }
+                    notifRepo.saveAll(sync.getNotificationRules());
+                } else {
+                    if (sync.isSchemaChanged()) {
+                        sync.setSchemaChanged(false);
+                        syncRepo.save(sync);
+                    }
+                }
+
                 String strategy = retryOnSchemaMismatch ? sync.getSyncStrategy() : "RELOAD";
                 tableManager.createOrUpdateTable(sync.getTargetTableName(), schema, strategy);
                 attemptDataSync(sync, mappedData, retryOnSchemaMismatch);
@@ -393,6 +419,20 @@ public class SyncService {
             if (headers == null) {
                 headers = new HashMap<>();
             }
+            if (config.containsKey("auth")) {
+                try {
+                    Map<String, String> authConfig = objectMapper.convertValue(config.get("auth"), new TypeReference<>() {});
+                    String user = authConfig.get("username");
+                    String pass = authConfig.get("password");
+                    if (user != null && pass != null) {
+                        String authStr = user + ":" + pass;
+                        String encodedAuth = Base64.getEncoder().encodeToString(authStr.getBytes(StandardCharsets.UTF_8));
+                        headers.put("Authorization", "Basic " + encodedAuth);
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to parse basic auth config", e);
+                }
+            }
             if (config.containsKey("authRequest")) {
                 try {
                     Map<String, Object> authConfig = objectMapper.convertValue(config.get("authRequest"),
@@ -416,9 +456,9 @@ public class SyncService {
             boolean hasNextPage = true;
             String paginationType = "NONE";
             String nextKeyParam = null;
+            String limitParam = null;
             String nextKeyValue = null;
             int limit = 100;
-            int offset = 0;
             int pageNum = 1;
 
             if (paginationConfig != null && !paginationConfig.isEmpty()) {
@@ -426,6 +466,7 @@ public class SyncService {
                 Map<String, String> pConfig = objectMapper.readValue(paginationConfig, new TypeReference<>() {});
                 paginationType = pConfig.getOrDefault("type", "NONE");
                 nextKeyParam = pConfig.get("nextKey");
+                limitParam = pConfig.get("limitParam");
                 try {
                     limit = Integer.parseInt(pConfig.getOrDefault("limit", "100"));
                 } catch (NumberFormatException e) {
@@ -440,31 +481,25 @@ public class SyncService {
                 pageCount++;
 
                 if (pageCount > 1) {
-                    if ("OFFSET".equalsIgnoreCase(paginationType)) {
-                        offset += limit;
-                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(offset));
-                    } else if ("PAGE".equalsIgnoreCase(paginationType)) {
+                    if ("PAGE".equalsIgnoreCase(paginationType)) {
                         pageNum++;
                         currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(pageNum));
-                    } else if ("CURSOR".equalsIgnoreCase(paginationType)) {
-                        if (nextKeyValue == null || nextKeyValue.isEmpty()) {
-                            hasNextPage = false;
-                            break;
+                        if (limitParam != null && !limitParam.isEmpty()) {
+                            currentUrl = updateQueryParam(currentUrl, limitParam, String.valueOf(limit));
                         }
-                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, nextKeyValue);
-                    } else if ("LINK_HEADER".equalsIgnoreCase(paginationType)) {
+                    } else if ("NEXT_LINK_BODY".equalsIgnoreCase(paginationType)) {
                         if (nextKeyValue == null || nextKeyValue.isEmpty()) {
                             hasNextPage = false;
                             break;
                         }
                         currentUrl = nextKeyValue;
                     }
-                } else if (!"NONE".equalsIgnoreCase(paginationType) && !"LINK_HEADER".equalsIgnoreCase(paginationType) && !"CURSOR".equalsIgnoreCase(paginationType)) {
-                    if ("OFFSET".equalsIgnoreCase(paginationType)) {
-                        currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(offset));
-                        currentUrl = updateQueryParam(currentUrl, "limit", String.valueOf(limit));
-                    } else if ("PAGE".equalsIgnoreCase(paginationType)) {
+                } else if (!"NONE".equalsIgnoreCase(paginationType)) {
+                    if ("PAGE".equalsIgnoreCase(paginationType)) {
                         currentUrl = updateQueryParam(currentUrl, nextKeyParam, String.valueOf(pageNum));
+                        if (limitParam != null && !limitParam.isEmpty()) {
+                            currentUrl = updateQueryParam(currentUrl, limitParam, String.valueOf(limit));
+                        }
                     }
                 }
 
@@ -477,7 +512,21 @@ public class SyncService {
 
                 if (jsonBody != null && !jsonBody.isEmpty()) {
                     if (jsonBody.trim().startsWith("[")) {
-                        pageResults = objectMapper.readValue(jsonBody, new TypeReference<List<Map<String, Object>>>() {});
+                        List<?> rawList = objectMapper.readValue(jsonBody, new TypeReference<List<Object>>() {});
+                        List<Map<String, Object>> convertedList = new ArrayList<>();
+                        for (Object item : rawList) {
+                            if (item instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> mapItem = (Map<String, Object>) item;
+                                convertedList.add(mapItem);
+                            } else {
+                                Map<String, Object> wrapped = new HashMap<>();
+                                wrapped.put("value", item);
+                                wrapped.put("$", item);
+                                convertedList.add(wrapped);
+                            }
+                        }
+                        pageResults = convertedList;
                     } else {
                         singleObj = objectMapper.readValue(jsonBody, new TypeReference<Map<String, Object>>() {});
                         pageResults = Collections.singletonList(singleObj);
@@ -489,14 +538,11 @@ public class SyncService {
                     break;
                 }
 
-                if ("CURSOR".equalsIgnoreCase(paginationType)) {
+                if ("NEXT_LINK_BODY".equalsIgnoreCase(paginationType)) {
                     if (singleObj != null && nextKeyParam != null) {
-                        Object cursorObj = resolvePath(singleObj, nextKeyParam);
-                        nextKeyValue = cursorObj != null ? String.valueOf(cursorObj) : null;
+                        Object nextLinkObj = resolvePath(singleObj, nextKeyParam);
+                        nextKeyValue = nextLinkObj != null ? String.valueOf(nextLinkObj) : null;
                     }
-                } else if ("LINK_HEADER".equalsIgnoreCase(paginationType)) {
-                    List<String> linkHeaders = response.getHeaders().get("Link");
-                    nextKeyValue = extractNextLink(linkHeaders);
                 }
 
                 if (rootPath != null && !rootPath.trim().isEmpty()) {
@@ -507,8 +553,12 @@ public class SyncService {
 
                 if ("NONE".equalsIgnoreCase(paginationType)) {
                     hasNextPage = false;
-                } else if ("OFFSET".equalsIgnoreCase(paginationType) || "PAGE".equalsIgnoreCase(paginationType)) {
+                } else if ("PAGE".equalsIgnoreCase(paginationType)) {
                     if (pageResults.size() < limit) {
+                        hasNextPage = false;
+                    }
+                } else if ("NEXT_LINK_BODY".equalsIgnoreCase(paginationType)) {
+                    if (nextKeyValue == null || nextKeyValue.isEmpty()) {
                         hasNextPage = false;
                     }
                 }
@@ -658,31 +708,40 @@ public class SyncService {
     }
 
     private Object resolvePath(Map<String, Object> obj, String path) {
-        if (path == null || obj == null)
-            return null;
-        String cleanPath = path.replaceAll("\\[(\\d+)\\]", ".$1");
-        String[] parts = cleanPath.split("\\.");
+        if (path == null || obj == null) return null;
+        
+        String clean = path.trim().replace("$", "").replaceAll("\\[(\\d+)\\]", ".$1").replaceAll("^\\.+|\\.+$", "");
+        if (clean.isEmpty()) return obj;
+        
+        String[] parts = clean.split("\\.");
+        int idx = 0;
+        
+        while (idx < parts.length) {
+            String part = parts[idx];
+            if (part.matches("\\d+")) {
+                idx++;
+            } else if (!obj.containsKey(part) && idx + 1 < parts.length && parts[idx + 1].matches("\\d+")) {
+                idx += 2;
+            } else {
+                break;
+            }
+        }
+        
+        if (idx >= parts.length) return obj;
+        
         Object current = obj;
-        for (String part : parts) {
+        for (int i = idx; i < parts.length; i++) {
+            String part = parts[i];
             if (current instanceof Map) {
                 current = ((Map<?, ?>) current).get(part);
-            } else if (current instanceof List) {
-                try {
-                    int index = Integer.parseInt(part);
-                    List<?> list = (List<?>) current;
-                    if (index >= 0 && index < list.size()) {
-                        current = list.get(index);
-                    } else {
-                        return null;
-                    }
-                } catch (NumberFormatException e) {
-                    return null;
-                }
+            } else if (current instanceof List && part.matches("\\d+")) {
+                List<?> list = (List<?>) current;
+                int listIdx = Integer.parseInt(part);
+                current = (listIdx >= 0 && listIdx < list.size()) ? list.get(listIdx) : null;
             } else {
                 return null;
             }
-            if (current == null)
-                return null;
+            if (current == null) return null;
         }
         return current;
     }
@@ -741,14 +800,21 @@ public class SyncService {
         entity.setId(id);
 
 
-        for (WidgetDefinition w : existing.getWidgets()) {
-            w.setSchemaChanged(true);
+        boolean schemaConfigChanged = !Objects.equals(existing.getTargetTableName(), entity.getTargetTableName())
+                || !Objects.equals(existing.getFieldMapping(), entity.getFieldMapping());
+        if (schemaConfigChanged) {
+            for (WidgetDefinition w : existing.getWidgets()) {
+                w.setSchemaChanged(true);
+            }
+            widgetRepo.saveAll(existing.getWidgets());
+            for (NotificationRule n : existing.getNotificationRules()) {
+                n.setSchemaChanged(true);
+            }
+            notifRepo.saveAll(existing.getNotificationRules());
+            entity.setSchemaChanged(true);
+        } else {
+            entity.setSchemaChanged(existing.isSchemaChanged());
         }
-        widgetRepo.saveAll(existing.getWidgets());
-        for (NotificationRule n : existing.getNotificationRules()) {
-            n.setSchemaChanged(true);
-        }
-        notifRepo.saveAll(existing.getNotificationRules());
 
         SyncDefinition saved = syncRepo.save(entity);
         if (newName != null && !newName.equals(oldName)) {

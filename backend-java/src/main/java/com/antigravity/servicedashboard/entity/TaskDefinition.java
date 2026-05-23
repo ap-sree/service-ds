@@ -28,7 +28,7 @@ public class TaskDefinition {
     private Long sourceId;
 
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "payload")
     @NotBlank(message = "{task.payload.required}")
     private String payload;
 

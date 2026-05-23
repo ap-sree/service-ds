@@ -32,7 +32,7 @@ export class UserService {
     }
 
     resetPreferences(username: string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/users/${username}/preferences`, null);
+        return this.http.post(`${this.apiUrl}/users/${username}/preferences`, {});
     }
 
     getPreferences(username: string): Observable<UserPreferences> {

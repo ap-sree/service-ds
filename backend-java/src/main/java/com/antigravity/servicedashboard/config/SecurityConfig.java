@@ -13,9 +13,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.client.RestTemplate;
 
@@ -42,7 +42,10 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/h2-console/**").permitAll()
                                                 .anyRequest().authenticated())
+                                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                                 .oauth2ResourceServer(oauth2 -> oauth2
                                                 .jwt(Customizer.withDefaults()));
 
@@ -61,3 +64,4 @@ public class SecurityConfig {
                                 .build();
         }
 }
+

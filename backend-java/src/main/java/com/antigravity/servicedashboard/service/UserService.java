@@ -71,7 +71,11 @@ public class UserService {
             UserPreferences prefs) {
         return repository.findById(username).map(user -> {
             try {
-                user.setPreferences(objectMapper.writeValueAsString(prefs));
+                if (prefs == null || (prefs.getWidgetIds() == null && prefs.getTheme() == null && prefs.getRefreshInterval() == null)) {
+                    user.setPreferences((String) null);
+                } else {
+                    user.setPreferences(objectMapper.writeValueAsString(prefs));
+                }
                 return repository.save(user);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Failed to update preferences", e);

@@ -21,6 +21,7 @@ import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 @Service
 public class RestClientService {
@@ -76,8 +77,21 @@ public class RestClientService {
         try {
             if (jsonBody != null && !jsonBody.isEmpty()) {
                 if (jsonBody.trim().startsWith("[")) {
-                    return objectMapper.readValue(jsonBody, new TypeReference<List<Map<String, Object>>>() {
-                    });
+                    List<?> rawList = objectMapper.readValue(jsonBody, new TypeReference<List<Object>>() {});
+                    List<Map<String, Object>> convertedList = new ArrayList<>();
+                    for (Object item : rawList) {
+                        if (item instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> mapItem = (Map<String, Object>) item;
+                            convertedList.add(mapItem);
+                        } else {
+                            Map<String, Object> wrapped = new java.util.HashMap<>();
+                            wrapped.put("value", item);
+                            wrapped.put("$", item);
+                            convertedList.add(wrapped);
+                        }
+                    }
+                    return convertedList;
                 } else {
                     Map<String, Object> singleObj = objectMapper.readValue(jsonBody,
                             new TypeReference<Map<String, Object>>() {

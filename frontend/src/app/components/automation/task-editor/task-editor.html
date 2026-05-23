@@ -153,22 +153,40 @@
                     <div class="col-12">
                         <label class="font-bold block mb-2">Pagination</label>
                         <div class="grid">
-                            <div class="col-12 md:col-4">
+                            <div class="col-12">
                                 <p-select formControlName="paginationType" [options]="paginationOptions"
                                     optionLabel="label" optionValue="value" styleClass="w-full"
                                     appendTo="body"></p-select>
                             </div>
-                            <div class="col-12 md:col-8 grid" *ngIf="taskForm.get('paginationType')?.value !== 'NONE'">
-                                <div class="col-6">
-                                    <input pInputText formControlName="paginationNextKey"
-                                        placeholder="Next Key / Offset Param" class="w-full" />
-                                </div>
-                                <div class="col-6">
-                                    <input pInputText formControlName="paginationLimit" placeholder="Limit / Page Size"
-                                        class="w-full" />
-                                </div>
+                        </div>
+
+                        @if (taskForm.get('paginationType')?.value === 'PAGE') {
+                        <div class="grid mt-2">
+                            <div class="col-4">
+                                <label class="block mb-1 text-sm font-bold">Page Number Parameter Name</label>
+                                <input pInputText formControlName="paginationNextKey" placeholder="e.g. page" class="w-full" />
+                            </div>
+                            <div class="col-4">
+                                <label class="block mb-1 text-sm font-bold">Count Per Page Parameter Name</label>
+                                <input pInputText formControlName="paginationLimitParam" placeholder="e.g. numberPerPage" class="w-full" />
+                            </div>
+                            <div class="col-4">
+                                <label class="block mb-1 text-sm font-bold">Count Per Page Value</label>
+                                <input pInputText type="number" formControlName="paginationLimit" placeholder="e.g. 10" class="w-full" />
                             </div>
                         </div>
+                        }
+
+
+
+                        @if (taskForm.get('paginationType')?.value === 'NEXT_LINK_BODY') {
+                        <div class="grid mt-2">
+                            <div class="col-12">
+                                <label class="block mb-1 text-sm font-bold">Next Link JSON Property</label>
+                                <input pInputText formControlName="paginationNextKey" placeholder="e.g. @odata.nextLink" class="w-full" />
+                            </div>
+                        </div>
+                        }
                     </div>
                 </form>
 

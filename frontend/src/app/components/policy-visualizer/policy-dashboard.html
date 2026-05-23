@@ -1,10 +1,10 @@
 <div class="policy-dashboard h-full px-5 py-3 md:px-6 md:py-4 surface-ground flex flex-column overflow-hidden">
 
   <div class="flex-grow-1 flex overflow-hidden">
-    <div class="grid w-full m-0" style="min-height: calc(100vh - 9rem);">
+    <div class="grid w-full h-full m-0">
 
       
-      <div class="col-3 p-0 pr-3 flex flex-column gap-3">
+      <div class="col-3 p-0 pr-3 flex flex-column gap-3 h-full">
 
         <h2 class="text-2xl font-semibold m-0 text-900">Policy Dashboard</h2>
 
@@ -15,22 +15,23 @@
 
         
         <div class="surface-card border-round shadow-1 p-3 flex-grow-1 flex flex-column overflow-hidden">
-          <h4 class="mt-0 mb-3 text-700 capitalize">{{currentTab}} ({{totalItemsCount}})</h4>
-          <p-listbox [options]="groupedPolicies" [(ngModel)]="selectedPolicy" [group]="isGrouped"
-            [style]="{'width':'100%', 'height': '100%'}" [listStyle]="{'max-height': '100%'}"
-            styleClass="border-none w-full flex-grow-1 custom-scrollbar" optionLabel="label" optionValue="value"
-            (onChange)="onSelectPolicy($event.value)">
-            <ng-template let-group pTemplate="group">
-              <div class="flex align-items-center">
-                <span class="font-bold">{{group.label}}</span>
-              </div>
-            </ng-template>
-            <ng-template let-policy pTemplate="item">
-              <div class="flex flex-column gap-1">
-                <span class="font-bold text-sm">{{policy.label}}</span>
-              </div>
-            </ng-template>
-          </p-listbox>
+          <h4 class="mt-0 mb-3 text-700 capitalize flex-shrink-0">{{currentTab}} ({{totalItemsCount}})</h4>
+          <div class="flex-grow-1 overflow-y-auto custom-scrollbar w-full">
+            <p-listbox [options]="groupedPolicies" [(ngModel)]="selectedPolicy" [group]="isGrouped"
+              [style]="{'width':'100%'}" styleClass="border-none w-full" optionLabel="label" optionValue="value"
+              (onChange)="onSelectPolicy($event.value)">
+              <ng-template let-group pTemplate="group">
+                <div class="flex align-items-center">
+                  <span class="font-bold">{{group.label}}</span>
+                </div>
+              </ng-template>
+              <ng-template let-policy pTemplate="item">
+                <div class="flex flex-column gap-1">
+                  <span class="font-bold text-sm">{{policy.label}}</span>
+                </div>
+              </ng-template>
+            </p-listbox>
+          </div>
         </div>
       </div>
 

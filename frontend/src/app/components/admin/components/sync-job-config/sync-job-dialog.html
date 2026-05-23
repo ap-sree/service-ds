@@ -93,18 +93,36 @@
         </div>
     </div>
 
-    @if (syncFormGroup.get('paginationType')?.value !== 'NONE') {
+    @if (syncFormGroup.get('paginationType')?.value === 'PAGE') {
     <div class="field grid">
         <div class="col-12 md:col-9 md:col-offset-3">
             <div class="grid p-fluid">
-                <div class="col-6">
-                    <label class="block mb-1 text-sm font-bold">Next Key / Offset Param</label>
-                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. nextLink, offset"
-                        class="w-full" />
+                <div class="col-4">
+                    <label class="block mb-1 text-sm font-bold">Page Number Parameter Name</label>
+                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. page" class="w-full" />
                 </div>
-                <div class="col-6">
-                    <label class="block mb-1 text-sm font-bold">Limit / Page Size</label>
-                    <input pInputText formControlName="paginationLimit" placeholder="e.g. 100" class="w-full" />
+                <div class="col-4">
+                    <label class="block mb-1 text-sm font-bold">Count Per Page Parameter Name</label>
+                    <input pInputText formControlName="paginationLimitParam" placeholder="e.g. numberPerPage" class="w-full" />
+                </div>
+                <div class="col-4">
+                    <label class="block mb-1 text-sm font-bold">Count Per Page Value</label>
+                    <input pInputText type="number" formControlName="paginationLimit" placeholder="e.g. 10" class="w-full" />
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+
+
+    @if (syncFormGroup.get('paginationType')?.value === 'NEXT_LINK_BODY') {
+    <div class="field grid">
+        <div class="col-12 md:col-9 md:col-offset-3">
+            <div class="grid p-fluid">
+                <div class="col-12">
+                    <label class="block mb-1 text-sm font-bold">Next Link JSON Property</label>
+                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. @odata.nextLink" class="w-full" />
                 </div>
             </div>
         </div>

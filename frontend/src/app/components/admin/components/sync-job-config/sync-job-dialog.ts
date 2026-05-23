@@ -66,10 +66,8 @@ export class SyncJobDialogComponent implements OnInit {
     showHttpOptions = false;
     paginationOptions = [
         { label: 'None', value: 'NONE' },
-        { label: 'Offset & Limit', value: 'OFFSET' },
-        { label: 'Page Number', value: 'PAGE' },
-        { label: 'Cursor', value: 'CURSOR' },
-        { label: 'Link Header', value: 'LINK_HEADER' }
+        { label: 'Page Number (e.g. page=1)', value: 'PAGE' },
+        { label: 'Next Link in Response Body (e.g. MS Graph @odata.nextLink)', value: 'NEXT_LINK_BODY' },
     ];
     ngOnInit() {
         this.initForm();
@@ -90,6 +88,7 @@ export class SyncJobDialogComponent implements OnInit {
             primaryKey: [''],
             paginationType: ['NONE'],
             paginationNextKey: [''],
+            paginationLimitParam: [''],
             paginationLimit: [''],
             rootPath: [''],
             mappingRows: this.fb.array([])
@@ -125,6 +124,7 @@ export class SyncJobDialogComponent implements OnInit {
                     this.syncFormGroup.patchValue({
                         paginationType: p.type || 'NONE',
                         paginationNextKey: p.nextKey || '',
+                        paginationLimitParam: p.limitParam || '',
                         paginationLimit: p.limit || ''
                     });
                 } catch (e) { }
@@ -190,14 +190,14 @@ export class SyncJobDialogComponent implements OnInit {
                 this.showMethodDropdown = true;
                 this.showHttpOptions = true;
 
-
                 if (!this.isEditing) {
                     try {
                         const cfg = JSON.parse(selectedSource.config || '{}');
-                        if (cfg.pagination && cfg.pagination.type && cfg.pagination.type !== 'NONE') {
+                        if (cfg.pagination?.type && cfg.pagination.type !== 'NONE') {
                             this.syncFormGroup.patchValue({
-                                paginationType: cfg.pagination.type === 'PAGE_PARAM' ? 'PAGE' : cfg.pagination.type,
+                                paginationType: cfg.pagination.type,
                                 paginationNextKey: cfg.pagination.key || cfg.pagination.nextPath || '',
+                                paginationLimitParam: cfg.pagination.type === 'PAGE' ? 'numberPerPage' : '',
                                 paginationLimit: cfg.pagination.limit || ''
                             });
                         }
@@ -308,6 +308,7 @@ export class SyncJobDialogComponent implements OnInit {
         const paginationJson = {
             type: formVal.paginationType,
             nextKey: formVal.paginationNextKey,
+            limitParam: formVal.paginationLimitParam,
             limit: formVal.paginationLimit
         };
 
@@ -319,6 +320,7 @@ export class SyncJobDialogComponent implements OnInit {
         delete (payload as any).mappingRows;
         delete (payload as any).paginationType;
         delete (payload as any).paginationNextKey;
+        delete (payload as any).paginationLimitParam;
         delete (payload as any).paginationLimit;
 
         if (this.isEditing) {

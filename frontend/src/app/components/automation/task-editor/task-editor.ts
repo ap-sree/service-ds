@@ -72,10 +72,8 @@ export class TaskEditorComponent implements OnInit {
     showMethodDropdown = false;
     paginationOptions = [
         { label: 'None', value: 'NONE' },
-        { label: 'Offset & Limit', value: 'OFFSET' },
-        { label: 'Page Number', value: 'PAGE' },
-        { label: 'Cursor', value: 'CURSOR' },
-        { label: 'Link Header', value: 'LINK_HEADER' }
+        { label: 'Page Number (e.g. page=1)', value: 'PAGE' },
+        { label: 'Next Link in Response Body (e.g. MS Graph @odata.nextLink)', value: 'NEXT_LINK_BODY' }
     ];
     constructor() {
         this.mappingRows = this.fb.array([]);
@@ -89,6 +87,7 @@ export class TaskEditorComponent implements OnInit {
             bodyType: ['form'],
             paginationType: ['NONE'],
             paginationNextKey: [''],
+            paginationLimitParam: [''],
             paginationLimit: [''],
             bodyParams: this.fb.array([]),
             mappingRows: this.mappingRows
@@ -142,6 +141,7 @@ export class TaskEditorComponent implements OnInit {
                     bodyType: 'json',
                     paginationType: payloadObj.pagination_config?.type || 'NONE',
                     paginationNextKey: payloadObj.pagination_config?.nextKey || '',
+                    paginationLimitParam: payloadObj.pagination_config?.limitParam || '',
                     paginationLimit: payloadObj.pagination_config?.limit || ''
                 });
                 if (payloadObj.body) {
@@ -234,6 +234,7 @@ export class TaskEditorComponent implements OnInit {
             pagination_config: {
                 type: val.paginationType,
                 nextKey: val.paginationNextKey,
+                limitParam: val.paginationLimitParam,
                 limit: val.paginationLimit
             }
         }, null, 2);

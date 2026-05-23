@@ -44,7 +44,7 @@ export class DataSourceDialogComponent implements OnInit {
 
     private SQL_TEMPLATE = `{\n  "server": "localhost",\n  "database": "testdb",\n  "authentication": "ActiveDirectoryManagedIdentity",\n  "clientId": "your-mi-client-id",\n  "options": { "encrypt": true, "trustServerCertificate": true }\n}`;
 
-    private REST_TEMPLATE = `{\n  "baseUrl": "",\n  "headers": { "Authorization": "Bearer token" }, \n  "dataPropertyPath": "data",\n  "pagination": {\n    "type": "PAGE_PARAM",\n    "key": "page",\n    "limit": 100\n  }\n}`;
+    private REST_TEMPLATE = `{\n  "baseUrl": "",\n  "headers": { "Authorization": "Bearer token" }, \n  "dataPropertyPath": "data"\n}`;
 
     private CMD_TEMPLATE = `{\n  "format": "json" \n}`;
 
@@ -58,11 +58,7 @@ export class DataSourceDialogComponent implements OnInit {
         { label: 'Local Command / Script', value: 'LOCAL_COMMAND' },
         { label: 'Local File (CSV/JSON)', value: 'LOCAL_FILE' }
     ];
-    paginationTypes = [
-        { label: 'None', value: 'NONE' },
-        { label: 'Page Parameter', value: 'PAGE_PARAM' },
-        { label: 'Next URL', value: 'NEXT_URL' }
-    ];
+
     sqlForm!: FormGroup;
     ldapForm!: FormGroup;
     restForm!: FormGroup;
@@ -96,9 +92,6 @@ export class DataSourceDialogComponent implements OnInit {
         this.restForm = this.fb.group({
             baseUrl: ['https://', Validators.required],
             dataPropertyPath: [''],
-            paginationType: ['NONE'],
-            paginationKey: ['page'],
-            paginationNextPath: ['next'],
             headers: ['{}'],
             authType: ['NONE'],
             basicUser: [''],
@@ -181,9 +174,6 @@ export class DataSourceDialogComponent implements OnInit {
                 this.restForm.patchValue({
                     baseUrl: json.baseUrl,
                     dataPropertyPath: json.dataPropertyPath,
-                    paginationType: json.pagination?.type || 'NONE',
-                    paginationKey: json.pagination?.key || 'page',
-                    paginationNextPath: json.pagination?.nextPath || 'next',
                     headers: JSON.stringify(json.headers || {}, null, 2),
                     authType: authType,
                     basicUser: json.auth?.username || '',
@@ -228,9 +218,6 @@ export class DataSourceDialogComponent implements OnInit {
             const val = this.restForm.value;
             configObj.baseUrl = val.baseUrl;
             configObj.dataPropertyPath = val.dataPropertyPath;
-            if (val.paginationType !== 'NONE') {
-                configObj.pagination = { type: val.paginationType, key: val.paginationKey, nextPath: val.paginationNextPath };
-            } else { delete configObj.pagination; }
             try {
                 const h = JSON.parse(val.headers || '{}');
                 if (Object.keys(h).length > 0) configObj.headers = h;
@@ -290,6 +277,7 @@ export class DataSourceDialogComponent implements OnInit {
         if (this.viewMode === 'SIMPLE') {
             const type = this.sourceForm.get('type')?.value;
             if (type === 'SQL_SERVER' && this.sqlForm.invalid) return;
+            if (type === 'LDAP' && this.ldapForm.invalid) return;
             if (type === 'REST_API' && this.restForm.invalid) return;
             this.syncFormsToConfig();
         }

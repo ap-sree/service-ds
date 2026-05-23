@@ -4,6 +4,7 @@ import com.antigravity.servicedashboard.dto.UserDTO;
 import com.antigravity.servicedashboard.entity.User;
 import com.antigravity.servicedashboard.mapper.UserMapper;
 import com.antigravity.servicedashboard.service.UserService;
+import com.antigravity.servicedashboard.model.UserPreferences;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -74,15 +75,18 @@ public class UserController {
 
     @GetMapping("/{username}/preferences")
 
-    public ResponseEntity<com.antigravity.servicedashboard.model.UserPreferences> getPreferences(
+    public ResponseEntity<UserPreferences> getPreferences(
             @PathVariable String username) {
-        com.antigravity.servicedashboard.model.UserPreferences prefs = service.getPreferences(username);
+        UserPreferences prefs = service.getPreferences(username);
         return ResponseEntity.ok(prefs);
     }
 
     @PostMapping("/{username}/preferences")
     public ResponseEntity<UserDTO> updatePreferences(@PathVariable String username,
-            @RequestBody com.antigravity.servicedashboard.model.UserPreferences prefs) {
+            @RequestBody(required = false) UserPreferences prefs) {
+        if (prefs == null) {
+            prefs = new UserPreferences();
+        }
         return service.updatePreferences(username, prefs)
                 .map(userMapper::toDTO)
                 .map(ResponseEntity::ok)

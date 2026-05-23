@@ -55,6 +55,36 @@
   }
 
 
+  @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'LDAP') {
+  <ng-container [formGroup]="ldapForm">
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">LDAP URL <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9">
+        <input pInputText formControlName="url" class="w-full" placeholder="ldap://localhost:389" />
+      </div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Base DN <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9">
+        <input pInputText formControlName="baseDn" class="w-full" placeholder="dc=example,dc=com" />
+      </div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Account DN <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9">
+        <input pInputText formControlName="userDn" class="w-full" placeholder="cn=admin,dc=example,dc=com" />
+      </div>
+    </div>
+    <div class="field grid">
+      <label class="col-12 md:col-3 font-bold">Password <span class="text-red-500">*</span></label>
+      <div class="col-12 md:col-9">
+        <input type="password" pInputText formControlName="password" class="w-full" />
+      </div>
+    </div>
+  </ng-container>
+  }
+
+
   @if (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'REST_API') {
   <ng-container [formGroup]="restForm">
     <div class="field grid">
@@ -155,6 +185,7 @@
     <p-button label="Cancel" (click)="cancel()" [text]="true" severity="secondary"></p-button>
     <p-button label="Save" (click)="save()" [loading]="loading" [disabled]="sourceForm.invalid || 
       (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'SQL_SERVER' && sqlForm.invalid) || 
+      (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'LDAP' && ldapForm.invalid) || 
       (viewMode === 'SIMPLE' && sourceForm.get('type')?.value === 'REST_API' && restForm.invalid)">
     </p-button>
   </div>

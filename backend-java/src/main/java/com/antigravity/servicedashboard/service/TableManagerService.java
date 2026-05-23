@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -192,6 +194,66 @@ public class TableManagerService {
         }
         sql.append(updates).append(", _synced_at = CURRENT_TIMESTAMP WHERE ").append(idCol).append(" = ?");
         return sql.toString();
+    }
+
+    public boolean isSchemaDifferent(String tableName, Map<String, String> newSchema) {
+        validateTableName(tableName);
+
+        boolean tableExists = false;
+        try {
+            Integer result = jdbcTemplate.queryForObject(
+                    "{call app.sp_CheckTableExists(?)}",
+                    Integer.class, tableName);
+            tableExists = result != null && result == 1;
+        } catch (Exception e) {
+            logger.warn("Table existence check failed for {}: {}", tableName, e.getMessage());
+        }
+
+        if (!tableExists) {
+            return false;
+        }
+
+        List<String> existingColumns = new ArrayList<>();
+        try {
+            List<Map<String, Object>> columns = jdbcTemplate.queryForList(
+                    "{call app.sp_GetTableColumns(?)}",
+                    tableName);
+            for (Map<String, Object> row : columns) {
+                String name = null;
+                if (row.containsKey("name")) {
+                    name = (String) row.get("name");
+                } else if (row.containsKey("NAME")) {
+                    name = (String) row.get("NAME");
+                } else {
+                    for (Map.Entry<String, Object> entry : row.entrySet()) {
+                        if (entry.getValue() instanceof String) {
+                            name = (String) entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (name != null && !"_id".equalsIgnoreCase(name) && !"_synced_at".equalsIgnoreCase(name)) {
+                    existingColumns.add(name.toLowerCase());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Schema fetch failed for table: {}", tableName, e);
+            return false;
+        }
+
+        List<String> newColumns = new ArrayList<>();
+        if (newSchema != null) {
+            for (String key : newSchema.keySet()) {
+                if (key != null && !"_id".equalsIgnoreCase(key) && !"_synced_at".equalsIgnoreCase(key)) {
+                    newColumns.add(key.toLowerCase());
+                }
+            }
+        }
+
+        Set<String> existingSet = new HashSet<>(existingColumns);
+        Set<String> newSet = new HashSet<>(newColumns);
+
+        return !existingSet.equals(newSet);
     }
 
     public void dropTable(String tableName) {

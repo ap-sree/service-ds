@@ -34,15 +34,11 @@ public class TaskExecution {
     private String status;
 
     @Lob
-
-    @Column(name = "input_payload", columnDefinition = "TEXT")
-
+    @Column(name = "input_payload")
     private String inputPayload;
 
     @Lob
-
-    @Column(name = "output_result", columnDefinition = "TEXT")
-
+    @Column(name = "output_result")
     private String outputResult;
 
     @Column(name = "triggered_by")
