@@ -57,8 +57,72 @@ target/
 *.sqlite
 *.sqlite3
 
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# Node
+node_modules/
+backend/node_modules/
+npm-debug.log
+yarn-error.log
+testem.log
+reports/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Angular
+.angular/
+
+# Java / Maven
+backend-java/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # Logs
 *.log
 logs/
 npm-debug.log
 yarn-error.log
+ 
+# Excluded files
+.factorypath
+*.jks
+*.ps1
