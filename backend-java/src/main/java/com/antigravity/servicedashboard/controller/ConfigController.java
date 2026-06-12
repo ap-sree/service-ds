@@ -1,9 +1,5 @@
 package com.antigravity.servicedashboard.controller;
 
-import com.antigravity.servicedashboard.dto.AppConfigDTO;
-import com.antigravity.servicedashboard.entity.AppConfig;
-import com.antigravity.servicedashboard.mapper.AppConfigMapper;
-import com.antigravity.servicedashboard.service.AppConfigService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +7,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.antigravity.servicedashboard.dto.AppConfigDTO;
+import com.antigravity.servicedashboard.entity.AppConfig;
+import com.antigravity.servicedashboard.mapper.AppConfigMapper;
+import com.antigravity.servicedashboard.service.AppConfigService;
+
 import jakarta.validation.Valid;
 
 @RestController

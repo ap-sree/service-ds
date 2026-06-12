@@ -1,11 +1,12 @@
 package com.antigravity.servicedashboard.mapper;
 
-import com.antigravity.servicedashboard.dto.UserDTO;
-import com.antigravity.servicedashboard.entity.User;
+import java.util.List;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
+import com.antigravity.servicedashboard.dto.UserDTO;
+import com.antigravity.servicedashboard.entity.User;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {

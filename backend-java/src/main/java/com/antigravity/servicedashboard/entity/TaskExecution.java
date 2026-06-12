@@ -1,4 +1,6 @@
 package com.antigravity.servicedashboard.entity;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -6,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 @Entity
 @Table(name = "task_executions")
 public class TaskExecution {
@@ -20,6 +21,9 @@ public class TaskExecution {
     @Column(name = "task_id", nullable = false)
 
     private Long taskId;
+
+    @Column(name = "task_type", nullable = false)
+    private String taskType = "TASK";
 
     @Column(name = "started_at", nullable = false)
 
@@ -59,6 +63,14 @@ public class TaskExecution {
 
     public void setTaskId(Long taskId) {
         this.taskId = taskId;
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
     }
 
     public LocalDateTime getStartedAt() {

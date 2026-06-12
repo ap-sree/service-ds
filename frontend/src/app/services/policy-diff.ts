@@ -537,16 +537,20 @@ export class PolicyDiffService {
 
         const diffs: { key: string, oldVal: any, newVal: any }[] = [];
         const keys = new Set([...Object.keys(objA || {}), ...Object.keys(objB || {})]);
+        
+        const allIgnoreKeys = ['id', 'location', ...ignoreKeys];
 
         for (const key of keys) {
-            if (ignoreKeys.includes(key)) continue;
+            if (allIgnoreKeys.includes(key)) continue;
 
             const valA = objA[key];
             const valB = objB[key];
 
             
             
-            if (JSON.stringify(valA) !== JSON.stringify(valB)) {
+            const replacer = (k: string, v: any) => (k === 'id' || k === 'location' ? undefined : v);
+
+            if (JSON.stringify(valA, replacer) !== JSON.stringify(valB, replacer)) {
                 diffs.push({
                     key,
                     oldVal: valA,

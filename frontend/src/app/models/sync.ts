@@ -23,3 +23,14 @@ export interface SyncDefinition {
     lastStatus?: string;
     schemaChanged?: boolean;
 }
+
+export interface TaskExecution {
+    id: number;
+    taskId: number;
+    taskType: string;
+    startedAt: string;
+    completedAt?: string;
+    status: string;
+    outputResult?: string;
+    triggeredBy?: string;
+}

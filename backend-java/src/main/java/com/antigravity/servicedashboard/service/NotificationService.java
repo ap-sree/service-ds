@@ -1,22 +1,21 @@
 package com.antigravity.servicedashboard.service;
 
-import com.antigravity.servicedashboard.constant.AppConstants;
-import com.antigravity.servicedashboard.entity.NotificationRule;
-import com.antigravity.servicedashboard.model.Notification;
-import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import com.antigravity.servicedashboard.constant.AppConstants;
+import com.antigravity.servicedashboard.entity.NotificationRule;
+import com.antigravity.servicedashboard.model.Notification;
+import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
 
 @Service
 public class NotificationService {

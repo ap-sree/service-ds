@@ -10,10 +10,17 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { AccordionModule } from 'primeng/accordion';
+import { TabsModule } from 'primeng/tabs';
 import { DiffNode, PolicySummary, PolicyDiffService } from '../../services/policy-diff';
 import { PolicyVizComponent } from '../policy-viz/policy-viz';
 import { PolicyComparisonCardComponent } from './policy-comparison-card.component';
 import { ComparisonCard } from './policy-comparison.model';
+
+export interface DiffLine {
+    lineA: string;
+    lineB: string;
+    status: 'same' | 'added' | 'removed' | 'modified';
+}
 
 @Component({
     selector: 'app-policy-comparison',
@@ -30,6 +37,7 @@ import { ComparisonCard } from './policy-comparison.model';
         DialogModule,
         TableModule,
         AccordionModule,
+        TabsModule,
         PolicyComparisonCardComponent
     ],
     templateUrl: './policy-comparison.html',
@@ -49,6 +57,7 @@ export class PolicyComparisonComponent {
     selectedNode = signal<DiffNode | null>(null);
 
     showDetails = false;
+    activeTab: 'summary' | 'json' = 'summary';
 
     private diffService = inject(PolicyDiffService);
 
@@ -119,6 +128,7 @@ export class PolicyComparisonComponent {
     onNodeSelected(node: DiffNode) {
         this.selectedNode.set(node);
         this.showDetails = true;
+        this.activeTab = 'summary';
     }
 
     getSeverity(status: string): any {
@@ -277,6 +287,24 @@ export class PolicyComparisonComponent {
 
             return `${key}: [${source?.type}${sourceId}] ${val || ''}`;
         }).join('\n');
+    }
+
+    computeDiffLines(node: DiffNode): DiffLine[] {
+        const a = node.comparison?.a ? JSON.stringify(node.comparison.a, null, 2).split('\n') : [];
+        const b = node.comparison?.b ? JSON.stringify(node.comparison.b, null, 2).split('\n') : [];
+        const max = Math.max(a.length, b.length);
+        const lines: DiffLine[] = [];
+        for (let i = 0; i < max; i++) {
+            const la = a[i] ?? '';
+            const lb = b[i] ?? '';
+            let status: DiffLine['status'];
+            if (la === lb) status = 'same';
+            else if (!la) status = 'added';
+            else if (!lb) status = 'removed';
+            else status = 'modified';
+            lines.push({ lineA: la, lineB: lb, status });
+        }
+        return lines;
     }
 
     private getActionId(action: any): string | null {

@@ -8,9 +8,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DialogModule } from 'primeng/dialog';
 import { SyncJobDialogComponent } from './sync-job-dialog';
 import { SourceService } from '../../../../services/source';
-import { SyncDefinition } from '../../../../models/sync';
+import { SyncDefinition, TaskExecution } from '../../../../models/sync';
 
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -21,7 +22,7 @@ import { InputIconModule } from 'primeng/inputicon';
     imports: [
         CommonModule,
         CardModule, ButtonModule, TableModule, InputTextModule, TooltipModule, ConfirmDialogModule,
-        IconFieldModule, InputIconModule
+        IconFieldModule, InputIconModule, DialogModule
     ],
     providers: [DialogService, ConfirmationService],
     templateUrl: './sync-job-config.html',
@@ -38,6 +39,10 @@ export class SyncJobConfigComponent implements OnInit {
     dataSource: SyncDefinition[] = [];
 
     loadingJobs = new Set<number>();
+    
+    displayHistoryDialog = false;
+    historyData: TaskExecution[] = [];
+    loadingHistory = false;
 
     ngOnInit() {
         this.loadData();
@@ -112,5 +117,21 @@ export class SyncJobConfigComponent implements OnInit {
 
     showMsg(severity: string, summary: string) {
         this.messageService.add({ severity, summary, detail: summary });
+    }
+
+    showHistory(id: number) {
+        this.displayHistoryDialog = true;
+        this.loadingHistory = true;
+        this.historyData = [];
+        this.sourceService.getSyncHistory(id).subscribe({
+            next: (data) => {
+                this.historyData = data;
+                this.loadingHistory = false;
+            },
+            error: (err) => {
+                this.showMsg('error', 'Failed to load history');
+                this.loadingHistory = false;
+            }
+        });
     }
 }

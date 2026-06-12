@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { TaskDefinition, TaskExecution, AdHocRequest } from '../models/automation';
+import { TaskDefinition, TaskExecution, TaskExecutionSummary, AdHocRequest } from '../models/automation';
 @Injectable({
     providedIn: 'root'
 })
@@ -29,10 +29,13 @@ export class AutomationService {
     executeAdHoc(req: AdHocRequest): Observable<TaskExecution> {
         return this.http.post<TaskExecution>(`${this.apiUrl}/execute`, req);
     }
-    getTaskHistory(taskId: number): Observable<TaskExecution[]> {
-        return this.http.get<TaskExecution[]>(`${this.apiUrl}/tasks/${taskId}/history`);
+    getTaskHistory(taskId: number): Observable<TaskExecutionSummary[]> {
+        return this.http.get<TaskExecutionSummary[]>(`${this.apiUrl}/tasks/${taskId}/history`);
     }
     getExecution(id: number): Observable<TaskExecution> {
         return this.http.get<TaskExecution>(`${this.apiUrl}/executions/${id}`);
+    }
+    getMaxSteps(): Observable<number | null> {
+        return this.http.get<number | null>(`${environment.apiUrl}/config/automation_max_steps`);
     }
 }

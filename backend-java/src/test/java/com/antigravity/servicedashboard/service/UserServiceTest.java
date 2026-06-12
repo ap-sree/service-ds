@@ -1,18 +1,26 @@
 package com.antigravity.servicedashboard.service;
 
-import com.antigravity.servicedashboard.entity.User;
-import com.antigravity.servicedashboard.model.UserPreferences;
-import com.antigravity.servicedashboard.repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.antigravity.servicedashboard.entity.User;
+import com.antigravity.servicedashboard.model.UserPreferences;
+import com.antigravity.servicedashboard.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {

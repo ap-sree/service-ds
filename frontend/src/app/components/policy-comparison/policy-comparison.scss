@@ -2,3 +2,30 @@
 :host ::ng-deep .p-listbox .p-listbox-list .p-listbox-item {
     padding: 0.5rem 0.75rem;
 }
+
+.diff-line {
+    line-height: 1.5;
+    border-left: 3px solid transparent;
+}
+
+.diff-added {
+    background-color: #f0fdf4;
+    border-left-color: #22c55e;
+    color: #166534;
+}
+
+.diff-removed {
+    background-color: #fef2f2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+}
+
+.diff-modified {
+    background-color: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #92400e;
+}
+
+.diff-same {
+    color: #374151;
+}

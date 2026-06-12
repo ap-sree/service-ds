@@ -48,7 +48,7 @@
                                     (click)="openTaskDialog(task.id)" pTooltip="Edit"></p-button>
 
                                 <p-button icon="pi pi-history" [rounded]="true" [text]="true" severity="secondary"
-                                    (click)="openTaskDialog(task.id)" pTooltip="History (in Edit View)"></p-button>
+                                    (click)="openHistoryDialog(task)" pTooltip="Execution History"></p-button>
 
                                 <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
                                     (click)="deleteTask(task)" pTooltip="Delete"></p-button>
@@ -83,31 +83,275 @@
 
     <!-- Execution Result Modal -->
     <p-dialog [header]="'Execution Result #' + executionResult?.id" [(visible)]="displayResultDialog" [modal]="true"
-        [style]="{width: '50vw'}" [resizable]="false" [draggable]="false" appendTo="body"
-        (onHide)="executionResult = null">
+        [style]="{width: '60vw'}" [resizable]="true" [draggable]="false" appendTo="body"
+        (onHide)="executionResult = null; parsedExecutionResult = null">
 
-        <div *ngIf="executionResult">
-            <div class="mb-3">
-                <label class="font-bold block">Status</label>
+        <div *ngIf="executionResult" class="flex flex-column gap-3">
+
+            <!-- Status + failed banner -->
+            <div class="flex align-items-center gap-2 flex-wrap pb-3 border-bottom-1 surface-border">
                 <p-tag [value]="executionResult.status" [severity]="getSeverity(executionResult.status)"></p-tag>
+                @if (parsedExecutionResult?.failedStep) {
+                <span class="text-red-600 font-semibold text-sm">
+                    <i class="pi pi-times-circle mr-1"></i>
+                    Step {{ parsedExecutionResult.failedStepIndex }} — {{ parsedExecutionResult.failedStep }} failed:
+                    {{ parsedExecutionResult.failedStepError }}
+                </span>
+                }
             </div>
 
-            <div class="mb-3">
-                <label class="font-bold block">Input Payload</label>
-                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
-                    style="white-space: pre-wrap; max-height: 200px;">{{ executionResult.inputPayload }}</pre>
+            <!-- Step results -->
+            @if (parsedExecutionResult?.steps) {
+            <div class="flex flex-column gap-2">
+                @for (stepRes of parsedExecutionResult.steps; track stepRes.stepIndex) {
+                <ng-container *ngTemplateOutlet="stepResultCard; context: { $implicit: stepRes }"></ng-container>
+                }
             </div>
+            } @else {
+            <div>
+                <div class="text-sm font-semibold text-color-secondary mb-1">Output</div>
+                <div class="p-3 border-round border-1 border-red-200 bg-red-50 text-red-700 text-sm font-mono">
+                    {{ executionResult.outputResult }}
+                </div>
+            </div>
+            }
 
-            <div class="mb-3">
-                <label class="font-bold block">Output Result</label>
-                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
-                    style="white-space: pre-wrap; max-height: 400px;">{{ executionResult.outputResult }}</pre>
+            <!-- End action result -->
+            @if (parsedExecutionResult?.endTaskResult && parsedExecutionResult.endTaskResult.type !== 'NONE') {
+            <div class="border-1 surface-border border-round p-3 surface-card">
+                <div class="font-bold mb-2"><i class="pi pi-flag mr-1 text-green-500"></i>End Action</div>
+                <p-tag [value]="parsedExecutionResult.endTaskResult.type" severity="success"></p-tag>
+                <span class="text-sm text-color-secondary ml-2">{{ parsedExecutionResult.endTaskResult.details }}</span>
             </div>
+            }
+
+            <!-- Input payload — collapsible -->
+            <details class="border-1 surface-border border-round">
+                <summary class="p-2 cursor-pointer text-sm font-semibold text-color-secondary select-none">
+                    <i class="pi pi-code mr-1"></i>Input Payload
+                </summary>
+                <pre class="surface-ground p-3 m-0 overflow-auto text-xs font-mono border-top-1 surface-border"
+                     style="max-height:200px; white-space:pre-wrap; border-radius:0 0 6px 6px">{{ executionResult.inputPayload }}</pre>
+            </details>
+
         </div>
+
         <ng-template pTemplate="footer">
             <button pButton label="Close" icon="pi pi-times" (click)="displayResultDialog = false"></button>
         </ng-template>
     </p-dialog>
+
+    <!-- ── Execution History Dialog ─────────────────────────────────────── -->
+    <p-dialog [header]="'Execution History — ' + historyTask?.name"
+              [(visible)]="displayHistoryDialog"
+              [modal]="true" [style]="{width: '70vw'}" [resizable]="false"
+              [draggable]="false" appendTo="body"
+              (onHide)="historyTask = null; taskHistory = []">
+
+        <p-table [value]="taskHistory" [loading]="loadingHistory"
+                 styleClass="p-datatable-sm" [rows]="10" [paginator]="true"
+                 [showCurrentPageReport]="true"
+                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords}">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width:5rem">ID</th>
+                    <th style="width:9rem">Status</th>
+                    <th style="width:14rem">Started</th>
+                    <th style="width:14rem">Completed</th>
+                    <th>Triggered By</th>
+                    <th style="width:5rem"></th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-exec>
+                <tr>
+                    <td>{{ exec.id }}</td>
+                    <td>
+                        <p-tag [value]="exec.status" [severity]="getSeverity(exec.status)"></p-tag>
+                    </td>
+                    <td>{{ exec.startedAt | date:'short' }}</td>
+                    <td>{{ exec.completedAt ? (exec.completedAt | date:'short') : '—' }}</td>
+                    <td>{{ exec.triggeredBy || 'system' }}</td>
+                    <td>
+                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true"
+                                  (click)="showHistoryExecution(exec)"
+                                  pTooltip="View output" tooltipPosition="top"></p-button>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center p-4 text-color-secondary">No executions yet.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <ng-template pTemplate="footer">
+            <p-button label="Close" icon="pi pi-times" severity="secondary"
+                      (click)="displayHistoryDialog = false"></p-button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- ── Execution Detail Dialog ───────────────────────────────────────── -->
+    <p-dialog [header]="loadingDetail ? 'Loading…' : 'Execution #' + historySelectedExecution?.id"
+              [(visible)]="displayHistoryResultDialog"
+              [modal]="true" [style]="{width: '60vw'}" [resizable]="false"
+              [draggable]="false" appendTo="body"
+              (onHide)="historySelectedExecution = null; parsedHistoryResult = null; loadingDetail = false">
+
+        @if (loadingDetail) {
+        <div class="flex align-items-center justify-content-center py-6 gap-3">
+            <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
+            <span class="text-color-secondary">Loading execution detail…</span>
+        </div>
+        }
+
+        @if (!loadingDetail && historySelectedExecution) {
+        <div class="flex flex-column gap-3">
+
+            <div class="flex align-items-center gap-2 pb-3 border-bottom-1 surface-border flex-wrap">
+                <p-tag [value]="historySelectedExecution.status"
+                       [severity]="getSeverity(historySelectedExecution.status)"></p-tag>
+                @if (parsedHistoryResult?.failedStep) {
+                <span class="text-red-600 font-semibold text-sm">
+                    <i class="pi pi-times-circle mr-1"></i>
+                    Step {{ parsedHistoryResult.failedStepIndex }} — {{ parsedHistoryResult.failedStep }} failed:
+                    {{ parsedHistoryResult.failedStepError }}
+                </span>
+                }
+                <span class="text-sm text-color-secondary ml-auto">
+                    {{ historySelectedExecution.startedAt | date:'medium' }} · {{ historySelectedExecution.triggeredBy || 'system' }}
+                </span>
+            </div>
+
+            @if (parsedHistoryResult?.steps) {
+            <div class="flex flex-column gap-2">
+                @for (stepRes of parsedHistoryResult.steps; track stepRes.stepIndex) {
+                <ng-container *ngTemplateOutlet="stepResultCard; context: { $implicit: stepRes }"></ng-container>
+                }
+            </div>
+            }
+
+            @if (parsedHistoryResult?.endTaskResult && parsedHistoryResult.endTaskResult.type !== 'NONE') {
+            <div class="border-1 surface-border border-round p-3 surface-card">
+                <div class="font-bold mb-2"><i class="pi pi-flag mr-1 text-green-500"></i>End Action Result</div>
+                <p-tag [value]="parsedHistoryResult.endTaskResult.type" severity="success"></p-tag>
+                <span class="text-sm text-color-secondary ml-2">{{ parsedHistoryResult.endTaskResult.details }}</span>
+                @if (parsedHistoryResult.endTaskResult.type === 'DOWNLOAD') {
+                <div class="flex align-items-center justify-content-between mt-2 border-1 border-primary-200 bg-primary-50 p-2 border-round">
+                    <span class="font-bold text-primary text-sm">
+                        <i class="pi pi-file mr-1"></i>{{ parsedHistoryResult.endTaskResult.file.fileName }}
+                    </span>
+                    <p-button icon="pi pi-download" label="Download" [outlined]="true" size="small" severity="success"
+                              (click)="downloadFile(parsedHistoryResult.endTaskResult.file)"></p-button>
+                </div>
+                }
+            </div>
+            }
+
+            @if (!parsedHistoryResult) {
+            <div class="p-3 border-round border-1 border-red-200 bg-red-50 text-red-700 text-sm font-mono">
+                {{ historySelectedExecution.outputResult }}
+            </div>
+            }
+
+        </div>
+        }
+
+        <ng-template pTemplate="footer">
+            <p-button label="Close" icon="pi pi-times" severity="secondary"
+                      (click)="displayHistoryResultDialog = false"></p-button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- ── Shared step result card template ─────────────────────────────── -->
+    <ng-template #stepResultCard let-stepRes>
+        <div class="border-1 surface-border border-round p-3 surface-ground">
+
+            <!-- Header row -->
+            <div class="flex justify-content-between align-items-center mb-2">
+                <div class="flex align-items-center gap-2">
+                    <span class="border-circle text-white flex align-items-center justify-content-center font-bold text-xs flex-shrink-0"
+                          [ngClass]="stepRes.status === 'FAILED' ? 'bg-red-500' : 'bg-primary'"
+                          style="width:1.5rem;height:1.5rem">{{ stepRes.stepIndex + 1 }}</span>
+                    <span class="font-bold">{{ stepRes.name }}</span>
+                    <span class="text-xs text-color-secondary">({{ stepRes.type }})</span>
+                </div>
+                <div class="flex align-items-center gap-2">
+                    @if (stepRes.httpStatus != null) {
+                    <span class="text-xs font-mono font-bold px-2 py-1 border-round border-1"
+                          [ngClass]="stepRes.httpStatus >= 200 && stepRes.httpStatus < 300
+                              ? 'text-green-700 bg-green-50 border-green-200'
+                              : stepRes.httpStatus >= 400
+                                  ? 'text-red-700 bg-red-50 border-red-200'
+                                  : 'text-color-secondary surface-card surface-border'">
+                        HTTP {{ stepRes.httpStatus }}
+                    </span>
+                    }
+                    @if (stepRes.resultCount != null) {
+                    <span class="text-xs text-color-secondary border-round px-2 py-1 surface-card border-1 surface-border">
+                        {{ stepRes.resultCount }} record{{ stepRes.resultCount !== 1 ? 's' : '' }}
+                    </span>
+                    }
+                    <p-tag [value]="stepRes.status" [severity]="getSeverity(stepRes.status)" styleClass="p-tag-sm"></p-tag>
+                </div>
+            </div>
+
+            <!-- FAILED -->
+            @if (stepRes.status === 'FAILED') {
+            <div class="p-2 border-round bg-red-50 text-red-700 font-mono text-sm border-1 border-red-200 mt-1">
+                <strong>Error:</strong> {{ stepRes.error }}
+            </div>
+            }
+
+            <!-- PROCESS — file output -->
+            @else if (stepRes.type === 'PROCESS') {
+            <div class="flex align-items-center justify-content-between border-1 border-primary-200 bg-primary-50 p-2 border-round">
+                <span class="font-bold text-primary text-sm">
+                    <i class="pi pi-file mr-1"></i>{{ stepRes.output?.fileName }}
+                    <span class="text-xs font-normal text-color-secondary ml-1">({{ stepRes.output?.size }} bytes)</span>
+                </span>
+                <p-button icon="pi pi-download" label="Download" [outlined]="true" size="small"
+                          (click)="downloadFile(stepRes.output)"></p-button>
+            </div>
+            }
+
+            <!-- DATASOURCE — field mapping + values -->
+            @else {
+            @if (stepRes.mappingConfig) {
+            <div class="mb-2">
+                <div class="text-xs font-semibold text-color-secondary mb-1 uppercase tracking-wide">Field Mapping</div>
+                <div class="flex flex-wrap gap-1">
+                    @for (kv of stepRes.mappingConfig | keyvalue; track kv.key) {
+                    <span class="text-xs font-mono px-2 py-1 border-round surface-card border-1 surface-border">
+                        <span class="text-primary font-semibold">{{ kv.key }}</span>
+                        <span class="text-color-secondary mx-1">←</span>{{ kv.value }}
+                    </span>
+                    }
+                </div>
+            </div>
+            }
+            @if (stepRes.mappedValues && stepRes.mappedValues.length > 0) {
+            <div>
+                <div class="text-xs font-semibold text-color-secondary mb-1 uppercase tracking-wide">
+                    Values
+                    @if (stepRes.resultCount > stepRes.mappedValues.length) {
+                    <span class="font-normal normal-case">(showing {{ stepRes.mappedValues.length }} of {{ stepRes.resultCount }})</span>
+                    }
+                </div>
+                <pre class="surface-card p-2 border-round overflow-auto text-xs font-mono m-0"
+                     style="max-height:160px; border:1px solid var(--surface-border)">{{ stepRes.mappedValues | json }}</pre>
+            </div>
+            } @else if (!stepRes.mappingConfig && stepRes.output) {
+            <pre class="surface-card p-2 border-round overflow-auto text-xs font-mono m-0"
+                 style="max-height:150px; border:1px solid var(--surface-border)">{{ stepRes.output | json }}</pre>
+            }
+            }
+
+        </div>
+    </ng-template>
 
     <p-toast></p-toast>
 </div>

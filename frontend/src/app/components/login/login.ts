@@ -5,7 +5,9 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { AuthService } from '../../auth/auth';
+import { checkAndGetRoute } from '../../auth.guard';
 import { SessionNotificationService } from '../../services/session-notification';
+import { environment } from '../../../environments/environment';
 
 import { CheckboxModule } from 'primeng/checkbox';
 
@@ -24,7 +26,7 @@ export class LoginComponent {
     private router = inject(Router);
 
     ngOnInit() {
-        
+
         this.authService.currentUser.set(null);
         sessionStorage.removeItem('currentUser');
     }
@@ -38,7 +40,7 @@ export class LoginComponent {
         this.authService.syncUser(this.username).subscribe({
             next: () => {
                 this.loading = false;
-                this.router.navigate(['/dashboard']);
+                this.router.navigate([checkAndGetRoute()]);
             },
             error: (err) => {
                 this.error = 'Login Failed';

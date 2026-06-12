@@ -1,16 +1,17 @@
 package com.antigravity.servicedashboard.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.antigravity.servicedashboard.util.MessageUtils;
 
@@ -44,11 +45,11 @@ public class TableManagerService {
             dropTable(tableName);
         }
 
-        // Check if table exists
+
         boolean tableExists = false;
         try {
             Integer result = jdbcTemplate.queryForObject(
-                    "{call app.sp_CheckTableExists(?)}",
+                    "{call \"APP\".sp_CheckTableExists(?)}",
                     Integer.class, tableName);
             tableExists = result != null && result == 1;
         } catch (Exception e) {
@@ -59,14 +60,14 @@ public class TableManagerService {
             return;
         }
 
-        // Build column definitions string for SP
+
         StringJoiner colDefs = new StringJoiner(", ");
         for (Map.Entry<String, String> entry : schema.entrySet()) {
             String colName = entry.getKey();
             String colType = entry.getValue();
 
             if ("_id".equalsIgnoreCase(colName) || "_synced_at".equalsIgnoreCase(colName)) {
-                continue; // Skip system columns
+                continue;
             }
 
             if (!colName.matches("^[\\w]+$")) {
@@ -74,14 +75,11 @@ public class TableManagerService {
                 continue;
             }
 
-            // Basic type mapping adjustment if needed, but assuming input is generic enough
-            // or SQL Server compatible
-            // e.g. TEXT -> NVARCHAR(MAX) mapping might be handled by caller or here
             colDefs.add(colName + " " + colType);
         }
 
         logger.info("Calling sp_CreateDynamicTable for {}", tableName);
-        jdbcTemplate.update("{call app.sp_CreateDynamicTable(?, ?)}", tableName, colDefs.toString());
+        jdbcTemplate.update("{call \"APP\".sp_CreateDynamicTable(?, ?)}", tableName, colDefs.toString());
     }
 
     @Transactional
@@ -95,7 +93,7 @@ public class TableManagerService {
             upsertData(tableName, dataRowList, primaryKey);
         } else {
             logger.info("Strategy RELOAD: Clearing table {}", tableName);
-            jdbcTemplate.execute("DELETE FROM \"app\".\"" + tableName + "\"");
+            jdbcTemplate.execute("DELETE FROM \"APP\".\"" + tableName + "\"");
             batchInsert(tableName, dataRowList);
         }
     }
@@ -107,7 +105,7 @@ public class TableManagerService {
         Set<String> columns = firstRow.keySet();
         if (columns.isEmpty())
             return;
-        StringBuilder sql = new StringBuilder("INSERT INTO \"app\".\"" + tableName + "\" (");
+        StringBuilder sql = new StringBuilder("INSERT INTO \"APP\".\"" + tableName + "\" (");
         StringJoiner colNames = new StringJoiner(", ");
         StringJoiner placeHolders = new StringJoiner(", ");
         for (String col : columns) {
@@ -133,7 +131,7 @@ public class TableManagerService {
         Map<String, Object> firstRow = dataRowList.get(0);
         Set<String> columns = firstRow.keySet();
         List<Map<String, Object>> existing = jdbcTemplate
-                .queryForList("SELECT _id, " + primaryKey + " FROM \"app\".\"" + tableName + "\"");
+                .queryForList("SELECT _id, " + primaryKey + " FROM \"APP\".\"" + tableName + "\"");
         Map<String, Integer> existingMap = new java.util.HashMap<>();
         for (Map<String, Object> row : existing) {
             Object pkVal = row.get(primaryKey);
@@ -175,7 +173,7 @@ public class TableManagerService {
     }
 
     private String buildInsertSql(String tableName, Set<String> columns) {
-        StringBuilder sql = new StringBuilder("INSERT INTO \"app\".\"" + tableName + "\" (");
+        StringBuilder sql = new StringBuilder("INSERT INTO \"APP\".\"" + tableName + "\" (");
         StringJoiner colNames = new StringJoiner(", ");
         StringJoiner placeHolders = new StringJoiner(", ");
         for (String col : columns) {
@@ -187,7 +185,7 @@ public class TableManagerService {
     }
 
     private String buildUpdateSql(String tableName, Set<String> columns, String idCol) {
-        StringBuilder sql = new StringBuilder("UPDATE \"app\".\"" + tableName + "\" SET ");
+        StringBuilder sql = new StringBuilder("UPDATE \"APP\".\"" + tableName + "\" SET ");
         StringJoiner updates = new StringJoiner(", ");
         for (String col : columns) {
             updates.add(col + " = ?");
@@ -202,7 +200,7 @@ public class TableManagerService {
         boolean tableExists = false;
         try {
             Integer result = jdbcTemplate.queryForObject(
-                    "{call app.sp_CheckTableExists(?)}",
+                    "{call \"APP\".sp_CheckTableExists(?)}",
                     Integer.class, tableName);
             tableExists = result != null && result == 1;
         } catch (Exception e) {
@@ -216,7 +214,7 @@ public class TableManagerService {
         List<String> existingColumns = new ArrayList<>();
         try {
             List<Map<String, Object>> columns = jdbcTemplate.queryForList(
-                    "{call app.sp_GetTableColumns(?)}",
+                    "{call \"APP\".sp_GetTableColumns(?)}",
                     tableName);
             for (Map<String, Object> row : columns) {
                 String name = null;
@@ -259,6 +257,6 @@ public class TableManagerService {
     public void dropTable(String tableName) {
         validateTableName(tableName);
         logger.info("Dropping table: {}", tableName);
-        jdbcTemplate.update("{call app.sp_DropDynamicTable(?)}", tableName);
+        jdbcTemplate.update("{call \"APP\".sp_DropDynamicTable(?)}", tableName);
     }
 }

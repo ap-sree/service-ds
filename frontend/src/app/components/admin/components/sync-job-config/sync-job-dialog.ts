@@ -210,6 +210,7 @@ export class SyncJobDialogComponent implements OnInit {
         const sourceId = this.syncFormGroup.get('sourceId')?.value;
         const query = this.syncFormGroup.get('fetchQuery')?.value;
         const method = this.syncFormGroup.get('httpMethod')?.value;
+        const rootPath = this.syncFormGroup.get('rootPath')?.value;
         let body = this.syncFormGroup.get('requestBody')?.value;
         if (body) {
             try {
@@ -222,7 +223,7 @@ export class SyncJobDialogComponent implements OnInit {
             return;
         }
         this.showMsg('info', 'Fetching preview...');
-        this.sourceService.previewData(sourceId, query, method, body).subscribe({
+        this.sourceService.previewData(sourceId, query, method, body, rootPath).subscribe({
             next: (res) => {
                 this.sampleData = res.sample || [];
                 if (this.sampleData.length > 0) {

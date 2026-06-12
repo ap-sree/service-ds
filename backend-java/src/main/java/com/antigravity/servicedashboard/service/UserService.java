@@ -1,14 +1,14 @@
 package com.antigravity.servicedashboard.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.antigravity.servicedashboard.entity.User;
 import com.antigravity.servicedashboard.model.UserPreferences;
 import com.antigravity.servicedashboard.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {

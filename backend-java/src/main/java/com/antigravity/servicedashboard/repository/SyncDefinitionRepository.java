@@ -1,8 +1,10 @@
 package com.antigravity.servicedashboard.repository;
 
-import com.antigravity.servicedashboard.entity.SyncDefinition;
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.antigravity.servicedashboard.entity.SyncDefinition;
 
 public interface SyncDefinitionRepository extends JpaRepository<SyncDefinition, Long> {
     List<SyncDefinition> findBySyncMode(String syncMode);

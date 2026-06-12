@@ -1,58 +1,70 @@
 package com.antigravity.servicedashboard.service;
 
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Objects;
-import java.util.Base64;
-import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+
+import javax.naming.NamingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ldap.core.AttributesMapper;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
-
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 
 import com.antigravity.servicedashboard.constant.AppConstants;
-import javax.naming.NamingException;
-import org.springframework.ldap.core.AttributesMapper;
-import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.core.support.LdapContextSource;
 import com.antigravity.servicedashboard.entity.DataSource;
 import com.antigravity.servicedashboard.entity.NotificationRule;
-import com.antigravity.servicedashboard.util.MessageUtils;
 import com.antigravity.servicedashboard.entity.SyncDefinition;
 import com.antigravity.servicedashboard.entity.WidgetDefinition;
 import com.antigravity.servicedashboard.exception.SyncException;
 import com.antigravity.servicedashboard.repository.DataSourceRepository;
 import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
 import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
+import com.antigravity.servicedashboard.repository.TaskExecutionRepository;
 import com.antigravity.servicedashboard.repository.WidgetDefinitionRepository;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.antigravity.servicedashboard.entity.TaskExecution;
+import com.antigravity.servicedashboard.util.MessageUtils;
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
 
 @Service
 public class SyncService {
 
     private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
+
+    public static class FetchResult {
+        public final List<Map<String, Object>> data;
+        public final Integer httpStatus;
+        public FetchResult(List<Map<String, Object>> data, Integer httpStatus) {
+            this.data = data;
+            this.httpStatus = httpStatus;
+        }
+    }
 
     private final SyncDefinitionRepository syncRepo;
 
@@ -74,6 +86,8 @@ public class SyncService {
 
     private final FileService fileService;
 
+    private final TaskExecutionRepository executionRepo;
+
     private final SyncService self;
 
     public SyncService(SyncDefinitionRepository syncRepo,
@@ -86,7 +100,8 @@ public class SyncService {
             NotificationService notificationService,
             ObjectMapper objectMapper,
             FileService fileService,
-            @org.springframework.context.annotation.Lazy SyncService self) {
+            TaskExecutionRepository executionRepo,
+            @Lazy SyncService self) {
         this.syncRepo = syncRepo;
         this.widgetRepo = widgetRepo;
         this.notifRepo = notifRepo;
@@ -97,6 +112,7 @@ public class SyncService {
         this.notificationService = notificationService;
         this.objectMapper = objectMapper;
         this.fileService = fileService;
+        this.executionRepo = executionRepo;
         this.self = self;
     }
 
@@ -134,8 +150,21 @@ public class SyncService {
 
     private void runSyncJob(SyncDefinition sync, boolean retryOnSchemaMismatch) {
         logger.info("Starting Sync Job: {}", sync.getTargetTableName());
+        
+        TaskExecution exec = new TaskExecution();
+        exec.setTaskId(sync.getId());
+        exec.setTaskType("SYNC");
+        exec.setStartedAt(LocalDateTime.now());
+        exec.setStatus("RUNNING");
+        exec.setTriggeredBy("SYSTEM");
+        exec = executionRepo.save(exec);
+        
         Optional<DataSource> sourceOpt = sourceRepo.findById(sync.getSourceId());
         if (sourceOpt.isEmpty()) {
+            exec.setStatus("FAILED");
+            exec.setCompletedAt(LocalDateTime.now());
+            exec.setOutputResult("DataSource not found: " + sync.getSourceId());
+            executionRepo.save(exec);
             throw new IllegalArgumentException(MessageUtils.get("error.datasource.notfound", sync.getSourceId()));
         }
         DataSource source = sourceOpt.get();
@@ -146,6 +175,10 @@ public class SyncService {
                     sync.getPaginationConfig());
             if (rawData.isEmpty()) {
                 updateStatus(sync, "SUCCESS (No Data)");
+                exec.setStatus("SUCCESS");
+                exec.setCompletedAt(LocalDateTime.now());
+                exec.setOutputResult("Processed 0 records.");
+                executionRepo.save(exec);
                 return;
             }
             List<Map<String, Object>> mappedData = applyFieldMapping(rawData, sync.getFieldMapping());
@@ -181,8 +214,16 @@ public class SyncService {
                 notificationService.triggerEventRules(sync.getTargetTableName());
             }
             updateStatus(sync, "SUCCESS");
+            exec.setStatus("SUCCESS");
+            exec.setCompletedAt(LocalDateTime.now());
+            exec.setOutputResult("Processed " + mappedData.size() + " records.");
+            executionRepo.save(exec);
         } catch (Exception e) {
             logger.error("Sync Job Failed", e);
+            exec.setStatus("FAILED");
+            exec.setCompletedAt(LocalDateTime.now());
+            exec.setOutputResult(e.getMessage() != null ? e.getMessage() : "Unknown error");
+            executionRepo.save(exec);
             throw new SyncException(MessageUtils.get("error.sync.jobfailed", sync.getTargetTableName()), e);
         }
     }
@@ -215,6 +256,10 @@ public class SyncService {
         return data;
     }
 
+    public List<com.antigravity.servicedashboard.dto.TaskExecutionSummary> getSyncHistory(Long syncId) {
+        return executionRepo.findSummaryByTaskIdAndTaskTypeOrderByStartedAtDesc(syncId, "SYNC");
+    }
+
     public List<Map<String, Object>> fetchData(DataSource source, String fetchQuery) {
         return fetchData(source, fetchQuery, "GET", null, null, null);
     }
@@ -225,10 +270,18 @@ public class SyncService {
 
     public List<Map<String, Object>> fetchData(DataSource source, String fetchQuery, String method, Object body,
             String rootPath, String paginationConfig) {
+        return fetchDataWithStatus(source, fetchQuery, method, body, rootPath, paginationConfig).data;
+    }
+
+    public FetchResult fetchDataWithStatus(DataSource source, String fetchQuery, String method, Object body,
+            String rootPath, String paginationConfig) {
         try {
             List<Map<String, Object>> result = Collections.emptyList();
+            Integer httpStatus = null;
             if (AppConstants.DS_TYPE_REST_API.equals(source.getType())) {
-                result = fetchFromRestApi(source, fetchQuery, method, body, paginationConfig, rootPath);
+                FetchResult fr = fetchFromRestApi(source, fetchQuery, method, body, paginationConfig, rootPath);
+                result = fr.data;
+                httpStatus = fr.httpStatus;
                 rootPath = null;
             } else if (AppConstants.DS_TYPE_SQL_SERVER.equals(source.getType())) {
                 result = fetchFromSql(source, fetchQuery);
@@ -241,9 +294,9 @@ public class SyncService {
             }
 
             if (rootPath != null && !rootPath.trim().isEmpty() && !result.isEmpty()) {
-                return extractRootPath(result, rootPath);
+                result = extractRootPath(result, rootPath);
             }
-            return result;
+            return new FetchResult(result, httpStatus);
         } catch (Exception e) {
             logger.error("Error fetching data", e);
             throw new SyncException(MessageUtils.get("error.sync.datafetch", e.getMessage()), e);
@@ -337,11 +390,6 @@ public class SyncService {
                     throw new SyncException(MessageUtils.get("error.sync.auth.mi"));
                 }
             } else {
-                // Fallback (though UI removed user/pass, maybe older configs exist?)
-                // Or maybe system assigned MI?
-                // If System Assigned MI, clientID could be null but we still use
-                // DefaultAzureCredential?
-                // But user explicitly asked for User Assigned Client ID.
                 logger.warn("No Client ID provided for SQL Server source {}. Attempting System-Assigned MI or failure.",
                         source.getName());
                 DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
@@ -401,7 +449,7 @@ public class SyncService {
         return data;
     }
 
-    private List<Map<String, Object>> fetchFromRestApi(DataSource source, String fetchQuery, String method,
+    private FetchResult fetchFromRestApi(DataSource source, String fetchQuery, String method,
             Object body, String paginationConfig, String rootPath) {
         try {
             Map<String, Object> config = objectMapper.readValue(source.getConfig(), new TypeReference<>() {
@@ -476,6 +524,7 @@ public class SyncService {
 
             List<Map<String, Object>> allResults = new ArrayList<>();
             String currentUrl = url;
+            Integer lastHttpStatus = null;
 
             while (hasNextPage && pageCount < maxPages) {
                 pageCount++;
@@ -505,6 +554,7 @@ public class SyncService {
 
                 logger.info("Executing REST Request Page {}: Method={}, URL={}", pageCount, method, currentUrl);
                 ResponseEntity<String> response = restClient.fetchResponse(currentUrl, method, headers, body);
+                lastHttpStatus = response.getStatusCode().value();
                 String jsonBody = response.getBody();
 
                 List<Map<String, Object>> pageResults = Collections.emptyList();
@@ -564,7 +614,7 @@ public class SyncService {
                 }
             }
             logger.info("Pagination finished. Total records: {}", allResults.size());
-            return allResults;
+            return new FetchResult(allResults, lastHttpStatus);
         } catch (Exception e) {
             throw new SyncException(MessageUtils.get("error.sync.restfetch"), e);
         }

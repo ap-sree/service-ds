@@ -1,27 +1,27 @@
 package com.antigravity.servicedashboard.service;
 
-import com.antigravity.servicedashboard.exception.ApiConnectionException;
-import com.antigravity.servicedashboard.exception.SslCertificateException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.http.HttpClient;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import org.springframework.http.ResponseEntity;
 
+import com.antigravity.servicedashboard.exception.ApiConnectionException;
+import com.antigravity.servicedashboard.exception.SslCertificateException;
 import com.antigravity.servicedashboard.util.MessageUtils;
-
-import java.net.http.HttpClient;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.ArrayList;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class RestClientService {
@@ -112,7 +112,7 @@ public class RestClientService {
         logger.info("Fetching response from URL: {}", url);
         try {
             RestClient.RequestBodySpec request = restClient.method(HttpMethod.valueOf(method.toUpperCase()))
-                    .uri(url)
+                    .uri(toSafeUri(url))
                     .contentType(MediaType.APPLICATION_JSON);
 
             if (headersMap != null) {
@@ -140,6 +140,25 @@ public class RestClientService {
         } catch (Exception e) {
             logger.error("Unexpected error calling API: {}", url, e);
             throw new RuntimeException(MessageUtils.get("error.api.call", e.getMessage()), e);
+        }
+    }
+
+    private java.net.URI toSafeUri(String url) {
+        try {
+            return java.net.URI.create(url);
+        } catch (IllegalArgumentException first) {
+            String encoded = url
+                .replace(" ",  "%20")
+                .replace("|",  "%7C")
+                .replace("^",  "%5E")
+                .replace("`",  "%60")
+                .replace("\\", "%5C");
+            try {
+                return java.net.URI.create(encoded);
+            } catch (IllegalArgumentException second) {
+                throw new IllegalArgumentException(
+                    "Malformed URL — check for unencoded special characters: " + url, second);
+            }
         }
     }
 }

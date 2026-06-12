@@ -1,15 +1,15 @@
 <div class="flex flex-column h-full w-full surface-ground">
-    
+
     <div class="px-4 py-3 flex align-items-center justify-content-between bg-white border-bottom-1 surface-border">
         <div>
             <h2 class="text-xl font-bold m-0 text-900">Policy Comparison</h2>
         </div>
     </div>
 
-    
+
     <div class="flex-grow-1 flex flex-column p-4 overflow-auto gap-4">
 
-        
+
         <div class="grid">
             <div class="col-12 md:col-6">
                 <p-card styleClass="h-full surface-card shadow-1 border-1 surface-border">
@@ -100,14 +100,14 @@
             </div>
         </div>
 
-        
+
         <div class="flex justify-content-center">
             <button pButton label="Compare Selected" icon="pi pi-arrows-h"
                 class="p-button-primary p-button-rounded shadow-2 w-15rem" (click)="compare()"
                 [disabled]="!canCompare()"></button>
         </div>
 
-        
+
         <div class="flex-grow-1 surface-card shadow-1 border-1 surface-border border-round relative overflow-hidden"
             style="min-height: 500px;">
             @if (diffTree()) {
@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    
+
     <p-dialog [(visible)]="showDetails" [modal]="true" header="Diff Details"
         [style]="{width: '90vw', maxWidth: '1400px'}" [maximizable]="true" [draggable]="false" [resizable]="false"
         [dismissableMask]="true">
@@ -138,36 +138,81 @@
                 <div class="mt-2 text-xs text-500 font-mono break-all">ID: {{ node.id }}</div>
             </div>
 
-            
             @if (node.comparison) {
-            <div class="grid">
-                <div class="col-12 md:col-6">
-                    <div class="surface-card p-3 border-round border-1 surface-border h-full">
-                        <div
-                            class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
-                            <span class="font-bold text-700">Policy A</span>
-                            <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.a">(Not active)</span>
+            <p-tabs value="summary">
+                <p-tablist>
+                    <p-tab value="summary">Summary</p-tab>
+                    <p-tab value="json">JSON Diff</p-tab>
+                </p-tablist>
+                <p-tabpanels>
+                    <p-tabpanel value="summary">
+                        <div class="grid mt-2">
+                            <div class="col-12 md:col-6">
+                                <div class="surface-card p-3 border-round border-1 surface-border h-full">
+                                    <div
+                                        class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                                        <span class="font-bold text-700">Policy A</span>
+                                        <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.a">(Not
+                                            active)</span>
+                                    </div>
+                                    <p-accordion [value]="[node.name]" [multiple]="true">
+                                        <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="a">
+                                        </app-policy-comparison-card>
+                                    </p-accordion>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6">
+                                <div class="surface-card p-3 border-round border-1 surface-border h-full">
+                                    <div
+                                        class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
+                                        <span class="font-bold text-700">Policy B</span>
+                                        <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.b">(Not
+                                            active)</span>
+                                    </div>
+                                    <p-accordion [value]="[node.name]" [multiple]="true">
+                                        <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="b">
+                                        </app-policy-comparison-card>
+                                    </p-accordion>
+                                </div>
+                            </div>
                         </div>
-                        <p-accordion [value]="[node.name]" [multiple]="true">
-                            <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="a">
-                            </app-policy-comparison-card>
-                        </p-accordion>
-                    </div>
-                </div>
-                <div class="col-12 md:col-6">
-                    <div class="surface-card p-3 border-round border-1 surface-border h-full">
-                        <div
-                            class="flex align-items-center justify-content-between mb-3 border-bottom-1 surface-border pb-2">
-                            <span class="font-bold text-700">Policy B</span>
-                            <span class="text-xs text-500 font-mono" *ngIf="!node.comparison.b">(Not active)</span>
+                    </p-tabpanel>
+                    <p-tabpanel value="json">
+                        <div class="flex gap-2 mt-2" style="font-size:0.75rem; font-family:monospace;">
+                            <div class="flex-1 border-1 surface-border border-round overflow-auto"
+                                style="max-height:60vh;">
+                                <div class="px-2 py-1 font-bold text-700 border-bottom-1 surface-border bg-gray-50">
+                                    Policy A</div>
+                                @for (line of computeDiffLines(node); track $index) {
+                                <div class="px-2 py-0 flex align-items-start gap-2 diff-line"
+                                    [class.diff-removed]="line.status === 'removed'"
+                                    [class.diff-modified]="line.status === 'modified'"
+                                    [class.diff-same]="line.status === 'same'">
+                                    <span class="text-400 select-none w-2rem text-right flex-shrink-0">{{ $index + 1
+                                        }}</span>
+                                    <span class="white-space-pre flex-1">{{ line.lineA }}</span>
+                                </div>
+                                }
+                            </div>
+                            <div class="flex-1 border-1 surface-border border-round overflow-auto"
+                                style="max-height:60vh;">
+                                <div class="px-2 py-1 font-bold text-700 border-bottom-1 surface-border bg-gray-50">
+                                    Policy B</div>
+                                @for (line of computeDiffLines(node); track $index) {
+                                <div class="px-2 py-0 flex align-items-start gap-2 diff-line"
+                                    [class.diff-added]="line.status === 'added'"
+                                    [class.diff-modified]="line.status === 'modified'"
+                                    [class.diff-same]="line.status === 'same'">
+                                    <span class="text-400 select-none w-2rem text-right flex-shrink-0">{{ $index + 1
+                                        }}</span>
+                                    <span class="white-space-pre flex-1">{{ line.lineB }}</span>
+                                </div>
+                                }
+                            </div>
                         </div>
-                        <p-accordion [value]="[node.name]" [multiple]="true">
-                            <app-policy-comparison-card [card]="$any(getComparisonCard(node))" column="b">
-                            </app-policy-comparison-card>
-                        </p-accordion>
-                    </div>
-                </div>
-            </div>
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
             }
         </div>
         }

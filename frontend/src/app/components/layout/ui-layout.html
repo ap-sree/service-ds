@@ -14,11 +14,9 @@
 
         <div class="topbar-right flex align-items-center gap-2">
             @if (currentUser() || isAuthenticated) {
-            <div class="user-profile flex align-items-center gap-2 cursor-pointer p-2 border-round hover:surface-100"
-                (click)="optionsMenu.toggle($event)">
-                <span
-                    class="w-2rem h-2rem border-circle surface-200 flex align-items-center justify-content-center text-600 font-bold">
-                    {{ (currentUser()?.username || 'User').charAt(0).toUpperCase() }}
+            <div class="user-profile" (click)="optionsMenu.toggle($event)">
+                <span>
+                    {{ (currentUser()?.username || 'User') }}
                 </span>
             </div>
             <p-menu #optionsMenu [popup]="true" [model]="userMenuItems"></p-menu>

@@ -1,292 +1,468 @@
-<div class="card p-0 m-0 border-none shadow-none relative h-full">
-    <p-tabs value="config">
-        <p-tablist>
-            <p-tab value="config">Configuration</p-tab>
-            <p-tab value="history" *ngIf="!isNew">Execution History</p-tab>
-        </p-tablist>
-        <p-tabpanels>
-            <p-tabpanel value="config">
-                <form [formGroup]="taskForm" class="grid p-fluid">
-                    <div class="col-12 md:col-6">
-                        <label class="font-bold block mb-2">Task Name</label>
-                        <input pInputText formControlName="name" placeholder="Enter task name" />
-                    </div>
-                    <div class="col-12 md:col-6">
-                        <label class="font-bold block mb-2">Data Source</label>
-                        <p-select [options]="sources" formControlName="sourceId" optionLabel="name" optionValue="id"
-                            placeholder="Select a Source" styleClass="w-full" (onChange)="onSourceChange()"
+<div class="flex flex-column" style="min-height: 480px;">
+
+    <!-- Step indicator -->
+    <div class="flex align-items-center mb-5 px-1">
+        @for (label of wizardSteps; track label; let i = $index) {
+        <div class="flex align-items-center" [class.flex-1]="i < wizardSteps.length - 1">
+
+            <!-- Circle + label -->
+            <div class="flex align-items-center gap-2 cursor-pointer" (click)="goTo(i)">
+                <div class="border-circle w-2rem h-2rem flex align-items-center justify-content-center font-bold text-sm transition-all transition-duration-200"
+                    [ngClass]="{
+                        'bg-primary text-white shadow-2':          i === activeStep,
+                        'bg-green-500 text-white':                 i < activeStep,
+                        'bg-surface-200 text-color-secondary':     i > activeStep
+                    }">
+                    @if (i < activeStep) { <i class="pi pi-check text-xs"></i> }
+                        @else { {{ i + 1 }} }
+                </div>
+                <span class="text-sm hidden md:block"
+                    [ngClass]="i === activeStep ? 'font-bold text-primary' : 'text-color-secondary'">
+                    {{ label }}
+                </span>
+            </div>
+
+            <!-- Connector line -->
+            @if (i < wizardSteps.length - 1) { <div
+                class="flex-1 border-top-1 mx-3 transition-all transition-duration-300"
+                [ngClass]="i < activeStep ? 'border-green-400' : 'surface-border'">
+        </div>
+        }
+    </div>
+    }
+</div>
+
+<!-- ───── Step panels ───── -->
+<div class="flex-1 overflow-auto">
+    <form [formGroup]="taskForm">
+
+        <!-- ══ STEP 0 — Name ═══════════════════════════════════════════════ -->
+        @if (activeStep === 0) {
+        <div class="flex flex-column align-items-center justify-content-center gap-4 py-5">
+            <div class="w-full md:w-7">
+                <input pInputText formControlName="name" placeholder="Task Name" class="w-full p-3 text-lg" autofocus />
+            </div>
+        </div>
+        }
+
+        @if (activeStep === 1) {
+        <div formArrayName="steps" class="flex flex-column gap-3">
+
+            @for (step of stepsControls; track step; let i = $index) {
+            <div [formGroupName]="i" class="border-round border-1 surface-border p-4 surface-card shadow-1">
+
+                <!-- Card header -->
+                <div class="flex justify-content-between align-items-center mb-3">
+                    <div class="flex align-items-center gap-2">
+                        <span
+                            class="border-circle bg-primary text-white w-2rem h-2rem flex align-items-center justify-content-center font-bold text-sm">
+                            {{ i + 1 }}
+                        </span>
+                        <span class="font-bold text-lg">Step</span>
+                        @if (i > 0) {
+                        <p-select [options]="stepTypeOptions" formControlName="type" optionLabel="label"
+                            optionValue="value" styleClass="border-none shadow-none text-color-secondary text-sm"
                             appendTo="body"></p-select>
-                    </div>
-
-                    <div class="col-12" *ngIf="showMethodDropdown">
-                        <label class="font-bold block mb-2">HTTP Method</label>
-                        <p-select [options]="httpMethods" formControlName="httpMethod" placeholder="Select Method"
-                            styleClass="w-full">
-                        </p-select>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="font-bold block mb-2">Fetch Query / Command</label>
-                        <div class="flex flex-column gap-2">
-                            <textarea pTextarea formControlName="fetchQuery" rows="3" class="font-mono w-full"
-                                [placeholder]="queryHint"></textarea>
-
-                            <!-- Root Path Extraction -->
-                            <div class="mt-2" *ngIf="taskForm.get('sourceId')?.value">
-                                <label class="font-bold block mb-1 text-sm">Root Path (Optional)</label>
-                                <div class="p-inputgroup">
-                                    <span class="p-inputgroup-addon text-sm"><i class="pi pi-sitemap"></i></span>
-                                    <input pInputText formControlName="rootPath" placeholder="e.g. value, data.items"
-                                        class="p-inputtext-sm" />
-                                </div>
-                                <small class="text-gray-500">Specify the key containing the list (e.g., 'value' for
-                                    Graph API).</small>
-                            </div>
-
-
-                        </div>
-                    </div>
-
-                    <div class="col-12" *ngIf="mappingRows.length > 0 || taskForm.get('fetchQuery')?.value">
-                        <label class="font-bold block mb-2">Field Mapping</label>
-                        <p-table [value]="mappingRows.controls" styleClass="p-datatable-sm">
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th style="width: 40%">Target Field</th>
-                                    <th style="width: 40%">Source Path</th>
-                                    <th style="width: 20%">Action</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-control let-i="rowIndex">
-                                <tr [formGroup]="control">
-                                    <td>
-                                        <input pInputText formControlName="target" placeholder="e.g. user_id"
-                                            class="w-full" />
-                                    </td>
-                                    <td>
-                                        <input pInputText formControlName="source" placeholder="e.g. id, data.name"
-                                            class="w-full" />
-                                    </td>
-                                    <td>
-                                        <button pButton icon="pi pi-trash"
-                                            class="p-button-text p-button-danger p-button-sm"
-                                            (click)="removeMappingRow(i)"></button>
-                                    </td>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="footer">
-                                <tr>
-                                    <td colspan="3">
-                                        <button pButton label="Add Field" icon="pi pi-plus"
-                                            class="p-button-text p-button-sm" (click)="addMappingRow()"></button>
-                                    </td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="flex align-items-center justify-content-between mb-2">
-                            <label class="font-bold">Request Body</label>
-                            <div class="flex gap-2">
-                                <button pButton label="Form" size="small"
-                                    [outlined]="taskForm.get('bodyType')?.value !== 'form'"
-                                    (click)="taskForm.patchValue({bodyType: 'form'})"></button>
-                                <button pButton label="JSON" size="small"
-                                    [outlined]="taskForm.get('bodyType')?.value !== 'json'"
-                                    (click)="taskForm.patchValue({bodyType: 'json'})"></button>
-                            </div>
-                        </div>
-
-                        <!-- JSON View -->
-                        <textarea *ngIf="taskForm.get('bodyType')?.value === 'json'" pTextarea formControlName="body"
-                            rows="5" class="font-mono w-full" placeholder='{ "param": "value" }'></textarea>
-
-                        <!-- Form View -->
-                        <div *ngIf="taskForm.get('bodyType')?.value === 'form'">
-                            <p-table [value]="bodyParams" styleClass="p-datatable-sm">
-                                <ng-template pTemplate="header">
-                                    <tr>
-                                        <th style="width: 30%">Key</th>
-                                        <th style="width: 20%">Type</th>
-                                        <th style="width: 40%">Value / Variable</th>
-                                        <th style="width: 10%">Action</th>
-                                    </tr>
-                                </ng-template>
-                                <ng-template pTemplate="body" let-control let-i="rowIndex">
-                                    <tr [formGroup]="control">
-                                        <td>
-                                            <input pInputText formControlName="key" placeholder="Key" class="w-full" />
-                                        </td>
-                                        <td>
-                                            <select formControlName="type"
-                                                class="w-full p-2 border-round surface-border">
-                                                <option value="static">Static</option>
-                                                <option value="dynamic">Dynamic</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input pInputText formControlName="value"
-                                                [placeholder]="control.get('type')?.value === 'dynamic' ? 'Variable Name' : 'Value'"
-                                                class="w-full" />
-                                        </td>
-                                        <td>
-                                            <button pButton icon="pi pi-trash"
-                                                class="p-button-text p-button-danger p-button-sm"
-                                                (click)="removeBodyParam(i)"></button>
-                                        </td>
-                                    </tr>
-                                </ng-template>
-                                <ng-template pTemplate="footer">
-                                    <tr>
-                                        <td colspan="4">
-                                            <button pButton label="Add Parameter" icon="pi pi-plus"
-                                                class="p-button-text p-button-sm" (click)="addBodyParam()"></button>
-                                        </td>
-                                    </tr>
-                                </ng-template>
-                            </p-table>
-                        </div>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="col-12">
-                        <label class="font-bold block mb-2">Pagination</label>
-                        <div class="grid">
-                            <div class="col-12">
-                                <p-select formControlName="paginationType" [options]="paginationOptions"
-                                    optionLabel="label" optionValue="value" styleClass="w-full"
-                                    appendTo="body"></p-select>
-                            </div>
-                        </div>
-
-                        @if (taskForm.get('paginationType')?.value === 'PAGE') {
-                        <div class="grid mt-2">
-                            <div class="col-4">
-                                <label class="block mb-1 text-sm font-bold">Page Number Parameter Name</label>
-                                <input pInputText formControlName="paginationNextKey" placeholder="e.g. page" class="w-full" />
-                            </div>
-                            <div class="col-4">
-                                <label class="block mb-1 text-sm font-bold">Count Per Page Parameter Name</label>
-                                <input pInputText formControlName="paginationLimitParam" placeholder="e.g. numberPerPage" class="w-full" />
-                            </div>
-                            <div class="col-4">
-                                <label class="block mb-1 text-sm font-bold">Count Per Page Value</label>
-                                <input pInputText type="number" formControlName="paginationLimit" placeholder="e.g. 10" class="w-full" />
-                            </div>
-                        </div>
-                        }
-
-
-
-                        @if (taskForm.get('paginationType')?.value === 'NEXT_LINK_BODY') {
-                        <div class="grid mt-2">
-                            <div class="col-12">
-                                <label class="block mb-1 text-sm font-bold">Next Link JSON Property</label>
-                                <input pInputText formControlName="paginationNextKey" placeholder="e.g. @odata.nextLink" class="w-full" />
-                            </div>
-                        </div>
                         }
                     </div>
-                </form>
 
-                <!-- Preview Section -->
-                <div *ngIf="previewRows.length > 0" class="mt-4">
-                    <h4 class="mb-2">Preview Result</h4>
-                    <p-table [value]="previewRows" styleClass="p-datatable-sm p-datatable-gridlines">
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th *ngFor="let col of getPreviewCols()">{{ col }}</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-row>
-                            <tr>
-                                <td *ngFor="let col of getPreviewCols()">
-                                    <div class="white-space-nowrap overflow-hidden text-overflow-ellipsis"
-                                        style="max-width: 200px">
-                                        {{ row[col] }}
-                                    </div>
-                                </td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
+                    <div class="flex align-items-center gap-1">
+                        @if (stepsControls.length > 1) {
+                        <button pButton type="button" icon="pi pi-trash"
+                            class="p-button-text p-button-danger p-button-sm" (click)="removeStep(i)"
+                            pTooltip="Remove step" tooltipPosition="top"></button>
+                        }
+                    </div>
                 </div>
 
-            </p-tabpanel>
+                @if (step.get('type')?.value === 'DATASOURCE') {
+                <div class="flex flex-column gap-3">
+                    <div>
+                        <label class="font-semibold block mb-1">Data Source</label>
+                        <p-select [options]="sources" formControlName="sourceId" optionLabel="name" optionValue="id"
+                            placeholder="Select a data source…" styleClass="w-full" appendTo="body"></p-select>
+                    </div>
 
-            <p-tabpanel value="history" *ngIf="!isNew">
-                <p-table [value]="history" [loading]="loadingHistory" styleClass="p-datatable-sm" [rows]="5"
-                    [paginator]="true">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th>ID</th>
-                            <th>Status</th>
-                            <th>Started</th>
-                            <th>Actions</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-exec>
-                        <tr>
-                            <td>{{ exec.id }}</td>
-                            <td><p-tag [value]="exec.status" [severity]="getSeverity(exec.status)"></p-tag></td>
-                            <td>{{ exec.startedAt | date:'medium' }}</td>
-                            <td>
-                                <button pButton icon="pi pi-eye" class="p-button-text p-button-sm"
-                                    (click)="showExecution(exec)" pTooltip="View Details"></button>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </p-tabpanel>
-        </p-tabpanels>
-    </p-tabs>
+                    @if (step.get('sourceId')?.value) {
+                    <div>
+                        <label class="font-semibold block mb-1">Query / Endpoint</label>
+                        <textarea pTextarea formControlName="fetchQuery" rows="2" class="font-mono w-full"
+                            [placeholder]="getQueryHint(i)"></textarea>
+                        @if (i > 0) {
+                        <small class="text-primary block mt-1">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            Reference the previous step with
+                            <code>{{ "{{prev[0].fieldName}}" }}</code>
+                        </small>
+                        }
+                    </div>
 
-    <!-- Execution Result Modal -->
-    <p-dialog [header]="'Execution #' + selectedExecution?.id" [(visible)]="displayExecutionDialog" [modal]="true"
-        [style]="{width: '50vw'}" [resizable]="false" [draggable]="false" appendTo="body"
-        (onHide)="selectedExecution = null">
+                    <!-- Success Criteria -->
+                    <div class="border-round border-1 surface-border p-3 surface-ground">
+                        <div class="flex align-items-center gap-2 mb-2">
+                            <p-checkbox formControlName="successCriteriaEnabled" [binary]="true"
+                                inputId="sc_{{i}}"></p-checkbox>
+                            <label [for]="'sc_' + i" class="font-semibold cursor-pointer">Success Criteria</label>
+                            @if (!step.get('successCriteriaEnabled')?.value) {
+                            <span class="text-color-secondary text-sm"></span>
+                            }
+                            @if (step.get('successCriteriaEnabled')?.value && getCriteriaLabel(i)) {
+                            <span class="text-primary text-sm font-mono">{{ getCriteriaLabel(i) }}</span>
+                            }
+                        </div>
 
-        <div *ngIf="selectedExecution">
-            <div class="mb-3">
-                <label class="font-bold block">Status</label>
-                <p-tag [value]="selectedExecution.status" [severity]="getSeverity(selectedExecution.status)"></p-tag>
+                        @if (step.get('successCriteriaEnabled')?.value) {
+                        <div class="flex flex-wrap gap-2 align-items-end mt-2">
+                            <div class="flex flex-column gap-1">
+                                <label class="text-sm font-semibold">Condition</label>
+                                <p-select [options]="getCriteriaTypes(i)" formControlName="successCriteriaType"
+                                    optionLabel="label" optionValue="value" styleClass="w-16rem"
+                                    appendTo="body"></p-select>
+                            </div>
+
+                            @if (step.get('successCriteriaType')?.value === 'FIELD_CHECK') {
+                            <div class="flex flex-column gap-1">
+                                <label class="text-sm font-semibold">Field path</label>
+                                <input pInputText formControlName="successCriteriaField"
+                                    placeholder="e.g. result[0].status" class="w-12rem" />
+                            </div>
+                            <div class="flex flex-column gap-1">
+                                <label class="text-sm font-semibold">Operator</label>
+                                <p-select [options]="criteriaOperators" formControlName="successCriteriaOperator"
+                                    optionLabel="label" optionValue="value" styleClass="w-10rem"
+                                    appendTo="body"></p-select>
+                            </div>
+                            }
+
+                            @if (criteriaHasValue(step.get('successCriteriaType')?.value,
+                            step.get('successCriteriaOperator')?.value)) {
+                            <div class="flex flex-column gap-1">
+                                <label class="text-sm font-semibold">Value</label>
+                                <input pInputText formControlName="successCriteriaValue" placeholder="e.g. 200"
+                                    class="w-8rem" />
+                            </div>
+                            }
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+
+                <!-- ── Additional DATASOURCE fields — only shown once a source is selected ── -->
+                @if (step.get('sourceId')?.value) {
+                <div class="mt-3 pt-3 border-top-1 surface-border flex flex-column gap-3">
+
+                    @if (showMethodDropdown(i)) {
+                    <div>
+                        <label class="font-semibold block mb-1">HTTP Method</label>
+                        <p-select [options]="httpMethods" formControlName="httpMethod" optionLabel="label"
+                            optionValue="value" styleClass="w-8rem" appendTo="body"></p-select>
+                    </div>
+                    }
+
+                    @if (isRestApi(i)) {
+                    <div>
+                        <div class="flex align-items-center justify-content-between mb-2">
+                            <label class="font-semibold">Request Body</label>
+                            <!-- Single dropdown: Manual JSON or "Use Step N response" -->
+                            <p-select [options]="getBodyOptions(i)" formControlName="bodyFromStep"
+                                optionLabel="label" optionValue="value" styleClass="w-16rem" appendTo="body"
+                                placeholder="Manual JSON"></p-select>
+                        </div>
+
+                        <!-- Manual body textarea -->
+                        @if (!step.get('bodyFromStep')?.value) {
+                        <textarea pTextarea formControlName="body" rows="3" class="font-mono w-full"
+                            placeholder='{ "key": "value" }'></textarea>
+                        }
+
+                        <!-- Step response body + overrides -->
+                        @if (step.get('bodyFromStep')?.value) {
+                        <div class="border-round border-1 surface-border p-3 surface-ground">
+                            <div class="flex justify-content-between align-items-center mb-2">
+                                <span class="text-sm text-color-secondary">
+                                    <i class="pi pi-info-circle mr-1"></i>
+                                    Step {{ step.get('bodyFromStep')?.value }}'s full response is sent as the body.
+                                    Override specific fields below.
+                                </span>
+                                <button pButton type="button" icon="pi pi-plus" label="Override field"
+                                    class="p-button-text p-button-sm flex-shrink-0 ml-2"
+                                    (click)="addOverrideRow(i)"></button>
+                            </div>
+                            <div formArrayName="overrideRows">
+                                @for (row of getOverrideRows(i).controls; track row; let ri = $index) {
+                                <div [formGroupName]="ri" class="flex flex-column gap-1 mb-3">
+                                    <div class="flex gap-2 align-items-center">
+                                        <!-- Field path -->
+                                        <input pInputText formControlName="field"
+                                            placeholder="Field path  e.g. spBrowserSso.sloServiceEndpoints[0].url"
+                                            class="flex-1 font-mono text-sm" />
+                                        <!-- Type selector -->
+                                        <p-select [options]="overrideValueTypes" formControlName="valueType"
+                                            optionLabel="label" optionValue="value" styleClass="w-7rem"
+                                            appendTo="body"></p-select>
+                                        <!-- Append / Replace — icon toggle, only for JSON type -->
+                                        @if (row.get('valueType')?.value === 'JSON') {
+                                        <button pButton type="button" icon="pi pi-pencil"
+                                            class="p-button-rounded p-button-sm flex-shrink-0"
+                                            [ngClass]="row.get('appendMode')?.value !== 'APPEND' ? 'p-button-primary' : 'p-button-text text-color-secondary'"
+                                            pTooltip="Replace — overwrite the field entirely" tooltipPosition="top"
+                                            (click)="row.get('appendMode')?.setValue('REPLACE')"></button>
+                                        <button pButton type="button" icon="pi pi-plus-circle"
+                                            class="p-button-rounded p-button-sm flex-shrink-0"
+                                            [ngClass]="row.get('appendMode')?.value === 'APPEND' ? 'p-button-primary' : 'p-button-text text-color-secondary'"
+                                            pTooltip="Append — add items to the existing array" tooltipPosition="top"
+                                            (click)="row.get('appendMode')?.setValue('APPEND')"></button>
+                                        }
+                                        <button pButton type="button" icon="pi pi-times"
+                                            class="p-button-text p-button-danger p-button-sm flex-shrink-0"
+                                            (click)="removeOverrideRow(i, ri)"></button>
+                                    </div>
+                                    <!-- Value input -->
+                                    @if (row.get('valueType')?.value === 'JSON') {
+                                    <textarea pTextarea formControlName="value" rows="4"
+                                        class="font-mono w-full text-sm"
+                                        placeholder='["item1"] or {"key":"value"}'></textarea>
+                                    } @else {
+                                    <input pInputText formControlName="value"
+                                        [placeholder]="row.get('valueType')?.value === 'NUMBER' ? '42' : 'New value'"
+                                        class="w-full" />
+                                    }
+                                </div>
+                                }
+                                @if (getOverrideRows(i).length === 0) {
+                                <p class="text-sm text-color-secondary m-0">No overrides — full response sent as-is.</p>
+                                }
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    }
+
+                    @if (isRestApi(i)) {
+                    <div>
+                        <label class="font-semibold block mb-1">Pagination</label>
+                        <p-select [options]="paginationOptions" formControlName="paginationType" optionLabel="label"
+                            optionValue="value" styleClass="w-full md:w-6" appendTo="body"></p-select>
+
+                        @if (step.get('paginationType')?.value !== 'NONE') {
+                        <div class="grid mt-2">
+                            <div class="col-12 md:col-4">
+                                <label class="font-semibold text-sm block mb-1">Page param / Next key</label>
+                                <input pInputText formControlName="paginationNextKey" placeholder="e.g. page"
+                                    class="w-full" />
+                            </div>
+                            <div class="col-12 md:col-4">
+                                <label class="font-semibold text-sm block mb-1">Limit param</label>
+                                <input pInputText formControlName="paginationLimitParam" placeholder="e.g. pageSize"
+                                    class="w-full" />
+                            </div>
+                            <div class="col-12 md:col-4">
+                                <label class="font-semibold text-sm block mb-1">Page size</label>
+                                <input pInputText formControlName="paginationLimit" placeholder="100" class="w-full" />
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    }
+
+                    <!-- Field mapping -->
+                    <div>
+                        <div class="flex justify-content-between align-items-center mb-2">
+                            <label class="font-semibold">
+                                Field Mapping
+                                <span class="font-normal text-color-secondary text-sm ml-1">(optional — extract specific fields from the response)</span>
+                            </label>
+                            <button pButton type="button" icon="pi pi-plus" label="Add row"
+                                class="p-button-text p-button-sm" (click)="addMappingRow(i)"></button>
+                        </div>
+
+                        @if (getMappingRows(i).length === 0) {
+                        <p class="text-sm text-color-secondary m-0">No mappings</p>
+                        }
+
+                        <div formArrayName="mappingRows">
+                            @for (row of getMappingRows(i).controls; track row; let ri = $index) {
+                            <div [formGroupName]="ri" class="flex gap-2 align-items-center mb-2">
+                                <input pInputText formControlName="target" placeholder="Output column" class="flex-1" />
+                                <span class="text-color-secondary px-1">←</span>
+                                <input pInputText formControlName="source" placeholder="Source field / path"
+                                    class="flex-1" />
+                                <button pButton type="button" icon="pi pi-times"
+                                    class="p-button-text p-button-danger p-button-sm flex-shrink-0"
+                                    (click)="removeMappingRow(i, ri)"></button>
+                            </div>
+                            }
+                        </div>
+
+                        <!-- Include response body checkbox -->
+                        <div class="flex align-items-center gap-2 mt-3 pt-2 border-top-1 surface-border">
+                            <p-checkbox formControlName="includeResponseBody" [binary]="true"
+                                inputId="irb_{{i}}"></p-checkbox>
+                            <label [for]="'irb_' + i" class="cursor-pointer text-sm">
+                                Include full response body
+                                <span class="text-color-secondary ml-1">— makes the complete response available for
+                                    subsequent steps to use as a request body</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                }
+                }
+
+                <!-- ── PROCESS (Export to File) fields ── -->
+                @if (step.get('type')?.value === 'PROCESS') {
+                <div class="grid">
+                    <div class="col-12 md:col-6">
+                        <label class="font-semibold block mb-1">Format</label>
+                        <p-select [options]="fileFormats" formControlName="fileFormat" optionLabel="label"
+                            optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label class="font-semibold block mb-1">File Name</label>
+                        <input pInputText formControlName="fileName" placeholder="e.g. export.csv" class="w-full" />
+                    </div>
+                </div>
+                }
+
             </div>
+            }
 
-            <div class="mb-3">
-                <label class="font-bold block">Input Payload</label>
-                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
-                    style="white-space: pre-wrap; max-height: 200px;">{{ selectedExecution.inputPayload }}</pre>
-            </div>
+            <!-- Add step button -->
+            @if (stepsFormArray.length < maxSteps) { <button pButton type="button" icon="pi pi-plus"
+                label="Add another step" class="p-button-outlined p-button-primary p-button-sm w-full"
+                style="border-style: dashed" (click)="addStep()"></button>
+                }
 
-            <div class="mb-3">
-                <label class="font-bold block">Output Result</label>
-                <pre class="surface-ground p-2 border-round overflow-auto text-sm"
-                    style="white-space: pre-wrap; max-height: 300px;">{{ selectedExecution.outputResult }}</pre>
+        </div>
+        }
+
+        <!-- ══ STEP 2 — End Action ═════════════════════════════════════════ -->
+        @if (activeStep === 2) {
+        <div class="flex flex-column align-items-center py-5" formGroupName="endTask">
+            <div class="w-full md:w-7 flex flex-column gap-4">
+                <p-select [options]="endTaskTypes" formControlName="type" optionLabel="label" optionValue="value"
+                    styleClass="w-full" appendTo="body"></p-select>
+
+                <!-- Email fields -->
+                @if (taskForm.get('endTask.type')?.value === 'EMAIL') {
+                <div class="flex flex-column gap-3">
+                    <div>
+                        <label class="font-semibold block mb-1">Recipient</label>
+                        <input pInputText formControlName="emailTo" placeholder="admin@example.com" class="w-full" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-1">Subject</label>
+                        <input pInputText formControlName="emailSubject" placeholder="Workflow complete"
+                            class="w-full" />
+                    </div>
+                    <div>
+                        <label class="font-semibold block mb-1">Body</label>
+                        <textarea pTextarea formControlName="emailBody" rows="4" class="w-full font-mono"
+                            placeholder="{{'Workflow finished. Result: {{prev.id}'}}"></textarea>
+                        <small class="text-primary mt-1 block">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            Use <code>{{ exampleStepRef }}</code> to inject step output values.
+                        </small>
+                    </div>
+                </div>
+                }
+
+                <!-- Download fields -->
+                @if (taskForm.get('endTask.type')?.value === 'DOWNLOAD') {
+                <div class="grid">
+                    <div class="col-12 md:col-6">
+                        <label class="font-semibold block mb-1">Format</label>
+                        <p-select [options]="fileFormats" formControlName="downloadFormat" optionLabel="label"
+                            optionValue="value" styleClass="w-full" appendTo="body"></p-select>
+                    </div>
+                    <div class="col-12 md:col-6">
+                        <label class="font-semibold block mb-1">File Name</label>
+                        <input pInputText formControlName="downloadFileName" placeholder="report.json" class="w-full" />
+                    </div>
+                </div>
+                }
             </div>
         </div>
+        }
 
-    </p-dialog>
+        <!-- ══ STEP 3 — Review ════════════════════════════════════════════ -->
+        @if (activeStep === 3) {
+        <div class="flex flex-column align-items-center py-5">
+            <div class="w-full md:w-7 border-round border-1 surface-border p-4 surface-card shadow-1">
+                <!-- Name -->
+                <div class="flex gap-3 align-items-start pb-3 mb-3 border-bottom-1 surface-border">
+                    <div>
+                        <div class="text-xs text-color-secondary mb-1">Name</div>
+                        <div class="font-bold text-lg">{{ taskForm.get('name')?.value }}</div>
+                    </div>
+                </div>
 
-    <!-- Runtime Parameters Dialog -->
-    <p-dialog header="Enter Runtime Parameters" [(visible)]="displayRuntimeParamsDialog" [modal]="true"
-        [style]="{width: '30vw'}" [resizable]="false" [draggable]="false" appendTo="body">
+                <!-- Steps -->
+                <div class="mb-3">
+                    <div class="text-xs text-color-secondary mb-2">Steps</div>
+                    @for (step of stepsControls; track step; let i = $index) {
+                    <div class="flex align-items-center gap-2 mb-2">
+                        <span
+                            class="border-circle bg-primary text-white w-1rem h-1rem flex align-items-center justify-content-center text-xs font-bold flex-shrink-0"
+                            style="min-width:1.5rem; min-height:1.5rem;">{{ i + 1 }}</span>
+                        <span class="font-semibold">{{ step.get('name')?.value }}</span>
+                        <span class="text-sm text-color-secondary">
+                            @if (step.get('type')?.value === 'DATASOURCE') {
+                            — {{ getSourceName(step.get('sourceId')?.value) }}
+                            } @else {
+                            — Export to {{ step.get('fileFormat')?.value }}
+                            }
+                        </span>
+                    </div>
+                    }
+                </div>
 
-        <div class="flex flex-column gap-3">
-            <p *ngIf="runtimeParams.length > 0">Please provide values for the following dynamic parameters:</p>
-            <div *ngFor="let param of runtimeParams" class="field">
-                <label class="block font-bold mb-2">{{ param }}</label>
-                <input pInputText [(ngModel)]="runtimeValues[param]" [name]="param" class="w-full" />
+                <!-- End action -->
+                @if (taskForm.get('endTask.type')?.value !== 'NONE') {
+                <div class="border-top-1 surface-border pt-3">
+                    <div class="text-xs text-color-secondary mb-1">End action</div>
+                    <div class="flex align-items-center gap-2">
+                        <span class="font-semibold">{{ taskForm.get('endTask.type')?.value }}</span>
+                        @if (taskForm.get('endTask.type')?.value === 'EMAIL') {
+                        <span class="text-sm text-color-secondary">→ {{ taskForm.get('endTask.emailTo')?.value }}</span>
+                        }
+                        @if (taskForm.get('endTask.type')?.value === 'DOWNLOAD') {
+                        <span class="text-sm text-color-secondary">
+                            → {{ taskForm.get('endTask.downloadFileName')?.value || 'download' }}
+                            ({{ taskForm.get('endTask.downloadFormat')?.value }})
+                        </span>
+                        }
+                    </div>
+                </div>
+                }
             </div>
         </div>
+        }
 
-        <ng-template pTemplate="footer">
-            <button pButton label="Cancel" class="p-button-text" (click)="displayRuntimeParamsDialog = false"></button>
-            <button pButton label="Run" icon="pi pi-check" (click)="runWithParams(runtimeValues)"></button>
-        </ng-template>
-    </p-dialog>
+    </form>
+</div>
 
-    <div class="flex justify-content-end gap-2 mt-4">
-        <button pButton label="Cancel" class="p-button-secondary p-button-text" (click)="close()"></button>
+<!-- ───── Footer navigation ───── -->
+<div class="flex justify-content-between align-items-center mt-4 pt-3 border-top-1 surface-border">
 
-        <button pButton label="Save" icon="pi pi-save" class="p-button-primary" (click)="save()"></button>
+    <!-- Right: Back / Next / Save -->
+    <div class="flex gap-2">
+        @if (activeStep > 0) {
+        <button pButton type="button" label="Back" icon="pi pi-arrow-left" class="p-button-secondary p-button-outlined"
+            (click)="back()"></button>
+        }
+
+        @if (activeStep < wizardSteps.length - 1) { <button pButton type="button" label="Next" icon="pi pi-arrow-right"
+            iconPos="right" class="p-button-primary" [disabled]="!canProceed" (click)="next()"></button>
+            } @else {
+            <button pButton type="button" [label]="isNew ? 'Create Workflow' : 'Save Changes'" icon="pi pi-save"
+                class="p-button-primary" (click)="save()"></button>
+            }
     </div>
+</div>
+
+<p-toast></p-toast>
+
+</div>

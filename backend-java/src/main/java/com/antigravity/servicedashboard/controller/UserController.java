@@ -1,10 +1,6 @@
 package com.antigravity.servicedashboard.controller;
 
-import com.antigravity.servicedashboard.dto.UserDTO;
-import com.antigravity.servicedashboard.entity.User;
-import com.antigravity.servicedashboard.mapper.UserMapper;
-import com.antigravity.servicedashboard.service.UserService;
-import com.antigravity.servicedashboard.model.UserPreferences;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,7 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.antigravity.servicedashboard.dto.UserDTO;
+import com.antigravity.servicedashboard.entity.User;
+import com.antigravity.servicedashboard.mapper.UserMapper;
+import com.antigravity.servicedashboard.model.UserPreferences;
+import com.antigravity.servicedashboard.service.UserService;
+
 import jakarta.validation.Valid;
 
 @RestController

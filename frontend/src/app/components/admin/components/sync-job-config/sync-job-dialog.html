@@ -69,7 +69,7 @@
         <label for="rootPath" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Data Path</label>
         <div class="col-12 md:col-9">
             <input id="rootPath" type="text" pInputText formControlName="rootPath"
-                placeholder="e.g. data or results.items" class="w-full" />
+                placeholder="e.g. {resutls.items:[]} -> results.items or {items:[]} -> items" class="w-full" />
             <small class="block text-gray-500">Path to the array in the JSON response (leave empty if root is
                 array)</small>
         </div>
@@ -103,11 +103,13 @@
                 </div>
                 <div class="col-4">
                     <label class="block mb-1 text-sm font-bold">Count Per Page Parameter Name</label>
-                    <input pInputText formControlName="paginationLimitParam" placeholder="e.g. numberPerPage" class="w-full" />
+                    <input pInputText formControlName="paginationLimitParam" placeholder="e.g. numberPerPage"
+                        class="w-full" />
                 </div>
                 <div class="col-4">
                     <label class="block mb-1 text-sm font-bold">Count Per Page Value</label>
-                    <input pInputText type="number" formControlName="paginationLimit" placeholder="e.g. 10" class="w-full" />
+                    <input pInputText type="number" formControlName="paginationLimit" placeholder="e.g. 10"
+                        class="w-full" />
                 </div>
             </div>
         </div>
@@ -122,7 +124,8 @@
             <div class="grid p-fluid">
                 <div class="col-12">
                     <label class="block mb-1 text-sm font-bold">Next Link JSON Property</label>
-                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. @odata.nextLink" class="w-full" />
+                    <input pInputText formControlName="paginationNextKey" placeholder="e.g. @odata.nextLink"
+                        class="w-full" />
                 </div>
             </div>
         </div>

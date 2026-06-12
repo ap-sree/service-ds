@@ -16,11 +16,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { AutomationService } from '../../../services/automation';
-import { TaskDefinition } from '../../../models/automation';
+import { TaskDefinition, TaskExecution, TaskExecutionSummary } from '../../../models/automation';
 import { TaskEditorComponent } from '../task-editor/task-editor';
 @Component({
     selector: 'app-automation-list',
-    standalone: true,
     imports: [
         CommonModule,
         RouterModule,
@@ -70,8 +69,8 @@ export class AutomationListComponent implements OnInit {
     }
     openTaskDialog(taskId?: number) {
         const ref = this.dialogService.open(TaskEditorComponent, {
-            header: taskId ? 'Edit Task' : 'New Task',
-            width: '70vw',
+            header: taskId ? 'Edit Workflow' : 'New Workflow',
+            width: '60vw',
             contentStyle: { overflow: 'auto' },
             baseZIndex: 10000,
             maximizable: true,
@@ -92,12 +91,11 @@ export class AutomationListComponent implements OnInit {
     runTask(task: TaskDefinition) {
         if (!task.id) return;
         const payloadStr = task.payload || '';
-        const regex = /{{(.*?)}}/g;
         const matches = new Set<string>();
         let match;
-        while ((match = regex.exec(payloadStr)) !== null) {
-            matches.add(match[1]);
-        }
+        // Only ${varName} prompts the user — {{...}} references are resolved automatically from step results
+        const re = /\$\{(.*?)\}/g;
+        while ((match = re.exec(payloadStr)) !== null) matches.add(match[1]);
         if (matches.size > 0) {
             this.pendingTask = task;
             this.runtimeParams = Array.from(matches);
@@ -117,24 +115,46 @@ export class AutomationListComponent implements OnInit {
     }
     displayResultDialog = false;
     executionResult: any = null;
+    parsedExecutionResult: any = null;
 
     executeTaskService(taskId: number, params: any) {
         this.messageService.add({ severity: 'info', summary: 'Running', detail: `Starting task...` });
         this.service.executeTask(taskId, params).subscribe({
             next: (execution) => {
                 this.executionResult = execution;
+                try {
+                    this.parsedExecutionResult = JSON.parse(execution.outputResult);
+                } catch { this.parsedExecutionResult = null; }
                 this.displayResultDialog = true;
                 this.messageService.add({
                     severity: execution.status === 'SUCCESS' ? 'success' : 'error',
                     summary: 'Execution Complete',
                     detail: `Status: ${execution.status}`
                 });
+
+                if (this.parsedExecutionResult?.endTaskResult?.type === 'DOWNLOAD'
+                    && this.parsedExecutionResult.endTaskResult.file) {
+                    this.downloadFile(this.parsedExecutionResult.endTaskResult.file);
+                }
+
                 this.loadTasks();
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Execution Failed', detail: err.message });
             }
         });
+    }
+    downloadFile(file: any) {
+        if (!file || !file.fileContent) return;
+        const blob = new Blob([file.fileContent], { type: file.format === 'CSV' ? 'text/csv' : 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.fileName || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     }
     deleteTask(task: TaskDefinition) {
         this.confirmationService.confirm({
@@ -154,6 +174,55 @@ export class AutomationListComponent implements OnInit {
             }
         });
     }
+    // ── History dialog ────────────────────────────────────────────────────────
+    displayHistoryDialog = false;
+    historyTask: TaskDefinition | null = null;
+    taskHistory: TaskExecutionSummary[] = [];   // summaries only — no LOB fields
+    loadingHistory = false;
+
+    // Execution detail — fetched on-demand via GET /executions/{id}
+    displayHistoryResultDialog = false;
+    historySelectedExecution: TaskExecution | null = null;
+    parsedHistoryResult: any = null;
+    loadingDetail = false;
+
+    openHistoryDialog(task: TaskDefinition) {
+        this.historyTask = task;
+        this.taskHistory = [];
+        this.loadingHistory = true;
+        this.displayHistoryDialog = true;
+        this.service.getTaskHistory(task.id!).subscribe({
+            next: (data) => {
+                this.taskHistory = data;
+                this.loadingHistory = false;
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load history' });
+                this.loadingHistory = false;
+            }
+        });
+    }
+
+    showHistoryExecution(summary: TaskExecutionSummary) {
+        this.historySelectedExecution = null;
+        this.parsedHistoryResult = null;
+        this.loadingDetail = true;
+        this.displayHistoryResultDialog = true;
+        this.service.getExecution(summary.id).subscribe({
+            next: (exec) => {
+                this.historySelectedExecution = exec;
+                try { this.parsedHistoryResult = JSON.parse(exec.outputResult); }
+                catch { this.parsedHistoryResult = null; }
+                this.loadingDetail = false;
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load execution detail' });
+                this.loadingDetail = false;
+                this.displayHistoryResultDialog = false;
+            }
+        });
+    }
+
     getSeverity(status: string | undefined): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined {
         if (!status) return 'secondary';
         switch (status.toUpperCase()) {

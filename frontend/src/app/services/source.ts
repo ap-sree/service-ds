@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { DataSource, SyncDefinition } from '../models/sync';
+import { DataSource, SyncDefinition, TaskExecution } from '../models/sync';
 
 @Injectable({
     providedIn: 'root'
@@ -47,6 +47,10 @@ export class SourceService {
 
     triggerSync(id: number): Observable<any> {
         return this.http.post(`${this.apiUrl}/sync-defs/sync/${id}`, {});
+    }
+
+    getSyncHistory(id: number): Observable<TaskExecution[]> {
+        return this.http.get<TaskExecution[]>(`${this.apiUrl}/sync-defs/${id}/history`);
     }
 
     previewData(sourceId: number, fetchQuery: string, method?: string, body?: any, rootPath?: string): Observable<any> {

@@ -1,5 +1,7 @@
 package com.antigravity.servicedashboard.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,8 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "task_definitions")
@@ -23,8 +23,7 @@ public class TaskDefinition {
     @NotBlank(message = "{task.name.required}")
     private String name;
 
-    @Column(name = "source_id", nullable = false)
-    @NotNull(message = "{task.sourceId.required}")
+    @Column(name = "source_id")
     private Long sourceId;
 
     @Lob

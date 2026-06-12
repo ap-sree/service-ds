@@ -1,19 +1,5 @@
 package com.antigravity.servicedashboard.service;
 
-import com.antigravity.servicedashboard.entity.SyncDefinition;
-import com.antigravity.servicedashboard.entity.WidgetDefinition;
-import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
-import com.antigravity.servicedashboard.repository.WidgetDefinitionRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
-import com.antigravity.servicedashboard.constant.AppConstants;
-import com.antigravity.servicedashboard.util.AppUtils;
-import com.antigravity.servicedashboard.util.MessageUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,6 +7,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+import com.antigravity.servicedashboard.constant.AppConstants;
+import com.antigravity.servicedashboard.entity.SyncDefinition;
+import com.antigravity.servicedashboard.entity.WidgetDefinition;
+import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
+import com.antigravity.servicedashboard.repository.WidgetDefinitionRepository;
+import com.antigravity.servicedashboard.util.AppUtils;
+import com.antigravity.servicedashboard.util.MessageUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @Service
@@ -56,7 +56,7 @@ public class TableService {
         String type = widget.getType().toLowerCase();
         String userColumn = widget.getUserColumn();
 
-        StringBuilder sql = new StringBuilder("SELECT TOP(").append(limit).append(") * FROM \"app\".\"").append(tableName).append("\"");
+        StringBuilder sql = new StringBuilder("SELECT TOP(").append(limit).append(") * FROM \"APP\".\"").append(tableName).append("\"");
         List<Object> params = new ArrayList<>();
 
         if (userId != null && userColumn != null && !userColumn.isEmpty()) {
@@ -118,7 +118,7 @@ public class TableService {
     }
 
     private Map<String, Object> fetchCardData(String baseSql, List<Object> params, WidgetDefinition widget) {
-        String countSql = "SELECT COUNT(*) as count FROM \"app\"." + getQuotedTableName(widget.getDataSourceTable());
+        String countSql = "SELECT COUNT(*) as count FROM \"APP\"." + getQuotedTableName(widget.getDataSourceTable());
         if (baseSql.contains(" WHERE ")) {
             countSql += baseSql.substring(baseSql.indexOf(" WHERE "));
         }
@@ -175,7 +175,7 @@ public class TableService {
 
             String tableName = widget.getDataSourceTable();
             StringBuilder aggSql = new StringBuilder("SELECT ").append(String.join(", ", selects))
-                    .append(" FROM \"app\".\"").append(tableName).append("\"");
+                    .append(" FROM \"APP\".\"").append(tableName).append("\"");
             if (baseSql.contains(" WHERE ")) {
                 aggSql.append(baseSql.substring(baseSql.indexOf(" WHERE ")));
             }
@@ -263,7 +263,7 @@ public class TableService {
 
         try {
             List<Map<String, Object>> columns = jdbcTemplate.queryForList(
-                    "{call app.sp_GetTableColumns(?)}",
+                    "{call \"APP\".sp_GetTableColumns(?)}",
                     tableName);
 
             return columns.stream()

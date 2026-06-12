@@ -1,8 +1,8 @@
 package com.antigravity.servicedashboard.controller;
 
-import com.antigravity.servicedashboard.entity.SyncDefinition;
-import com.antigravity.servicedashboard.service.SyncService;
-import com.antigravity.servicedashboard.util.MessageUtils;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.antigravity.servicedashboard.dto.TaskExecutionSummary;
+import com.antigravity.servicedashboard.entity.SyncDefinition;
+import com.antigravity.servicedashboard.service.SyncService;
+import com.antigravity.servicedashboard.util.MessageUtils;
 
 import jakarta.validation.Valid;
 
@@ -95,5 +97,10 @@ public class SyncDefinitionController {
             throw new IllegalArgumentException(MessageUtils.get("error.sync.notfound"));
         syncService.runSyncJob(sync);
         return ResponseEntity.ok(Map.of("status", "Sync Completed"));
+    }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<TaskExecutionSummary>> getHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(syncService.getSyncHistory(id));
     }
 }

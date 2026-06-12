@@ -116,6 +116,7 @@ CREATE TABLE app.task_executions
     started_at DATETIME2 NOT NULL,
     status VARCHAR(255) NOT NULL,
     task_id BIGINT NOT NULL,
+    task_type VARCHAR(50) NOT NULL DEFAULT 'TASK',
     triggered_by VARCHAR(255),
     PRIMARY KEY (id)
 );

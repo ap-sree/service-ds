@@ -1,11 +1,12 @@
 package com.antigravity.servicedashboard.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.antigravity.servicedashboard.entity.AppConfig;
 import com.antigravity.servicedashboard.model.UserPreferences;
 import com.antigravity.servicedashboard.repository.AppConfigRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AppConfigService {

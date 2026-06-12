@@ -5,18 +5,19 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
-import { TabsModule } from 'primeng/tabs';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AutomationService } from '../../../services/automation';
 import { SourceService } from '../../../services/source';
-import { TaskDefinition, TaskExecution } from '../../../models/automation';
+import { TaskDefinition } from '../../../models/automation';
 import { DataSource } from '../../../models/sync';
+
 @Component({
     selector: 'app-task-editor',
     standalone: true,
@@ -28,394 +29,493 @@ import { DataSource } from '../../../models/sync';
         InputTextModule,
         TextareaModule,
         SelectModule,
-        TabsModule,
         TableModule,
         TagModule,
         TooltipModule,
-        TooltipModule,
         ToastModule,
-        DialogModule
+        DialogModule,
+        CheckboxModule
     ],
     templateUrl: './task-editor.html',
     styleUrls: ['./task-editor.scss']
 })
 export class TaskEditorComponent implements OnInit {
-    taskForm: FormGroup;
-    mappingRows: FormArray;
+
+    // ── Wizard state ─────────────────────────────────────────────────────────
+    activeStep = 0;
+    readonly wizardSteps = ['Name', 'Steps', 'End Action', 'Review'];
+
+    // ── Form & data ──────────────────────────────────────────────────────────
+    taskForm!: FormGroup;
     sources: DataSource[] = [];
-    history: TaskExecution[] = [];
     isNew = true;
-    loadingHistory = false;
     currentTaskId: number | null = null;
-    selectedExecution: TaskExecution | null = null;
-    availablePaths: any[] = [];
-    previewRows: any[] = [];
-    queryHint = 'Enter query or command';
+    maxSteps = 3;
 
-    private service = inject(AutomationService);
-
-    private sourceService = inject(SourceService);
-
-    private messageService = inject(MessageService);
-
-    private fb = inject(FormBuilder);
-
-    public ref = inject(DynamicDialogRef);
-
-    public config = inject(DynamicDialogConfig);
-    httpMethods = [
+    // ── Option lists ─────────────────────────────────────────────────────────
+    readonly httpMethods = [
         { label: 'GET', value: 'GET' },
         { label: 'POST', value: 'POST' },
         { label: 'PUT', value: 'PUT' },
         { label: 'DELETE', value: 'DELETE' }
     ];
-    showMethodDropdown = false;
-    paginationOptions = [
+
+    readonly paginationOptions = [
         { label: 'None', value: 'NONE' },
-        { label: 'Page Number (e.g. page=1)', value: 'PAGE' },
-        { label: 'Next Link in Response Body (e.g. MS Graph @odata.nextLink)', value: 'NEXT_LINK_BODY' }
+        { label: 'Page Number  (e.g. ?page=1)', value: 'PAGE' },
+        { label: 'Next Link in Response Body  (e.g. @odata.nextLink)', value: 'NEXT_LINK_BODY' }
     ];
+
+    readonly endTaskTypes = [
+        { label: 'None — no final action', value: 'NONE' },
+        { label: 'Email Notification', value: 'EMAIL' },
+        { label: 'File Download', value: 'DOWNLOAD' }
+    ];
+
+    readonly fileFormats = [
+        { label: 'JSON', value: 'JSON' },
+        { label: 'CSV', value: 'CSV' }
+    ];
+
+    readonly stepTypeOptions = [
+        { label: 'Fetch Data', value: 'DATASOURCE' },
+        { label: 'Export to File', value: 'PROCESS' }
+    ];
+
+    readonly overrideValueTypes = [
+        { label: 'String', value: 'STRING' },
+        { label: 'Number', value: 'NUMBER' },
+        { label: 'JSON', value: 'JSON' }
+    ];
+
+    // ── Success criteria options ──────────────────────────────────────────────
+    private readonly criteriaTypesRestApi = [
+        { label: 'HTTP status is 2xx', value: 'HTTP_STATUS_2XX' },
+        { label: 'HTTP status equals', value: 'HTTP_STATUS_EQUALS' },
+        { label: 'Response is not empty', value: 'RESPONSE_NOT_EMPTY' },
+        { label: 'Field check', value: 'FIELD_CHECK' }
+    ];
+
+    private readonly criteriaTypesData = [
+        { label: 'Result count > 0', value: 'RESULT_NOT_EMPTY' },
+        { label: 'Result count equals', value: 'RESULT_COUNT_EQ' },
+        { label: 'Result count >', value: 'RESULT_COUNT_GT' },
+        { label: 'Field check', value: 'FIELD_CHECK' }
+    ];
+
+    readonly criteriaOperators = [
+        { label: 'equals', value: 'EQUALS' },
+        { label: 'not equals', value: 'NOT_EQUALS' },
+        { label: 'contains', value: 'CONTAINS' },
+        { label: 'greater than', value: 'GT' },
+        { label: 'less than', value: 'LT' },
+        { label: 'is not empty', value: 'NOT_EMPTY' }
+    ];
+
+    getCriteriaTypes(stepIndex: number) {
+        return this.isRestApi(stepIndex) ? this.criteriaTypesRestApi : this.criteriaTypesData;
+    }
+
+    criteriaHasValue(type: string, operator?: string): boolean {
+        if (type === 'HTTP_STATUS_2XX' || type === 'RESPONSE_NOT_EMPTY' || type === 'RESULT_NOT_EMPTY') return false;
+        if (type === 'FIELD_CHECK' && operator === 'NOT_EMPTY') return false;
+        return true;
+    }
+
+    getCriteriaLabel(stepIndex: number): string {
+        const type = this.stepsFormArray.at(stepIndex)?.get('successCriteriaType')?.value;
+        const op = this.stepsFormArray.at(stepIndex)?.get('successCriteriaOperator')?.value;
+        const field = this.stepsFormArray.at(stepIndex)?.get('successCriteriaField')?.value;
+        const val = this.stepsFormArray.at(stepIndex)?.get('successCriteriaValue')?.value;
+        if (!type) return '';
+        switch (type) {
+            case 'HTTP_STATUS_2XX': return 'HTTP status is 2xx';
+            case 'HTTP_STATUS_EQUALS': return `HTTP status = ${val}`;
+            case 'RESPONSE_NOT_EMPTY': return 'Response is not empty';
+            case 'RESULT_NOT_EMPTY': return 'Result count > 0';
+            case 'RESULT_COUNT_EQ': return `Result count = ${val}`;
+            case 'RESULT_COUNT_GT': return `Result count > ${val}`;
+            case 'FIELD_CHECK': return `${field} ${op} ${val}`;
+            default: return '';
+        }
+    }
+
+    // Literal {{ }} strings used as display examples in the template.
+    // Defined here so the template compiler never sees raw {{ }} syntax.
+    readonly exampleStepRef = '{{prev[0].fieldName}}';
+    readonly exampleEmailBody = 'Workflow finished. Result: {{prev.id}}';
+
+    // ── DI ───────────────────────────────────────────────────────────────────
+    private service = inject(AutomationService);
+    private sourceService = inject(SourceService);
+    private messageService = inject(MessageService);
+    private fb = inject(FormBuilder);
+    public ref = inject(DynamicDialogRef);
+    public config = inject(DynamicDialogConfig);
+
+    // ── Constructor ───────────────────────────────────────────────────────────
     constructor() {
-        this.mappingRows = this.fb.array([]);
         this.taskForm = this.fb.group({
             name: ['', Validators.required],
-            sourceId: [null, Validators.required],
-            fetchQuery: [''],
-            httpMethod: ['GET'],
-            rootPath: [''],
-            body: [''],
-            bodyType: ['form'],
-            paginationType: ['NONE'],
-            paginationNextKey: [''],
-            paginationLimitParam: [''],
-            paginationLimit: [''],
-            bodyParams: this.fb.array([]),
-            mappingRows: this.mappingRows
-        });
-        this.taskForm.get('mappingRows')?.valueChanges.subscribe(() => {
+            steps: this.fb.array([]),
+            endTask: this.fb.group({
+                type: ['NONE'],
+                emailTo: [''],
+                emailSubject: [''],
+                emailBody: [''],
+                downloadFileName: [''],
+                downloadFormat: ['JSON']
+            })
         });
     }
-    get bodyParams() {
-        return (this.taskForm.get('bodyParams') as FormArray).controls;
-    }
-    addBodyParam(key: string = '', value: string = '', type: 'static' | 'dynamic' = 'static') {
-        const arr = this.taskForm.get('bodyParams') as FormArray;
-        arr.push(this.fb.group({
-            key: [key, Validators.required],
-            value: [value],
-            type: [type]
-        }));
-    }
-    removeBodyParam(index: number) {
-        (this.taskForm.get('bodyParams') as FormArray).removeAt(index);
-    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     ngOnInit() {
         this.loadSources();
+        this.service.getMaxSteps().subscribe({
+            next: (val) => { this.maxSteps = val || 3; this.initForm(); },
+            error: () => { this.maxSteps = 3; this.initForm(); }
+        });
+    }
+
+    private initForm() {
         if (this.config.data?.taskId) {
             this.isNew = false;
             this.currentTaskId = this.config.data.taskId;
             this.loadTask(this.currentTaskId!);
-            this.loadHistory(this.currentTaskId!);
+        } else {
+            this.addStep();   // one blank step to start
         }
     }
-    loadSources() {
+
+    // ── Sources ───────────────────────────────────────────────────────────────
+    private loadSources() {
         this.sourceService.getSources().subscribe(data => this.sources = data);
     }
-    loadTask(id: number) {
-        this.service.getTasks().subscribe(tasks => {
-            const found = tasks.find(t => t.id === id);
-            if (found) {
-                let payloadObj: any = {};
-                try {
-                    payloadObj = JSON.parse(found.payload);
-                } catch (e) {
-                    console.error('Invalid JSON payload', e);
-                }
-                this.taskForm.patchValue({
-                    name: found.name,
-                    sourceId: found.sourceId,
-                    fetchQuery: payloadObj.fetch_query || '',
-                    httpMethod: payloadObj.method || 'GET',
-                    rootPath: payloadObj.root_path || '',
-                    body: payloadObj.body ? JSON.stringify(payloadObj.body, null, 2) : '',
-                    bodyType: 'json',
-                    paginationType: payloadObj.pagination_config?.type || 'NONE',
-                    paginationNextKey: payloadObj.pagination_config?.nextKey || '',
-                    paginationLimitParam: payloadObj.pagination_config?.limitParam || '',
-                    paginationLimit: payloadObj.pagination_config?.limit || ''
-                });
-                if (payloadObj.body) {
-                    this.parseBodyToForm(payloadObj.body);
-                }
-                this.onSourceChange();
-                this.mappingRows.clear();
-                if (payloadObj.mapping) {
-                    Object.keys(payloadObj.mapping).forEach(key => {
-                        this.addMappingRow(key, payloadObj.mapping[key]);
-                    });
-                }
-            }
-        });
+
+    // ── Steps FormArray ───────────────────────────────────────────────────────
+    get stepsFormArray(): FormArray {
+        return this.taskForm.get('steps') as FormArray;
     }
-    parseBodyToForm(bodyObj: any) {
-        const arr = this.taskForm.get('bodyParams') as FormArray;
-        arr.clear();
-        if (typeof bodyObj === 'object' && bodyObj !== null) {
-            Object.keys(bodyObj).forEach(key => {
-                const val = bodyObj[key];
-                let type: 'static' | 'dynamic' = 'static';
-                let value = val;
-                if (typeof val === 'string' && val.trim().startsWith('{{') && val.trim().endsWith('}}')) {
-                    type = 'dynamic';
-                    value = val.trim().substring(2, val.trim().length - 2);
-                }
-                this.addBodyParam(key, value, type);
+
+    get stepsControls(): FormGroup[] {
+        return this.stepsFormArray.controls as FormGroup[];
+    }
+
+    private createStepGroup(step?: any): FormGroup {
+        const mappingRows = this.fb.array<FormGroup>([]);
+        if (step?.mapping) {
+            Object.keys(step.mapping).forEach(k =>
+                mappingRows.push(this.fb.group({
+                    target: [k, Validators.required],
+                    source: [step.mapping[k], Validators.required]
+                }))
+            );
+        }
+
+        const overrideRows = this.fb.array<FormGroup>([]);
+        const loadOverrideMap = (map: Record<string, any>, appendMode: string) => {
+            Object.keys(map).forEach(k => {
+                const raw = map[k];
+                const valueType = (typeof raw === 'number') ? 'NUMBER'
+                    : (raw !== null && typeof raw === 'object') ? 'JSON'
+                        : 'STRING';
+                const valueStr = (valueType === 'JSON')
+                    ? JSON.stringify(raw, null, 2)
+                    : String(raw);
+                overrideRows.push(this.fb.group({
+                    field: [k, Validators.required],
+                    valueType: [valueType],
+                    appendMode: [appendMode],
+                    value: [valueStr]
+                }));
             });
-            this.taskForm.patchValue({ bodyType: 'form' });
-        } else {
-            this.taskForm.patchValue({ bodyType: 'json' });
-        }
-    }
-    buildBodyFromForm(): any {
-        const params = this.taskForm.value.bodyParams;
-        const body: any = {};
-        params.forEach((p: any) => {
-            if (p.key) {
-                if (p.type === 'dynamic') {
-                    body[p.key] = `{{${p.value}}}`;
-                } else {
-                    body[p.key] = p.value;
-                }
-            }
-        });
-        return body;
-    }
-    loadHistory(taskId: number) {
-        this.loadingHistory = true;
-        this.service.getTaskHistory(taskId).subscribe({
-            next: (data) => {
-                this.history = data;
-                this.loadingHistory = false;
-            },
-            error: () => this.loadingHistory = false
-        });
-    }
-    save() {
-        if (this.taskForm.invalid) {
-            this.messageService.add({ severity: 'warn', summary: 'Invalid', detail: 'Name and Source are required' });
-            return;
-        }
-        const val = this.taskForm.value;
-        const mapping: any = {};
-        val.mappingRows.forEach((row: any) => {
-            if (row.target && row.source) {
-                mapping[row.target] = row.source;
-            }
-        });
-        let bodyJson = null;
-        if (val.bodyType === 'form') {
-            bodyJson = this.buildBodyFromForm();
-        } else {
-            if (val.body) {
-                try {
-                    bodyJson = JSON.parse(val.body);
-                } catch (e) {
-                    this.messageService.add({ severity: 'error', summary: 'Invalid Body JSON', detail: 'Please fix JSON syntax' });
-                    return;
-                }
-            }
-        }
-        const payload = JSON.stringify({
-            fetch_query: val.fetchQuery,
-            method: val.httpMethod,
-            body: bodyJson,
-            mapping: Object.keys(mapping).length > 0 ? mapping : null,
-            root_path: val.rootPath || null,
-            pagination_config: {
-                type: val.paginationType,
-                nextKey: val.paginationNextKey,
-                limitParam: val.paginationLimitParam,
-                limit: val.paginationLimit
-            }
-        }, null, 2);
-        const taskDef: TaskDefinition = {
-            id: this.currentTaskId || undefined,
-            name: val.name,
-            sourceId: val.sourceId,
-            payload: payload
         };
-        if (this.isNew) {
-            this.service.createTask(taskDef).subscribe({
-                next: (created) => {
-                    this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Task created' });
-                    this.ref.close(true);
-                },
-                error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message })
-            });
-        } else {
-            this.service.updateTask(taskDef.id!, taskDef).subscribe({
-                next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Task updated' });
-                    this.ref.close(true);
-                },
-                error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message })
-            });
+        if (step?.overrides) loadOverrideMap(step.overrides, 'REPLACE');
+        if (step?.appendOverrides) loadOverrideMap(step.appendOverrides, 'APPEND');
+
+        let bodyStr = '';
+        if (step?.body) {
+            bodyStr = typeof step.body === 'string'
+                ? step.body
+                : JSON.stringify(step.body, null, 2);
+        }
+
+        return this.fb.group({
+            name: [step?.name || `Step ${this.stepsFormArray.length + 1}`, Validators.required],
+            type: [step?.type || 'DATASOURCE'],
+            sourceId: [step?.sourceId ?? null],
+            fetchQuery: [step?.fetchQuery || ''],
+            httpMethod: [step?.httpMethod || 'GET'],
+            rootPath: [step?.rootPath || ''],
+            body: [bodyStr],
+            // bodyFromStep: null = manual JSON; 1..N = use that step's full response as body
+            bodyFromStep: [typeof step?.bodyFromStep === 'number' ? step.bodyFromStep : null],
+            includeResponseBody: [step?.includeResponseBody ?? false],
+            overrideRows,
+            paginationType: [step?.paginationConfig?.type || 'NONE'],
+            paginationNextKey: [step?.paginationConfig?.nextKey || ''],
+            paginationLimitParam: [step?.paginationConfig?.limitParam || ''],
+            paginationLimit: [step?.paginationConfig?.limit || ''],
+            mappingRows,
+            // Success criteria
+            successCriteriaEnabled: [!!step?.successCriteria],
+            successCriteriaType: [step?.successCriteria?.type || 'HTTP_STATUS_2XX'],
+            successCriteriaField: [step?.successCriteria?.field || ''],
+            successCriteriaOperator: [step?.successCriteria?.operator || 'EQUALS'],
+            successCriteriaValue: [step?.successCriteria?.value || ''],
+            // PROCESS-type fields
+            processType: [step?.processType || 'JSON_TO_FILE'],
+            fileName: [step?.fileName || ''],
+            fileFormat: [step?.fileFormat || 'JSON'],
+            dependent: [step?.dependent !== undefined ? step.dependent : true]
+        });
+    }
+
+    addStep(step?: any) {
+        if (this.stepsFormArray.length < this.maxSteps) {
+            this.stepsFormArray.push(this.createStepGroup(step));
         }
     }
-    close() {
-        this.ref.close();
+
+    removeStep(index: number) {
+        if (this.stepsFormArray.length > 1) {
+            this.stepsFormArray.removeAt(index);
+        }
     }
-    get mappingControls() {
-        return (this.taskForm.get('mappingRows') as FormArray).controls;
+
+    getMappingRows(stepIndex: number): FormArray {
+        return this.stepsFormArray.at(stepIndex).get('mappingRows') as FormArray;
     }
-    addMappingRow(target: string = '', source: string = '') {
-        this.mappingRows.push(this.fb.group({
-            target: [target, Validators.required],
-            source: [source, Validators.required]
+
+    addMappingRow(stepIndex: number) {
+        this.getMappingRows(stepIndex).push(this.fb.group({
+            target: ['', Validators.required],
+            source: ['', Validators.required]
         }));
     }
-    removeMappingRow(index: number) {
-        this.mappingRows.removeAt(index);
+
+    removeMappingRow(stepIndex: number, rowIndex: number) {
+        this.getMappingRows(stepIndex).removeAt(rowIndex);
     }
-    onSourceChange() {
-        const sourceId = this.taskForm.get('sourceId')?.value;
-        const source = this.sources.find(s => s.id === sourceId);
-        if (source) {
-            if (source.type === 'SQL_SERVER') {
-                this.queryHint = 'SELECT * FROM ...';
-                this.showMethodDropdown = false;
-            } else if (source.type === 'LOCAL_COMMAND') {
-                this.queryHint = 'Enter command (e.g. docker ps --format json)';
-                this.showMethodDropdown = false;
-            } else {
-                this.queryHint = '/api/endpoint';
-                this.showMethodDropdown = true;
-            }
+
+    getOverrideRows(stepIndex: number): FormArray {
+        return this.stepsFormArray.at(stepIndex).get('overrideRows') as FormArray;
+    }
+
+    addOverrideRow(stepIndex: number) {
+        this.getOverrideRows(stepIndex).push(this.fb.group({
+            field: ['', Validators.required],
+            valueType: ['STRING'],
+            appendMode: ['REPLACE'],
+            value: ['']
+        }));
+    }
+
+    removeOverrideRow(stepIndex: number, rowIndex: number) {
+        this.getOverrideRows(stepIndex).removeAt(rowIndex);
+    }
+
+    // ── Wizard navigation ─────────────────────────────────────────────────────
+    get canProceed(): boolean {
+        switch (this.activeStep) {
+            case 0:
+                return !!this.taskForm.get('name')?.value?.trim();
+            case 1:
+                return this.stepsControls.length > 0 &&
+                    this.stepsControls.every(s =>
+                        s.get('type')?.value === 'PROCESS' || !!s.get('sourceId')?.value
+                    );
+            default:
+                return true;
         }
     }
-    fetchPreview() {
-        const sourceId = this.taskForm.get('sourceId')?.value;
-        const query = this.taskForm.get('fetchQuery')?.value;
-        const method = this.taskForm.get('httpMethod')?.value;
-        let body = this.taskForm.get('body')?.value;
-        if (body) {
-            try {
-                body = JSON.parse(body);
-            } catch (e) {
-            }
+
+    next() { if (this.activeStep < this.wizardSteps.length - 1) this.activeStep++; }
+    back() { if (this.activeStep > 0) this.activeStep--; }
+    goTo(i: number) { this.activeStep = i; }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    getSourceName(id: number): string {
+        return this.sources.find(s => s.id === id)?.name || `Source #${id}`;
+    }
+
+    getQueryHint(stepIndex: number): string {
+        const sid = this.stepsFormArray.at(stepIndex)?.get('sourceId')?.value;
+        const source = this.sources.find(s => s.id === sid);
+        if (source?.type === 'SQL_SERVER') return 'SELECT * FROM table WHERE ...';
+        if (source?.type === 'LOCAL_COMMAND') return 'docker ps --format json';
+        return '/api/endpoint/path';
+    }
+
+    getSourceType(stepIndex: number): string | undefined {
+        const sid = this.stepsFormArray.at(stepIndex)?.get('sourceId')?.value;
+        return this.sources.find(s => s.id === sid)?.type;
+    }
+
+    isRestApi(stepIndex: number): boolean {
+        return this.getSourceType(stepIndex) === 'REST_API';
+    }
+
+    showMethodDropdown(stepIndex: number): boolean {
+        return this.isRestApi(stepIndex);
+    }
+
+    /**
+     * Options for the "Request Body" dropdown on step at stepIndex.
+     * null  → manual JSON textarea
+     * 1..N  → use that step's full raw response as the body
+     */
+    getBodyOptions(stepIndex: number) {
+        const opts: { label: string; value: number | null }[] = [
+            { label: 'Manual JSON', value: null }
+        ];
+        for (let i = 0; i < stepIndex; i++) {
+            const stepName = this.stepsControls[i]?.get('name')?.value || `Step ${i + 1}`;
+            opts.push({ label: `Step ${i + 1} response${stepName !== `Step ${i + 1}` ? ' — ' + stepName : ''}`, value: i + 1 });
         }
-        if (!sourceId) {
-            this.messageService.add({ severity: 'warn', summary: 'Select Source' });
+        return opts;
+    }
+
+    // ── Load existing task ────────────────────────────────────────────────────
+    private loadTask(id: number) {
+        this.service.getTasks().subscribe(tasks => {
+            const found = tasks.find(t => t.id === id);
+            if (!found) return;
+
+            let payloadObj: any = {};
+            try { payloadObj = JSON.parse(found.payload); } catch { /* invalid JSON */ }
+
+            this.taskForm.patchValue({ name: found.name });
+            this.stepsFormArray.clear();
+
+            if (Array.isArray(payloadObj?.steps)) {
+                payloadObj.steps.forEach((s: any) => this.addStep(s));
+            }
+            if (payloadObj?.endTask) {
+                this.taskForm.patchValue({ endTask: payloadObj.endTask });
+            }
+            if (!this.stepsFormArray.length) this.addStep();
+        });
+    }
+
+    // ── Save ──────────────────────────────────────────────────────────────────
+    save() {
+        if (!this.taskForm.get('name')?.value?.trim()) {
+            this.messageService.add({ severity: 'warn', summary: 'Required', detail: 'Task name is required' });
+            this.activeStep = 0;
             return;
         }
-        const rootPath = this.taskForm.get('rootPath')?.value;
-        this.messageService.add({ severity: 'info', summary: 'Fetching Preview...' });
-        this.sourceService.previewData(sourceId, query, method, body, rootPath).subscribe({
-            next: (res) => {
-                const sample = res.sample || [];
-                if (sample.length > 0) {
-                    this.availablePaths = this.flattenObject(sample[0]).map(p => ({ label: p, value: p }));
-                    if (this.mappingRows.length === 0) {
-                        const keys = Object.keys(sample[0]).slice(0, 5);
-                        keys.forEach(k => this.addMappingRow(k, k));
+
+        try {
+            const val = this.taskForm.value;
+            let primarySourceId: number | null = null;
+
+            const steps = val.steps.map((step: any) => {
+                const s: any = { name: step.name, type: step.type, dependent: step.dependent };
+
+                if (step.type === 'DATASOURCE') {
+                    if (step.sourceId && !primarySourceId) primarySourceId = step.sourceId;
+                    s.sourceId = step.sourceId;
+                    s.fetchQuery = step.fetchQuery;
+                    s.httpMethod = step.httpMethod;
+                    s.rootPath = step.rootPath || null;
+
+                    if (step.bodyFromStep != null && step.bodyFromStep > 0) {
+                        // Use the numbered step's full raw response as the body
+                        s.bodyFromStep = step.bodyFromStep;
+                        const overrides: Record<string, any> = {};
+                        const appendOverrides: Record<string, any> = {};
+                        (step.overrideRows || []).forEach((r: any) => {
+                            if (r.field) {
+                                let val: any = r.value;
+                                if (r.valueType === 'NUMBER') {
+                                    val = Number(r.value);
+                                } else if (r.valueType === 'JSON') {
+                                    try { val = JSON.parse(r.value); } catch { /* keep as raw string if invalid */ }
+                                }
+                                if (r.appendMode === 'APPEND') {
+                                    appendOverrides[r.field] = val;
+                                } else {
+                                    overrides[r.field] = val;
+                                }
+                            }
+                        });
+                        if (Object.keys(overrides).length) s.overrides = overrides;
+                        if (Object.keys(appendOverrides).length) s.appendOverrides = appendOverrides;
+                    } else if (step.body?.trim()) {
+                        try { s.body = JSON.parse(step.body); } catch { s.body = step.body; }
                     }
-                    this.updatePreviewResult(sample);
-                    this.messageService.add({ severity: 'success', summary: 'Success', detail: `Fetched ${sample.length} rows` });
-                } else {
-                    this.messageService.add({ severity: 'warn', summary: 'No Data', detail: 'Query returned empty result' });
+
+                    if (step.paginationType !== 'NONE') {
+                        s.paginationConfig = {
+                            type: step.paginationType,
+                            nextKey: step.paginationNextKey || null,
+                            limitParam: step.paginationLimitParam || null,
+                            limit: step.paginationLimit || null
+                        };
+                    }
+
+                    const mapping: Record<string, string> = {};
+                    (step.mappingRows || []).forEach((m: any) => {
+                        if (m.target && m.source) mapping[m.target] = m.source;
+                    });
+                    if (Object.keys(mapping).length) s.mapping = mapping;
+                    if (step.includeResponseBody) s.includeResponseBody = true;
+
+                    // Success criteria
+                    if (step.successCriteriaEnabled) {
+                        s.successCriteria = {
+                            type: step.successCriteriaType,
+                            field: step.successCriteriaType === 'FIELD_CHECK' ? step.successCriteriaField : undefined,
+                            operator: step.successCriteriaType === 'FIELD_CHECK' ? step.successCriteriaOperator : undefined,
+                            value: this.criteriaHasValue(step.successCriteriaType, step.successCriteriaOperator)
+                                ? step.successCriteriaValue : undefined
+                        };
+                    }
+
+                } else if (step.type === 'PROCESS') {
+                    s.processType = step.processType;
+                    s.fileName = step.fileName || 'export.json';
+                    s.fileFormat = step.fileFormat || 'JSON';
                 }
-            },
-            error: (err) => this.messageService.add({ severity: 'error', summary: 'Failed', detail: err.message })
-        });
-    }
-    updatePreviewResult(sampleData: any[]) {
-        const mapping = this.taskForm.value.mappingRows;
-        if (!mapping || mapping.length === 0) {
-            this.previewRows = sampleData.slice(0, 5);
-            return;
-        }
-        this.previewRows = sampleData.slice(0, 5).map(row => {
-            const newRow: any = {};
-            mapping.forEach((m: any) => {
-                if (m.target && m.source) {
-                    newRow[m.target] = this.resolvePath(row, m.source);
-                }
+
+                return s;
             });
-            return newRow;
-        });
-    }
-    getPreviewCols() {
-        if (this.previewRows.length === 0) return [];
-        return Object.keys(this.previewRows[0]);
-    }
-    flattenObject(obj: any, prefix = ''): string[] {
-        let paths: string[] = [];
-        for (const key in obj) {
-            const fullPath = prefix ? `${prefix}.${key}` : key;
-            paths.push(fullPath);
-            if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
-                paths = paths.concat(this.flattenObject(obj[key], fullPath));
-            }
-        }
-        return paths;
-    }
-    resolvePath(obj: any, path: string) {
-        return path.split('.').reduce((acc, part) => acc && acc[part] ? acc[part] : null, obj);
-    }
-    runtimeParams: any[] = [];
-    runtimeValues: any = {};
-    displayRuntimeParamsDialog = false;
-    execute() {
-        if (!this.currentTaskId) return;
-        let bodyJson = this.taskForm.value.body;
-        if (this.taskForm.value.bodyType === 'form') {
-            bodyJson = JSON.stringify(this.buildBodyFromForm());
-        }
-        const payloadStr = JSON.stringify({
-            fetch_query: this.taskForm.value.fetchQuery,
-            method: this.taskForm.value.httpMethod,
-            root_path: this.taskForm.value.rootPath,
-            body: bodyJson
-        });
-        const regex = /{{(.*?)}}/g;
-        const matches = new Set<string>();
-        let match;
-        while ((match = regex.exec(payloadStr)) !== null) {
-            matches.add(match[1]);
-        }
-        if (matches.size > 0) {
-            this.runtimeParams = Array.from(matches);
-            this.runtimeValues = {};
-            this.runtimeParams.forEach(p => this.runtimeValues[p] = '');
-            this.displayRuntimeParamsDialog = true;
-        } else {
-            this.runWithParams(null);
-        }
-    }
-    runWithParams(params: any) {
-        this.displayRuntimeParamsDialog = false;
-        if (this.currentTaskId) {
-            this.messageService.add({ severity: 'info', summary: 'Running', detail: 'Execution started...' });
-            this.service.executeTask(this.currentTaskId, params).subscribe({
-                next: (exec) => {
-                    const sev = exec.status === 'SUCCESS' ? 'success' : 'error';
-                    const sum = exec.status === 'SUCCESS' ? 'Success' : 'Failed';
-                    this.messageService.add({ severity: sev, summary: sum, detail: 'Execution finished' });
-                    this.loadHistory(this.currentTaskId!);
-                    this.selectedExecution = exec;
-                    this.displayExecutionDialog = true;
+
+            const payload: any = { isMultiStep: true, steps, endTask: val.endTask };
+
+            const taskDef: TaskDefinition = {
+                id: this.currentTaskId || undefined,
+                name: val.name,
+                sourceId: primarySourceId || (this.sources[0]?.id ?? 1),
+                payload: JSON.stringify(payload, null, 2)
+            };
+
+            const op = this.isNew
+                ? this.service.createTask(taskDef)
+                : this.service.updateTask(taskDef.id!, taskDef);
+
+            op.subscribe({
+                next: () => {
+                    this.messageService.add({
+                        severity: 'success', summary: 'Saved',
+                        detail: this.isNew ? 'Task created successfully' : 'Task updated successfully'
+                    });
+                    this.ref.close(true);
                 },
-                error: (err) => this.messageService.add({ severity: 'error', summary: 'Failed', detail: err.message })
+                error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: err.message })
             });
+
+        } catch (e: any) {
+            this.messageService.add({ severity: 'error', summary: 'Save Failed', detail: e.message || 'Check JSON body format' });
         }
     }
-    showExecution(exec: TaskExecution) {
-        this.selectedExecution = exec;
-        this.displayExecutionDialog = true;
-    }
-    displayExecutionDialog = false;
+
+    close() { this.ref.close(); }
+
     getSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | undefined {
-        switch (status) {
+        switch (status?.toUpperCase()) {
             case 'SUCCESS': return 'success';
             case 'FAILED': return 'danger';
             case 'RUNNING': return 'info';

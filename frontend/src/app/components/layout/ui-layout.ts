@@ -9,6 +9,7 @@ import { MenuItem } from 'primeng/api';
 
 import { AuthService } from '../../auth/auth';
 import { SessionNotificationService } from '../../services/session-notification';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-ui-layout',
@@ -42,7 +43,7 @@ export class UiLayoutComponent implements OnInit {
     menuSections = [
         {
             items: [
-                { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard', routerLinkActiveOptions: { exact: true } }
+                ...(environment.menus.dashboard ? [{ label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard', routerLinkActiveOptions: { exact: true } }] : [])
             ],
             expanded: true
         },
@@ -50,18 +51,18 @@ export class UiLayoutComponent implements OnInit {
             title: 'Utilities',
             expanded: true,
             items: [
-                { label: 'Form Builder', icon: 'pi pi-file-edit', routerLink: '/form-builder', routerLinkActiveOptions: { exact: false } },
-                { label: 'Automation', icon: 'pi pi-bolt', routerLink: '/automation', routerLinkActiveOptions: { exact: false } },
-                { label: 'Kubernetes', icon: 'pi pi-server', routerLink: '/k8s', routerLinkActiveOptions: { exact: false } },
-                { label: 'Policy Visualizer', icon: 'pi pi-sitemap', routerLink: '/policy-visualizer', routerLinkActiveOptions: { exact: false } },
-                { label: 'Policy Comparison', icon: 'pi pi-clone', routerLink: '/policy-comparison', routerLinkActiveOptions: { exact: false } }
+                ...(environment.menus.formBuilder ? [{ label: 'Form Builder', icon: 'pi pi-file-edit', routerLink: '/form-builder', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.automation ? [{ label: 'Automation', icon: 'pi pi-bolt', routerLink: '/automation', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.kubernetes ? [{ label: 'Kubernetes', icon: 'pi pi-server', routerLink: '/k8s', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.policyVisualizer ? [{ label: 'Policy Visualizer', icon: 'pi pi-sitemap', routerLink: '/policy-visualizer', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.policyComparison ? [{ label: 'Policy Comparison', icon: 'pi pi-clone', routerLink: '/policy-comparison', routerLinkActiveOptions: { exact: false } }] : [])
             ]
         },
         {
             title: 'Experiment',
             expanded: true,
             items: [
-                { label: 'Natural Language', icon: 'pi pi-bolt', routerLink: '/nlp', routerLinkActiveOptions: { exact: false } }
+                ...(environment.menus.naturalLanguage ? [{ label: 'Natural Language', icon: 'pi pi-bolt', routerLink: '/nlp', routerLinkActiveOptions: { exact: false } }] : [])
             ]
         },
         {
@@ -69,15 +70,15 @@ export class UiLayoutComponent implements OnInit {
             expanded: false,
             isAdminOnly: true,
             items: [
-                { label: 'Data Sources', icon: 'pi pi-database', routerLink: '/admin/data-sources', routerLinkActiveOptions: { exact: false } },
-                { label: 'Sync Jobs', icon: 'pi pi-sync', routerLink: '/admin/sync-jobs', routerLinkActiveOptions: { exact: false } },
-                { label: 'Widgets', icon: 'pi pi-th-large', routerLink: '/admin/widgets', routerLinkActiveOptions: { exact: false } },
-                { label: 'Notification Rules', icon: 'pi pi-bell', routerLink: '/admin/notifications', routerLinkActiveOptions: { exact: false } },
-                { label: 'Users', icon: 'pi pi-users', routerLink: '/admin/users', routerLinkActiveOptions: { exact: false } },
-                { label: 'Certificates', icon: 'pi pi-lock', routerLink: '/admin/certificates', routerLinkActiveOptions: { exact: false } }
+                ...(environment.menus.administration.dataSources ? [{ label: 'Data Sources', icon: 'pi pi-database', routerLink: '/admin/data-sources', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.administration.syncJobs ? [{ label: 'Sync Jobs', icon: 'pi pi-sync', routerLink: '/admin/sync-jobs', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.administration.widgets ? [{ label: 'Widgets', icon: 'pi pi-th-large', routerLink: '/admin/widgets', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.administration.notificationRules ? [{ label: 'Notification Rules', icon: 'pi pi-bell', routerLink: '/admin/notifications', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.administration.users ? [{ label: 'Users', icon: 'pi pi-users', routerLink: '/admin/users', routerLinkActiveOptions: { exact: false } }] : []),
+                ...(environment.menus.administration.certificates ? [{ label: 'Certificates', icon: 'pi pi-lock', routerLink: '/admin/certificates', routerLinkActiveOptions: { exact: false } }] : [])
             ]
         }
-    ];
+    ].filter(section => section.items.length > 0);
 
     ngOnInit() {
         this.userMenuItems = [

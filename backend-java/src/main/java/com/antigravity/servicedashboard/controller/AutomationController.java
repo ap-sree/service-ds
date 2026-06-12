@@ -1,8 +1,8 @@
 package com.antigravity.servicedashboard.controller;
 
-import com.antigravity.servicedashboard.entity.TaskDefinition;
-import com.antigravity.servicedashboard.entity.TaskExecution;
-import com.antigravity.servicedashboard.service.AutomationService;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,8 +13,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
-import java.util.Map;
+
+import com.antigravity.servicedashboard.dto.TaskExecutionSummary;
+import com.antigravity.servicedashboard.entity.TaskDefinition;
+import com.antigravity.servicedashboard.entity.TaskExecution;
+import com.antigravity.servicedashboard.service.AutomationService;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -55,8 +59,7 @@ public class AutomationController {
     }
 
     @GetMapping("/tasks/{id}/history")
-
-    public List<TaskExecution> getHistory(@PathVariable Long id) {
+    public List<TaskExecutionSummary> getHistory(@PathVariable Long id) {
         return service.getTaskHistory(id);
     }
 

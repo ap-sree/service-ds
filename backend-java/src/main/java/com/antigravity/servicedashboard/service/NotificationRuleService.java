@@ -1,12 +1,13 @@
 package com.antigravity.servicedashboard.service;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.antigravity.servicedashboard.entity.NotificationRule;
 import com.antigravity.servicedashboard.repository.NotificationRuleRepository;
 import com.antigravity.servicedashboard.repository.SyncDefinitionRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class NotificationRuleService {

@@ -32,7 +32,7 @@
         <label for="global_filter" class="col-12 mb-2 md:col-3 md:mb-0 align-self-center font-bold">Global Filter
             (SQL)</label>
         <div class="col-12 md:col-9">
-            <input id="global_filter" type="text" pInputText formControlName="global_filter"
+            <input id="globalFilter" type="text" pInputText formControlName="globalFilter"
                 placeholder="e.g. status='active' AND created_at > -2d" class="w-full" />
             <small class="block mt-1 text-500">Filter data for <strong>this</strong> widget (SQL WHERE). Supports: >
                 -2d, = 0d (today), -1m (month)</small>
@@ -42,7 +42,7 @@
                 <span class="text-sm font-bold align-self-center">Fields:</span>
                 @for (col of tableColumns; track col) {
                 <p-tag [value]="col" styleClass="cursor-pointer"
-                    (click)="widgetForm.get('global_filter')?.setValue((widgetForm.get('global_filter')?.value || '') + ' ' + col)"></p-tag>
+                    (click)="widgetForm.get('globalFilter')?.setValue((widgetForm.get('globalFilter')?.value || '') + ' ' + col)"></p-tag>
                 }
             </div>
             }

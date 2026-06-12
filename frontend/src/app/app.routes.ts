@@ -2,7 +2,9 @@ import { Routes } from '@angular/router';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { AdminComponent } from './components/admin/admin';
 import { LoginComponent } from './components/login/login';
-import { authGuard, adminGuard } from './auth.guard';
+import { authGuard, adminGuard, checkAndGetRoute } from './auth.guard';
+import { environment } from '../environments/environment';
+
 export const routes: Routes = [
     { path: 'logout', component: LoginComponent },
     { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
@@ -67,5 +69,5 @@ export const routes: Routes = [
             }
         ]
     },
-    { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
+    { path: '', redirectTo: () => checkAndGetRoute(), pathMatch: 'full' }
 ];

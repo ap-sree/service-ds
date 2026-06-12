@@ -57,6 +57,8 @@
                                 <p-button icon="pi pi-play" [rounded]="true" [text]="true" severity="help"
                                     (click)="triggerSync(job.id!)" pTooltip="Run Now"
                                     [loading]="loadingJobs.has(job.id!)"></p-button>
+                                <p-button icon="pi pi-history" [rounded]="true" [text]="true" severity="info"
+                                    (click)="showHistory(job.id!)" pTooltip="History"></p-button>
                                 <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" (click)="openDialog(job)"
                                     pTooltip="Edit"></p-button>
                                 <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
@@ -73,4 +75,34 @@
             </p-table>
         </p-card>
     </div>
+
+    <p-dialog header="Execution History" [(visible)]="displayHistoryDialog" [modal]="true" [style]="{width: '60vw'}" [maximizable]="true">
+        <p-table [value]="historyData" [loading]="loadingHistory" [rows]="10" [paginator]="true" [rowHover]="true">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="startedAt">Started At <p-sortIcon field="startedAt"></p-sortIcon></th>
+                    <th pSortableColumn="completedAt">Completed At <p-sortIcon field="completedAt"></p-sortIcon></th>
+                    <th pSortableColumn="status">Status <p-sortIcon field="status"></p-sortIcon></th>
+                    <th>Details</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-record>
+                <tr>
+                    <td>{{record.startedAt | date:'short'}}</td>
+                    <td>{{record.completedAt | date:'short'}}</td>
+                    <td>
+                        <span class="font-bold" [class]="{'text-green-500': record.status === 'SUCCESS', 'text-red-500': record.status === 'FAILED'}">
+                            {{record.status}}
+                        </span>
+                    </td>
+                    <td class="text-sm">{{record.outputResult}}</td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-4">No execution history found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-dialog>
 </div>

@@ -1,12 +1,9 @@
 package com.antigravity.servicedashboard.controller;
 
-import com.antigravity.servicedashboard.dto.UserDTO;
-import com.antigravity.servicedashboard.entity.WidgetDefinition;
-import com.antigravity.servicedashboard.mapper.UserMapper;
-import com.antigravity.servicedashboard.model.UserPreferences;
-import com.antigravity.servicedashboard.service.AppConfigService;
-import com.antigravity.servicedashboard.service.UserService;
-import com.antigravity.servicedashboard.service.WidgetService;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,10 +12,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.antigravity.servicedashboard.dto.UserDTO;
+import com.antigravity.servicedashboard.entity.WidgetDefinition;
+import com.antigravity.servicedashboard.mapper.UserMapper;
+import com.antigravity.servicedashboard.model.UserPreferences;
+import com.antigravity.servicedashboard.service.AppConfigService;
+import com.antigravity.servicedashboard.service.UserService;
+import com.antigravity.servicedashboard.service.WidgetService;
 
 @RestController
 @RequestMapping("/auth")
