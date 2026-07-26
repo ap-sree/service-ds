@@ -234,6 +234,28 @@ export class PolicyComparisonComponent {
         const apcMap = this.getAPCMappings(action);
         if (apcMap) parts.push('APC:\n' + apcMap);
 
+        const lipInbound = this.formatMapping(action.inboundMapping?.attributeContractFulfillment);
+        if (lipInbound) parts.push('LIP Inbound:\n' + lipInbound);
+        const lipOutbound = this.formatMapping(action.outboundAttributeMapping?.attributeContractFulfillment);
+        if (lipOutbound) parts.push('LIP Outbound:\n' + lipOutbound);
+
+        const attrMapping = action.attributeMapping || action.fragmentMapping || action.inboundMapping;
+        const sources = attrMapping?.attributeSources;
+        if (Array.isArray(sources) && sources.length > 0) {
+            parts.push('Attribute Sources:\n' + sources.map((s: any, i: number) =>
+                `${i + 1}. [${s.type || '?'}] ${s.id || s.dataStoreRef?.id || ''} ${s.searchFilter || s.table || ''}`.trim()
+            ).join('\n'));
+        }
+
+        const criteria = attrMapping?.issuanceCriteria;
+        if (criteria) {
+            const lines: string[] = [];
+            (criteria.conditionalCriteria || []).forEach((c: any) =>
+                lines.push(`${c.attributeName} ${c.condition} "${c.value}"${c.errorResult ? ` → ${c.errorResult}` : ''}`));
+            (criteria.expressionCriteria || []).forEach((c: any) =>
+                lines.push(`expr: ${c.expression}${c.errorResult ? ` → ${c.errorResult}` : ''}`));
+            if (lines.length) parts.push('Issuance Criteria:\n' + lines.join('\n'));
+        }
 
         if (action.inputUserIdMapping) {
             parts.push('User Key:\n' + this.formatMapping({ "USER_KEY": action.inputUserIdMapping }));
@@ -313,6 +335,7 @@ export class PolicyComparisonComponent {
         if (action.authenticationSelectorRef?.id) return action.authenticationSelectorRef.id;
         if (action.authenticationSource?.sourceRef?.id) return action.authenticationSource.sourceRef.id;
         if (action.authenticationPolicyContractRef?.id) return action.authenticationPolicyContractRef.id;
+        if (action.localIdentityRef?.id) return action.localIdentityRef.id;
         return null;
     }
 }

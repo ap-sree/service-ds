@@ -1,6 +1,6 @@
 export interface PolicyResponse {
     authnSelectionTrees: AuthenticationPolicyTree[];
-    items?: any[]; 
+    items?: any[];
     authenticationPolicyFragments?: AuthenticationPolicyFragment[];
 }
 
@@ -20,18 +20,20 @@ export interface PolicyRootNode {
 export interface PolicyAction {
     id: string;
     name: string;
-    type: string; 
-    context?: string; 
+    type: string;
+    context?: string;
     description?: string;
     authenticationSelectorRef?: ResourceLink;
     authenticationSource?: AuthenticationSource;
     authenticationPolicyContractRef?: ResourceLink;
     policyFragmentRef?: ResourceLink;
-    fragment?: ResourceLink; 
+    fragment?: ResourceLink;
     attributeRules?: AttributeRule;
     fragmentMapping?: FragmentMapping;
     attributeMapping?: any;
-    
+    localIdentityRef?: ResourceLink;
+    inboundMapping?: any;
+    outboundAttributeMapping?: any;
 }
 
 export interface PolicyChildNode {
@@ -40,13 +42,13 @@ export interface PolicyChildNode {
 }
 
 export interface AuthenticationSource {
-    type: string; 
+    type: string;
     sourceRef?: ResourceLink;
     id?: string;
 }
 
 export interface ResourceLink {
-    id: string; 
+    id: string;
     location?: string;
 }
 
@@ -57,7 +59,7 @@ export interface AuthenticationPolicyFragment {
     description?: string;
     inputs?: any;
     outputs?: any;
-    rootNode: PolicyRootNode; 
+    rootNode: PolicyRootNode;
 }
 
 
@@ -66,7 +68,7 @@ export interface AuthenticationSelector {
     type: string;
     name?: string;
     pluginDescriptorRef?: ResourceLink;
-    configuration?: any; 
+    configuration?: any;
 }
 
 export interface PolicyNodeData {
@@ -103,7 +105,7 @@ export interface AttributeRule {
 export interface AttributeRuleItem {
     attributeSource: { type: string; id?: string };
     attributeName: string;
-    condition: string; 
+    condition: string;
     expectedValue: string;
     result: string;
 }

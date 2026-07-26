@@ -154,7 +154,8 @@ public class AutomationService {
         boolean hasGeneratedFile = false;
         Map<String, Object> generatedFileMeta = null;
 
-        for (int i = 0; i < stepsList.size(); i++) {
+        for (int j = 0; j < stepsList.size(); j++) {
+            int i = j;
             Map<String, Object> step = objectMapper.convertValue(stepsList.get(i), new TypeReference<Map<String, Object>>() {});
             String stepName = (String) step.getOrDefault("name", "Step " + (i + 1));
             String stepType = (String) step.getOrDefault("type", "DATASOURCE");

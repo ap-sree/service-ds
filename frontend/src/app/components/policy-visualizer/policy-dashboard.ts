@@ -51,7 +51,7 @@ export class PolicyDashboardComponent implements OnInit {
     totalItemsCount: number = 0;
     searchText: string = '';
 
-    currentTree: DiffNode | null = null; 
+    currentTree: DiffNode | null = null;
 
     constructor(
         public policyService: PolicyVisualizerService,
@@ -61,7 +61,7 @@ export class PolicyDashboardComponent implements OnInit {
             if (items && items.length > 0) {
                 this.processItems(items);
                 if (!this.selectedPolicy) {
-                    
+
                     const first = this.isGrouped && this.groupedPolicies.length > 0 ? this.groupedPolicies[0].items[0].value : (this.groupedPolicies.length > 0 ? this.groupedPolicies[0].value : null);
                     if (first) this.onSelectPolicy(first);
                 }
@@ -83,7 +83,7 @@ export class PolicyDashboardComponent implements OnInit {
     }
 
     ngOnInit() {
-        
+
         this.loadTab('policies');
     }
 
@@ -97,7 +97,7 @@ export class PolicyDashboardComponent implements OnInit {
     loadTab(tab: string) {
         this.currentTab = tab;
         this.selectedPolicy = null;
-        
+
     }
 
     loadPolicies() {
@@ -112,7 +112,7 @@ export class PolicyDashboardComponent implements OnInit {
         console.log('PolicyVisualizer: onSelectPolicy', policy);
         this.selectedPolicy = policy;
         if (policy) {
-            
+
             const dataToVisualize = policy.data || policy;
             console.log('PolicyVisualizer: visualizing data', dataToVisualize);
             this.currentTree = this.diffService.visualizePolicy(dataToVisualize);
@@ -135,7 +135,7 @@ export class PolicyDashboardComponent implements OnInit {
             return;
         }
 
-        
+
         const action = node.details.action || node.details.rootNode?.action;
 
         if (!action) {
@@ -144,66 +144,114 @@ export class PolicyDashboardComponent implements OnInit {
         }
         let mapping = null;
 
-        
+
         if (action.attributeContractFulfillment) {
             mapping = action.attributeContractFulfillment;
         }
-        
+
         else if (action.fragmentMapping?.attributeContractFulfillment) {
             mapping = action.fragmentMapping.attributeContractFulfillment;
         }
-        
+
         else if (action.fragment?.attributeMapping?.attributeContractFulfillment) {
             mapping = action.fragment.attributeMapping.attributeContractFulfillment;
         }
-        
+
         else if (action.fragment?.attributeMapping) {
             mapping = action.fragment.attributeMapping;
         }
-        
+
         else if (action.attributeMapping?.attributeContractFulfillment) {
             mapping = action.attributeMapping.attributeContractFulfillment;
         }
-        
+
         else if (action.attributeMapping) {
             mapping = action.attributeMapping;
         }
-        
+        else if (action.inboundMapping?.attributeContractFulfillment) {
+            mapping = action.inboundMapping.attributeContractFulfillment;
+        }
+        else if (action.outboundAttributeMapping?.attributeContractFulfillment) {
+            mapping = action.outboundAttributeMapping.attributeContractFulfillment;
+        }
         else if (action.inputUserIdMapping) {
             mapping = { "USER_KEY": action.inputUserIdMapping };
         }
 
         if (mapping) {
-            this.mappingData = Object.keys(mapping).map(key => {
-                const item = mapping[key];
-                
-                const sourceObj = item?.source;
-                let displayValue = '';
+            this.mappingData = Object.keys(mapping).map(key => ({
+                target: key,
+                source: this.formatFulfillmentSource(mapping[key])
+            }));
+        }
 
-                if (sourceObj) {
-                    if (sourceObj.type === 'TEXT') displayValue = sourceObj.value;
-                    else if (sourceObj.type === 'EXPRESSION') displayValue = '${' + sourceObj.value + '}';
-                    else {
-                        let prefix = sourceObj.type;
-                        if (sourceObj.id) prefix += ` (${sourceObj.id})`;
+        if (action.inboundMapping?.attributeContractFulfillment && action.outboundAttributeMapping?.attributeContractFulfillment) {
+            const outbound = action.outboundAttributeMapping.attributeContractFulfillment;
+            this.mappingData.push(...Object.keys(outbound).map(key => ({
+                target: `[Outbound] ${key}`,
+                source: this.formatFulfillmentSource(outbound[key])
+            })));
+        }
 
-                        
-                        const val = sourceObj.value || item.value;
-                        displayValue = val ? `${prefix}: ${val}` : prefix;
-                    }
-                } else {
-                    
-                    displayValue = typeof item === 'object' ? JSON.stringify(item) : item;
-                }
+        const attrMapping = action.attributeMapping || action.fragmentMapping || action.inboundMapping;
+        const sources = attrMapping?.attributeSources;
+        if (Array.isArray(sources)) {
+            this.mappingData.push(...sources.map((s: any, i: number) => ({
+                target: `[Attribute Source ${i + 1}] ${s.type || ''} ${s.id || s.dataStoreRef?.id || ''}`.trim(),
+                source: s.searchFilter || s.table || s.description || JSON.stringify(s.dataStoreRef || {})
+            })));
+        }
 
-                return {
-                    target: key,
-                    source: displayValue
-                };
+        const criteria = attrMapping?.issuanceCriteria;
+        if (criteria) {
+            (criteria.conditionalCriteria || []).forEach((c: any) => {
+                this.mappingData.push({
+                    target: `[Criteria] ${c.attributeName}`,
+                    source: `${c.condition} "${c.value}"${c.errorResult ? ` → ${c.errorResult}` : ''}`
+                });
+            });
+            (criteria.expressionCriteria || []).forEach((c: any) => {
+                this.mappingData.push({
+                    target: '[Criteria] expression',
+                    source: `${c.expression}${c.errorResult ? ` → ${c.errorResult}` : ''}`
+                });
             });
         }
 
+        const refsToResolve: { label: string, id?: string }[] = [
+            { label: 'Contract', id: action.authenticationPolicyContractRef?.id },
+            { label: 'Fragment Input', id: node.details.inputs?.id },
+            { label: 'Fragment Output', id: node.details.outputs?.id }
+        ];
+        for (const ref of refsToResolve) {
+            if (!ref.id) continue;
+            const contract = this.policyService.getContract(ref.id);
+            if (contract) {
+                const attrs = [
+                    ...(contract.coreAttributes || []).map((a: any) => a.name),
+                    ...(contract.extendedAttributes || []).map((a: any) => a.name)
+                ];
+                this.mappingData.push({
+                    target: `[${ref.label}] ${contract.name || ref.id}`,
+                    source: attrs.join(', ')
+                });
+            }
+        }
+
         this.detailsVisible = true;
+    }
+
+    private formatFulfillmentSource(item: any): string {
+        const sourceObj = item?.source;
+        if (sourceObj) {
+            if (sourceObj.type === 'TEXT') return sourceObj.value;
+            if (sourceObj.type === 'EXPRESSION') return '${' + sourceObj.value + '}';
+            let prefix = sourceObj.type;
+            if (sourceObj.id) prefix += ` (${sourceObj.id})`;
+            const val = sourceObj.value || item.value;
+            return val ? `${prefix}: ${val}` : prefix;
+        }
+        return typeof item === 'object' ? JSON.stringify(item) : item;
     }
 
     processItems(items: any[]) {

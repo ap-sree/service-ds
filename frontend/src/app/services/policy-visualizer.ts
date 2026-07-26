@@ -20,14 +20,22 @@ export class PolicyVisualizerService {
     private selectorsSubject = new BehaviorSubject<any[]>([]);
     selectors$ = this.selectorsSubject.asObservable();
 
+    private contractsMap = new Map<string, any>();
+    private contractsSubject = new BehaviorSubject<any[]>([]);
+    contracts$ = this.contractsSubject.asObservable();
+
     constructor() { }
 
-    
+    private isContractShaped(item: any): boolean {
+        return !!item && (Array.isArray(item.coreAttributes) || Array.isArray(item.extendedAttributes));
+    }
+
+
 
     loadPolicy(policy: any) {
         const response = policy as PolicyResponse;
 
-        
+
         if (response.authenticationPolicyFragments) {
             response.authenticationPolicyFragments.forEach((frag: AuthenticationPolicyFragment) => {
                 if (frag.id) {
@@ -40,19 +48,28 @@ export class PolicyVisualizerService {
         let tree: AuthenticationPolicyTree | null = null;
         let allPolicies: AuthenticationPolicyTree[] = [];
 
-        
+
         if (response.authnSelectionTrees && response.authnSelectionTrees.length > 0) {
             allPolicies = response.authnSelectionTrees;
-            
+
             tree = response.authnSelectionTrees[0];
             console.log('Loaded Policy Trees:', allPolicies.length);
         } else if (policy.items && Array.isArray(policy.items)) {
-            
+
+            const contractItems = policy.items.filter((i: any) => this.isContractShaped(i));
+            if (contractItems.length > 0) {
+                contractItems.forEach((c: any) => {
+                    if (c.id) this.contractsMap.set(c.id, c);
+                });
+                this.contractsSubject.next(Array.from(this.contractsMap.values()));
+                console.log('Loaded Policy Contracts:', contractItems.length);
+            }
+
             allPolicies = policy.items;
             if (allPolicies.length > 0) tree = allPolicies[0];
             console.log('Loaded Items (Fragments/Policies):', allPolicies.length);
         } else if (policy.rootNode) {
-            
+
             tree = policy as AuthenticationPolicyTree;
             allPolicies = [tree];
         }
@@ -70,9 +87,15 @@ export class PolicyVisualizerService {
         return this.fragmentsMap.get(id);
     }
 
+    getContract(id: string): any | undefined {
+        return this.contractsMap.get(id);
+    }
+
     clearPolicy() {
         this.policyTreeSubject.next(null);
         this.fragmentsMap.clear();
         this.fragmentsSubject.next([]);
+        this.contractsMap.clear();
+        this.contractsSubject.next([]);
     }
 }
