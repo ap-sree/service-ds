@@ -120,28 +120,11 @@
                                     appendTo="body"></p-select>
                             </div>
 
-                            @if (step.get('successCriteriaType')?.value === 'FIELD_CHECK') {
-                            <div class="flex flex-column gap-1">
-                                <label class="text-sm font-semibold">Field path</label>
-                                <input pInputText formControlName="successCriteriaField"
-                                    placeholder="e.g. result[0].status" class="w-12rem" />
-                            </div>
-                            <div class="flex flex-column gap-1">
-                                <label class="text-sm font-semibold">Operator</label>
-                                <p-select [options]="criteriaOperators" formControlName="successCriteriaOperator"
-                                    optionLabel="label" optionValue="value" styleClass="w-10rem"
-                                    appendTo="body"></p-select>
-                            </div>
-                            }
-
-                            @if (criteriaHasValue(step.get('successCriteriaType')?.value,
-                            step.get('successCriteriaOperator')?.value)) {
                             <div class="flex flex-column gap-1">
                                 <label class="text-sm font-semibold">Value</label>
-                                <input pInputText formControlName="successCriteriaValue" placeholder="e.g. 200"
-                                    class="w-8rem" />
+                                <input pInputText formControlName="successCriteriaValue" placeholder="e.g. 200 or 5"
+                                    class="w-10rem" />
                             </div>
-                            }
                         </div>
                         }
                     </div>
@@ -165,8 +148,8 @@
                         <div class="flex align-items-center justify-content-between mb-2">
                             <label class="font-semibold">Request Body</label>
                             <!-- Single dropdown: Manual JSON or "Use Step N response" -->
-                            <p-select [options]="getBodyOptions(i)" formControlName="bodyFromStep"
-                                optionLabel="label" optionValue="value" styleClass="w-16rem" appendTo="body"
+                            <p-select [options]="getBodyOptions(i)" formControlName="bodyFromStep" optionLabel="label"
+                                optionValue="value" styleClass="w-16rem" appendTo="body"
                                 placeholder="Manual JSON"></p-select>
                         </div>
 
@@ -266,12 +249,31 @@
                     </div>
                     }
 
-                    <!-- Field mapping -->
+                    @if (isRestApi(i)) {
+                    <div class="flex flex-column gap-2 mb-3 p-3 surface-ground border-round border-1 surface-border">
+                        <div class="flex align-items-center gap-2 flex-wrap">
+                            <label class="text-sm font-semibold w-13rem">Response Path (Optional):</label>
+                            <input pInputText formControlName="rootPath" placeholder="e.g. data or items"
+                                pTooltip="Path to extract nested data, e.g. 'data' if response is { data: [] }"
+                                class="w-12rem p-inputtext-sm" />
+                            <span class="text-color-secondary text-xs">— e.g. data for &#123; "data": [] &#125;</span>
+                        </div>
+                        <div class="flex align-items-center gap-2 flex-wrap mt-1">
+                            <label class="text-sm font-semibold w-13rem">Response Index (Optional):</label>
+                            <input pInputText formControlName="responseIndex" placeholder="e.g. 0"
+                                pTooltip="If response is an array, extract the single object at this index before mapping"
+                                class="w-6rem p-inputtext-sm" />
+                            <span class="text-color-secondary text-xs">— extract single object from array response before mapping</span>
+                        </div>
+                    </div>
+                    }
+
                     <div>
                         <div class="flex justify-content-between align-items-center mb-2">
                             <label class="font-semibold">
                                 Field Mapping
-                                <span class="font-normal text-color-secondary text-sm ml-1">(optional — extract specific fields from the response)</span>
+                                <span class="font-normal text-color-secondary text-sm ml-1">(optional — extract specific
+                                    fields from the response)</span>
                             </label>
                             <button pButton type="button" icon="pi pi-plus" label="Add row"
                                 class="p-button-text p-button-sm" (click)="addMappingRow(i)"></button>
@@ -296,14 +298,16 @@
                         </div>
 
                         <!-- Include response body checkbox -->
-                        <div class="flex align-items-center gap-2 mt-3 pt-2 border-top-1 surface-border">
-                            <p-checkbox formControlName="includeResponseBody" [binary]="true"
-                                inputId="irb_{{i}}"></p-checkbox>
-                            <label [for]="'irb_' + i" class="cursor-pointer text-sm">
-                                Include full response body
-                                <span class="text-color-secondary ml-1">— makes the complete response available for
-                                    subsequent steps to use as a request body</span>
-                            </label>
+                        <div class="flex align-items-center gap-3 mt-3 pt-2 border-top-1 surface-border">
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox formControlName="includeResponseBody" [binary]="true"
+                                    inputId="irb_{{i}}"></p-checkbox>
+                                <label [for]="'irb_' + i" class="cursor-pointer text-sm">
+                                    Include full response body
+                                    <span class="text-color-secondary ml-1">— makes the complete response available for
+                                        subsequent steps to use as a request body</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 

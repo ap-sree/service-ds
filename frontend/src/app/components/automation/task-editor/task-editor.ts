@@ -90,26 +90,15 @@ export class TaskEditorComponent implements OnInit {
 
     // ── Success criteria options ──────────────────────────────────────────────
     private readonly criteriaTypesRestApi = [
-        { label: 'HTTP status is 2xx', value: 'HTTP_STATUS_2XX' },
-        { label: 'HTTP status equals', value: 'HTTP_STATUS_EQUALS' },
-        { label: 'Response is not empty', value: 'RESPONSE_NOT_EMPTY' },
-        { label: 'Field check', value: 'FIELD_CHECK' }
+        { label: 'HTTP status equals', value: 'HTTP_STATUS_EQUALS' }
     ];
 
     private readonly criteriaTypesData = [
-        { label: 'Result count > 0', value: 'RESULT_NOT_EMPTY' },
-        { label: 'Result count equals', value: 'RESULT_COUNT_EQ' },
-        { label: 'Result count >', value: 'RESULT_COUNT_GT' },
-        { label: 'Field check', value: 'FIELD_CHECK' }
+        { label: 'Result count equals', value: 'RESULT_COUNT_EQ' }
     ];
 
     readonly criteriaOperators = [
-        { label: 'equals', value: 'EQUALS' },
-        { label: 'not equals', value: 'NOT_EQUALS' },
-        { label: 'contains', value: 'CONTAINS' },
-        { label: 'greater than', value: 'GT' },
-        { label: 'less than', value: 'LT' },
-        { label: 'is not empty', value: 'NOT_EMPTY' }
+        { label: 'equals', value: 'EQUALS' }
     ];
 
     getCriteriaTypes(stepIndex: number) {
@@ -117,25 +106,16 @@ export class TaskEditorComponent implements OnInit {
     }
 
     criteriaHasValue(type: string, operator?: string): boolean {
-        if (type === 'HTTP_STATUS_2XX' || type === 'RESPONSE_NOT_EMPTY' || type === 'RESULT_NOT_EMPTY') return false;
-        if (type === 'FIELD_CHECK' && operator === 'NOT_EMPTY') return false;
         return true;
     }
 
     getCriteriaLabel(stepIndex: number): string {
         const type = this.stepsFormArray.at(stepIndex)?.get('successCriteriaType')?.value;
-        const op = this.stepsFormArray.at(stepIndex)?.get('successCriteriaOperator')?.value;
-        const field = this.stepsFormArray.at(stepIndex)?.get('successCriteriaField')?.value;
         const val = this.stepsFormArray.at(stepIndex)?.get('successCriteriaValue')?.value;
         if (!type) return '';
         switch (type) {
-            case 'HTTP_STATUS_2XX': return 'HTTP status is 2xx';
             case 'HTTP_STATUS_EQUALS': return `HTTP status = ${val}`;
-            case 'RESPONSE_NOT_EMPTY': return 'Response is not empty';
-            case 'RESULT_NOT_EMPTY': return 'Result count > 0';
             case 'RESULT_COUNT_EQ': return `Result count = ${val}`;
-            case 'RESULT_COUNT_GT': return `Result count > ${val}`;
-            case 'FIELD_CHECK': return `${field} ${op} ${val}`;
             default: return '';
         }
     }
@@ -190,7 +170,9 @@ export class TaskEditorComponent implements OnInit {
 
     // ── Sources ───────────────────────────────────────────────────────────────
     private loadSources() {
-        this.sourceService.getSources().subscribe(data => this.sources = data);
+        this.sourceService.getSources().subscribe(data => {
+            this.sources = data.filter(s => s.type === 'REST_API' || s.type === 'SQL_SERVER');
+        });
     }
 
     // ── Steps FormArray ───────────────────────────────────────────────────────
@@ -247,11 +229,11 @@ export class TaskEditorComponent implements OnInit {
             sourceId: [step?.sourceId ?? null],
             fetchQuery: [step?.fetchQuery || ''],
             httpMethod: [step?.httpMethod || 'GET'],
-            rootPath: [step?.rootPath || ''],
+            rootPath: [step?.rootPath || step?.responsePath || ''],
             body: [bodyStr],
-            // bodyFromStep: null = manual JSON; 1..N = use that step's full response as body
             bodyFromStep: [typeof step?.bodyFromStep === 'number' ? step.bodyFromStep : null],
             includeResponseBody: [step?.includeResponseBody ?? false],
+            responseIndex: [typeof step?.responseIndex === 'number' ? step.responseIndex : (step?.responseIndex != null ? Number(step.responseIndex) : null)],
             overrideRows,
             paginationType: [step?.paginationConfig?.type || 'NONE'],
             paginationNextKey: [step?.paginationConfig?.nextKey || ''],
@@ -260,9 +242,9 @@ export class TaskEditorComponent implements OnInit {
             mappingRows,
             // Success criteria
             successCriteriaEnabled: [!!step?.successCriteria],
-            successCriteriaType: [step?.successCriteria?.type || 'HTTP_STATUS_2XX'],
-            successCriteriaField: [step?.successCriteria?.field || ''],
-            successCriteriaOperator: [step?.successCriteria?.operator || 'EQUALS'],
+            successCriteriaType: [step?.successCriteria?.type || 'HTTP_STATUS_EQUALS'],
+            successCriteriaField: [''],
+            successCriteriaOperator: ['EQUALS'],
             successCriteriaValue: [step?.successCriteria?.value || ''],
             // PROCESS-type fields
             processType: [step?.processType || 'JSON_TO_FILE'],
@@ -344,7 +326,6 @@ export class TaskEditorComponent implements OnInit {
         const sid = this.stepsFormArray.at(stepIndex)?.get('sourceId')?.value;
         const source = this.sources.find(s => s.id === sid);
         if (source?.type === 'SQL_SERVER') return 'SELECT * FROM table WHERE ...';
-        if (source?.type === 'LOCAL_COMMAND') return 'docker ps --format json';
         return '/api/endpoint/path';
     }
 
@@ -419,7 +400,8 @@ export class TaskEditorComponent implements OnInit {
                     s.sourceId = step.sourceId;
                     s.fetchQuery = step.fetchQuery;
                     s.httpMethod = step.httpMethod;
-                    s.rootPath = step.rootPath || null;
+                    s.rootPath = step.rootPath || step.responsePath || null;
+                    if (s.rootPath) s.responsePath = s.rootPath;
 
                     if (step.bodyFromStep != null && step.bodyFromStep > 0) {
                         // Use the numbered step's full raw response as the body
@@ -462,15 +444,13 @@ export class TaskEditorComponent implements OnInit {
                     });
                     if (Object.keys(mapping).length) s.mapping = mapping;
                     if (step.includeResponseBody) s.includeResponseBody = true;
+                    if (step.responseIndex != null && step.responseIndex !== '') s.responseIndex = Number(step.responseIndex);
 
                     // Success criteria
-                    if (step.successCriteriaEnabled) {
+                    if (step.successCriteriaEnabled && step.successCriteriaValue != null && step.successCriteriaValue !== '') {
                         s.successCriteria = {
                             type: step.successCriteriaType,
-                            field: step.successCriteriaType === 'FIELD_CHECK' ? step.successCriteriaField : undefined,
-                            operator: step.successCriteriaType === 'FIELD_CHECK' ? step.successCriteriaOperator : undefined,
-                            value: this.criteriaHasValue(step.successCriteriaType, step.successCriteriaOperator)
-                                ? step.successCriteriaValue : undefined
+                            value: step.successCriteriaValue
                         };
                     }
 

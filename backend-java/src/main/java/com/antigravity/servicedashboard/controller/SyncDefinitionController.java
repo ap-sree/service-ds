@@ -48,6 +48,18 @@ public class SyncDefinitionController {
         }
     }
 
+    @GetMapping("/{id}/data")
+    public ResponseEntity<Object> getSyncData(@PathVariable("id") Long id) {
+        try {
+            return ResponseEntity.ok(tableService.fetchSyncData(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Data fetch error for sync id={}", id, e);
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve data."));
+        }
+    }
+
     @GetMapping
     public List<SyncDefinition> getAll() {
         return syncService.getAll();

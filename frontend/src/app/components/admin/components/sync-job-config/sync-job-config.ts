@@ -44,6 +44,12 @@ export class SyncJobConfigComponent implements OnInit {
     historyData: TaskExecution[] = [];
     loadingHistory = false;
 
+    displayDataDialog = false;
+    tableData: any[] = [];
+    tableColumns: string[] = [];
+    loadingData = false;
+    selectedJob: SyncDefinition | null = null;
+
     ngOnInit() {
         this.loadData();
     }
@@ -133,5 +139,33 @@ export class SyncJobConfigComponent implements OnInit {
                 this.loadingHistory = false;
             }
         });
+    }
+
+    showData(job: SyncDefinition) {
+        if (!job.id) return;
+        this.selectedJob = job;
+        this.displayDataDialog = true;
+        this.loadingData = true;
+        this.tableData = [];
+        this.tableColumns = [];
+        this.sourceService.getSyncData(job.id).subscribe({
+            next: (data) => {
+                this.tableData = data || [];
+                if (this.tableData.length > 0) {
+                    this.tableColumns = Object.keys(this.tableData[0]);
+                }
+                this.loadingData = false;
+            },
+            error: (err) => {
+                this.showMsg('error', 'Failed to load table data: ' + (err.error?.error || err.message));
+                this.loadingData = false;
+            }
+        });
+    }
+
+    formatCellValue(val: any): string {
+        if (val === null || val === undefined) return '';
+        if (typeof val === 'object') return JSON.stringify(val);
+        return String(val);
     }
 }

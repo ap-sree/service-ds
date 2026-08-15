@@ -256,6 +256,29 @@ public class TableService {
         return fetchColumns(sync.getTargetTableName());
     }
 
+    public List<Map<String, Object>> fetchSyncData(Long syncId) {
+        SyncDefinition sync = syncRepo.findById(syncId)
+                .orElseThrow(() -> new IllegalArgumentException("Sync definition not found"));
+        String tableName = sync.getTargetTableName();
+        if (tableName == null || !AppUtils.isValidTableName(tableName)) {
+            return Collections.emptyList();
+        }
+        try {
+            String sql = "SELECT TOP(20) * FROM \"APP\".\"" + tableName + "\" ORDER BY _synced_at DESC";
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+            return stripSystemColumns(rows);
+        } catch (Exception e) {
+            try {
+                String fallbackSql = "SELECT TOP(20) * FROM \"APP\".\"" + tableName + "\"";
+                List<Map<String, Object>> rows = jdbcTemplate.queryForList(fallbackSql);
+                return stripSystemColumns(rows);
+            } catch (Exception ex) {
+                logger.error("Failed to fetch data from table: {}", tableName, ex);
+                return Collections.emptyList();
+            }
+        }
+    }
+
     private List<String> fetchColumns(String tableName) {
         if (!AppUtils.isValidTableName(tableName)) {
             throw new IllegalArgumentException(MessageUtils.get("error.table.invalid.param", tableName));

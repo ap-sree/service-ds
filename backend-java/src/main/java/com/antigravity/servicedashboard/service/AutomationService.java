@@ -3,6 +3,7 @@ package com.antigravity.servicedashboard.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import com.antigravity.servicedashboard.entity.TaskExecution;
 import com.antigravity.servicedashboard.repository.DataSourceRepository;
 import com.antigravity.servicedashboard.repository.TaskDefinitionRepository;
 import com.antigravity.servicedashboard.repository.TaskExecutionRepository;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,6 +26,41 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AutomationService {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(AutomationService.class);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class StepInfo {
+        private Integer stepIndex;
+        private String name;
+        private String type;
+        private String status;
+        private String startedAt;
+        private String completedAt;
+        private String error;
+        private Map<String, Object> input = new HashMap<>();
+        private Map<String, Object> output = new HashMap<>();
+        private Object stepOutputFieldMapping;
+
+        public Integer getStepIndex() { return stepIndex; }
+        public void setStepIndex(Integer stepIndex) { this.stepIndex = stepIndex; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public String getStartedAt() { return startedAt; }
+        public void setStartedAt(String startedAt) { this.startedAt = startedAt; }
+        public String getCompletedAt() { return completedAt; }
+        public void setCompletedAt(String completedAt) { this.completedAt = completedAt; }
+        public String getError() { return error; }
+        public void setError(String error) { this.error = error; }
+        public Map<String, Object> getInput() { return input; }
+        public void setInput(Map<String, Object> input) { this.input = input; }
+        public Map<String, Object> getOutput() { return output; }
+        public void setOutput(Map<String, Object> output) { this.output = output; }
+        public Object getStepOutputFieldMapping() { return stepOutputFieldMapping; }
+        public void setStepOutputFieldMapping(Object stepOutputFieldMapping) { this.stepOutputFieldMapping = stepOutputFieldMapping; }
+    }
 
     private final TaskDefinitionRepository taskRepo;
     private final TaskExecutionRepository executionRepo;
@@ -144,7 +181,7 @@ public class AutomationService {
             throw new IllegalArgumentException("Number of steps (" + stepsList.size() + ") exceeds the configured maximum of " + maxSteps);
         }
 
-        List<Map<String, Object>> stepExecutionLogs = new ArrayList<>();
+        Map<Integer, StepInfo> stepResultsMap = new LinkedHashMap<>();
         Map<String, Object> accumulatedVariables = new HashMap<>();
         if (runtimeParams != null) {
             accumulatedVariables.putAll(runtimeParams);
@@ -159,25 +196,24 @@ public class AutomationService {
             Map<String, Object> step = objectMapper.convertValue(stepsList.get(i), new TypeReference<Map<String, Object>>() {});
             String stepName = (String) step.getOrDefault("name", "Step " + (i + 1));
             String stepType = (String) step.getOrDefault("type", "DATASOURCE");
+            boolean dependent = step.get("dependent") != null ? Boolean.TRUE.equals(step.get("dependent")) : true;
+
             if (i == 0 && !"DATASOURCE".equalsIgnoreCase(stepType)) {
                 throw new IllegalArgumentException("The first step must be a Data Source step.");
             }
 
-            Map<String, Object> stepLog = new HashMap<>();
-            stepLog.put("stepIndex", i);
-            stepLog.put("name", stepName);
-            stepLog.put("type", stepType);
-            stepLog.put("startedAt", LocalDateTime.now().toString());
+            StepInfo stepInfo = new StepInfo();
+            stepInfo.setStepIndex(i + 1);
+            stepInfo.setName(stepName);
+            stepInfo.setType(stepType);
+            stepInfo.setStartedAt(LocalDateTime.now().toString());
 
             try {
                 Object stepOutputObj = null;
-                // Extra per-step data merged into the execution log on success
-                Map<String, Object> stepMeta = new HashMap<>();
 
                 if ("DATASOURCE".equalsIgnoreCase(stepType)) {
-                    List<Map<String, Object>> result = executeDataSourceStep(step, stepName, i + 1, accumulatedVariables, stepMeta);
-                    stepOutputObj = result;
-                    lastStepResult = result;
+                    stepOutputObj = executeDataSourceStep(step, stepName, i + 1, stepResultsMap, accumulatedVariables, stepInfo);
+                    lastStepResult = stepInfo.getStepOutputFieldMapping() != null ? stepInfo.getStepOutputFieldMapping() : stepInfo.getOutput().get("data");
                 } else if ("PROCESS".equalsIgnoreCase(stepType)) {
                     String processType = (String) step.get("processType");
                     if (!"JSON_TO_FILE".equalsIgnoreCase(processType)) {
@@ -188,9 +224,11 @@ public class AutomationService {
                     String fileFormat = (String) step.getOrDefault("fileFormat", "JSON");
 
                     logger.info("Executing step {} (PROCESS - JSON_TO_FILE): format={}, filename={}", stepName, fileFormat, fileName);
+                    stepInfo.getInput().put("processType", processType);
+                    stepInfo.getInput().put("fileName", fileName);
+                    stepInfo.getInput().put("fileFormat", fileFormat);
 
                     Object inputObj = lastStepResult;
-
                     if (inputObj == null) {
                         inputObj = new ArrayList<>();
                     }
@@ -222,53 +260,75 @@ public class AutomationService {
                         fileContentStr = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(listData);
                     }
 
-                    Map<String, Object> fileMeta = new HashMap<>();
-                    fileMeta.put("fileName", fileName);
-                    fileMeta.put("fileContent", fileContentStr);
-                    fileMeta.put("format", fileFormat);
-                    fileMeta.put("size", fileContentStr.length());
+                    stepInfo.getOutput().put("fileName", fileName);
+                    stepInfo.getOutput().put("fileContent", fileContentStr);
+                    stepInfo.getOutput().put("format", fileFormat);
+                    stepInfo.getOutput().put("size", fileContentStr.length());
 
-                    stepOutputObj = fileMeta;
-                    lastStepResult = fileMeta;
+                    stepOutputObj = stepInfo.getOutput();
+                    lastStepResult = stepOutputObj;
                     hasGeneratedFile = true;
-                    generatedFileMeta = fileMeta;
+                    generatedFileMeta = stepInfo.getOutput();
                 } else {
                     throw new IllegalArgumentException("Unknown step type: " + stepType);
                 }
 
-                stepLog.put("status", "SUCCESS");
-                stepLog.put("output", stepOutputObj);
-                stepLog.putAll(stepMeta);   // mappingConfig, resultCount, mappedValues
-                stepLog.put("completedAt", LocalDateTime.now().toString());
-                stepExecutionLogs.add(stepLog);
+                stepInfo.setStatus("SUCCESS");
+                stepInfo.setCompletedAt(LocalDateTime.now().toString());
+                stepResultsMap.put(i + 1, stepInfo);
 
                 accumulatedVariables.put("step" + (i + 1), stepOutputObj);
-                if (stepOutputObj instanceof List) {
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> mappedRows = (List<Map<String, Object>>) stepOutputObj;
-                    mappedRows.forEach(row -> row.forEach((k, v) ->
-                            accumulatedVariables.put("step" + (i + 1) + "." + k, v)));
-                } else if (stepOutputObj instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> mappedRow = (Map<String, Object>) stepOutputObj;
-                    mappedRow.forEach((k, v) ->
-                            accumulatedVariables.put("step" + (i + 1) + "." + k, v));
+
+                // 1. Populate variables from raw response data (so {{stepN.id}} or {{stepN[0].id}} always work even if field mapping is used)
+                Object rawDataObj = stepInfo.getOutput().get("data");
+                if (rawDataObj != null) {
+                    flattenJson("step" + (i + 1), rawDataObj, accumulatedVariables);
+                    if (rawDataObj instanceof List && !((List<?>) rawDataObj).isEmpty() && ((List<?>) rawDataObj).get(0) instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> firstRow = (Map<String, Object>) ((List<?>) rawDataObj).get(0);
+                        firstRow.forEach((k, v) -> accumulatedVariables.put("step" + (i + 1) + "." + k, v));
+                    } else if (rawDataObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> row = (Map<String, Object>) rawDataObj;
+                        row.forEach((k, v) -> accumulatedVariables.put("step" + (i + 1) + "." + k, v));
+                    }
+                }
+
+                // 2. Populate variables from mapped fields (so custom mapped names work too)
+                Object mappedDataObj = stepInfo.getStepOutputFieldMapping();
+                if (mappedDataObj != null && mappedDataObj != rawDataObj) {
+                    flattenJson("step" + (i + 1), mappedDataObj, accumulatedVariables);
+                    if (mappedDataObj instanceof List && !((List<?>) mappedDataObj).isEmpty() && ((List<?>) mappedDataObj).get(0) instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> firstRow = (Map<String, Object>) ((List<?>) mappedDataObj).get(0);
+                        firstRow.forEach((k, v) -> accumulatedVariables.put("step" + (i + 1) + "." + k, v));
+                    } else if (mappedDataObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> row = (Map<String, Object>) mappedDataObj;
+                        row.forEach((k, v) -> accumulatedVariables.put("step" + (i + 1) + "." + k, v));
+                    }
                 }
 
             } catch (Exception e) {
                 logger.error("Step execution failed: " + stepName, e);
-                stepLog.put("status", "FAILED");
-                stepLog.put("error", e.getMessage());
-                stepLog.put("completedAt", LocalDateTime.now().toString());
-                stepExecutionLogs.add(stepLog);
+                stepInfo.setStatus("FAILED");
+                stepInfo.setError(e.getMessage());
+                stepInfo.setCompletedAt(LocalDateTime.now().toString());
+                stepResultsMap.put(i + 1, stepInfo);
+
+                if (!dependent) {
+                    logger.warn("Optional (non-dependent) step {} failed. Continuing workflow.", stepName);
+                    continue;
+                }
 
                 Map<String, Object> finalResultMap = new HashMap<>();
-                finalResultMap.put("steps", stepExecutionLogs);
+                finalResultMap.put("input", runtimeParams != null && !runtimeParams.isEmpty() ? runtimeParams : payloadMap);
+                finalResultMap.put("steps", stepResultsMap);
                 finalResultMap.put("status", "FAILED");
                 finalResultMap.put("failedStep", stepName);
-                finalResultMap.put("failedStepIndex", i + 1);   // 1-based step number
+                finalResultMap.put("failedStepIndex", i + 1);
                 finalResultMap.put("failedStepError", e.getMessage());
-                
+
                 exec.setOutputResult(objectMapper.writeValueAsString(finalResultMap));
                 exec.setStatus("FAILED");
                 updateTaskStatus(exec.getTaskId(), "FAILED", LocalDateTime.now());
@@ -303,7 +363,7 @@ public class AutomationService {
                     attachments.add(generatedFileMeta);
                     logger.info("Attached generated file: name={}, size={}", generatedFileMeta.get("fileName"), generatedFileMeta.get("size"));
                 }
-                
+
                 endTaskResult.put("emailTo", to);
                 endTaskResult.put("emailSubject", subject);
                 endTaskResult.put("emailBody", body);
@@ -341,7 +401,8 @@ public class AutomationService {
         }
 
         Map<String, Object> finalResultMap = new HashMap<>();
-        finalResultMap.put("steps", stepExecutionLogs);
+        finalResultMap.put("input", runtimeParams != null && !runtimeParams.isEmpty() ? runtimeParams : payloadMap);
+        finalResultMap.put("steps", stepResultsMap);
         finalResultMap.put("endTaskResult", endTaskResult);
         finalResultMap.put("status", "SUCCESS");
 
@@ -350,12 +411,10 @@ public class AutomationService {
         updateTaskStatus(exec.getTaskId(), "SUCCESS", LocalDateTime.now());
     }
 
-
-
     @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> executeDataSourceStep(
+    private Object executeDataSourceStep(
             Map<String, Object> step, String stepName, int stepNumber,
-            Map<String, Object> accumulatedVariables, Map<String, Object> stepMeta) throws Exception {
+            Map<Integer, StepInfo> stepResultsMap, Map<String, Object> accumulatedVariables, StepInfo stepInfo) throws Exception {
 
         Object sourceIdObj = step.get("sourceId");
         if (sourceIdObj == null) {
@@ -366,85 +425,88 @@ public class AutomationService {
                 .orElseThrow(() -> new IllegalArgumentException("Source not found for step: " + stepName));
 
         String sourceType = source.getType();
-
-        if (AppConstants.DS_TYPE_REST_API.equals(sourceType)) {
-            return executeRestApiStep(step, stepName, stepNumber, source, accumulatedVariables, stepMeta);
-        } else if (AppConstants.DS_TYPE_SQL_SERVER.equals(sourceType)) {
-            return executeSqlServerStep(step, stepName, source, accumulatedVariables);
-        } else if (AppConstants.DS_TYPE_LDAP.equals(sourceType)) {
-            return executeLdapStep(step, stepName, source, accumulatedVariables);
-        } else if (AppConstants.DS_TYPE_LOCAL_COMMAND.equals(sourceType)) {
-            return executeLocalCommandStep(step, stepName, source, accumulatedVariables);
-        } else if (AppConstants.DS_TYPE_LOCAL_FILE.equals(sourceType)) {
-            return executeLocalFileStep(step, stepName, source, accumulatedVariables);
-        } else {
-            throw new IllegalArgumentException("Unsupported data source type: " + sourceType);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Map<String, Object>> executeRestApiStep(
-            Map<String, Object> step, String stepName, int stepNumber,
-            DataSource source, Map<String, Object> accumulatedVariables, Map<String, Object> stepMeta) throws Exception {
+        stepInfo.getInput().put("sourceId", stepSourceId);
+        stepInfo.getInput().put("sourceType", sourceType);
 
         String query = (String) step.get("fetchQuery");
+        if (query != null) {
+            query = resolveVariables(query, accumulatedVariables);
+            stepInfo.getInput().put("fetchQuery", query);
+        }
+
         String method = (String) step.getOrDefault("httpMethod", "GET");
         String rootPath = (String) step.get("rootPath");
+        if (rootPath == null) {
+            rootPath = (String) step.get("responsePath");
+        }
         Object body = step.get("body");
         Object mappingObj = step.get("mapping");
         Object paginationObj = step.get("paginationConfig");
 
-        Object bodyFromStepObj = step.get("bodyFromStep");
-        if (bodyFromStepObj instanceof Number) {
-            int bfStep = ((Number) bodyFromStepObj).intValue();
-            String responseKey = "step" + bfStep + ".response";
-            String mappedKey = "step" + bfStep;
-            boolean usedResponse = accumulatedVariables.containsKey(responseKey);
-            Object bodySourceResult = usedResponse
-                    ? accumulatedVariables.get(responseKey)
-                    : accumulatedVariables.get(mappedKey);
-            logger.info("Step {} bodyFromStep={}: using key '{}'", stepName, bfStep,
-                    usedResponse ? responseKey : mappedKey);
-
-            if (bodySourceResult != null) {
-                if (bodySourceResult instanceof List) {
-                    List<?> list = (List<?>) bodySourceResult;
-                    bodySourceResult = list.isEmpty() ? new HashMap<String, Object>() : list.get(0);
-                }
-                Map<String, Object> mergedBody = (bodySourceResult instanceof Map)
-                        ? deepCopyMap((Map<String, Object>) bodySourceResult)
-                        : new HashMap<>();
-                Object overridesObj = step.get("overrides");
-                if (overridesObj instanceof Map) {
-                    Map<String, Object> overrides = objectMapper.convertValue(
-                            overridesObj, new TypeReference<Map<String, Object>>() {});
-                    overrides.forEach((k, v) -> setNestedValue(mergedBody, k, v));
-                }
-                Object appendOverridesObj = step.get("appendOverrides");
-                if (appendOverridesObj instanceof Map) {
-                    Map<String, Object> appendOverrides = objectMapper.convertValue(
-                            appendOverridesObj, new TypeReference<Map<String, Object>>() {});
-                    appendOverrides.forEach((k, v) -> appendNestedValue(mergedBody, k, v));
-                }
-                body = mergedBody;
+        if (AppConstants.DS_TYPE_REST_API.equals(sourceType)) {
+            method = resolveVariables(method, accumulatedVariables);
+            if (rootPath != null) {
+                rootPath = resolveVariables(rootPath, accumulatedVariables);
             }
-        }
+            stepInfo.getInput().put("httpMethod", method);
+            if (rootPath != null) {
+                stepInfo.getInput().put("rootPath", rootPath);
+                stepInfo.getInput().put("responsePath", rootPath);
+            }
 
-        query = resolveVariables(query, accumulatedVariables);
-        method = resolveVariables(method, accumulatedVariables);
-        rootPath = resolveVariables(rootPath, accumulatedVariables);
-        if (body instanceof String) {
-            body = resolveVariables((String) body, accumulatedVariables);
-        } else if (body != null) {
-            String bodyStr = objectMapper.writeValueAsString(body);
-            body = objectMapper.readValue(resolveVariables(bodyStr, accumulatedVariables), Object.class);
+            Object bodyFromStepObj = step.get("bodyFromStep");
+            if (bodyFromStepObj instanceof Number) {
+                int bfStep = ((Number) bodyFromStepObj).intValue();
+                StepInfo prevStep = stepResultsMap.get(bfStep);
+                Object bodySourceResult = null;
+                if (prevStep != null) {
+                    bodySourceResult = prevStep.getOutput().get("responseBody");
+                    if (bodySourceResult == null) {
+                        bodySourceResult = prevStep.getStepOutputFieldMapping() != null
+                                ? prevStep.getStepOutputFieldMapping()
+                                : prevStep.getOutput().get("data");
+                    }
+                }
+                if (bodySourceResult != null) {
+                    if (bodySourceResult instanceof List) {
+                        List<?> list = (List<?>) bodySourceResult;
+                        bodySourceResult = list.isEmpty() ? new HashMap<String, Object>() : list.get(0);
+                    }
+                    Map<String, Object> mergedBody = (bodySourceResult instanceof Map)
+                            ? deepCopyMap((Map<String, Object>) bodySourceResult)
+                            : new HashMap<>();
+                    Object overridesObj = step.get("overrides");
+                    if (overridesObj instanceof Map) {
+                        Map<String, Object> overrides = objectMapper.convertValue(
+                                overridesObj, new TypeReference<Map<String, Object>>() {});
+                        overrides.forEach((k, v) -> setNestedValue(mergedBody, k, v));
+                    }
+                    Object appendOverridesObj = step.get("appendOverrides");
+                    if (appendOverridesObj instanceof Map) {
+                        Map<String, Object> appendOverrides = objectMapper.convertValue(
+                                appendOverridesObj, new TypeReference<Map<String, Object>>() {});
+                        appendOverrides.forEach((k, v) -> appendNestedValue(mergedBody, k, v));
+                    }
+                    body = mergedBody;
+                }
+            }
+
+            if (body instanceof String) {
+                body = resolveVariables((String) body, accumulatedVariables);
+            } else if (body != null) {
+                String bodyStr = objectMapper.writeValueAsString(body);
+                body = objectMapper.readValue(resolveVariables(bodyStr, accumulatedVariables), Object.class);
+            }
+            if (body != null) stepInfo.getInput().put("body", body);
         }
 
         String mapping = null;
         if (mappingObj instanceof Map) {
             mapping = objectMapper.writeValueAsString(mappingObj);
+            stepInfo.getInput().put("mapping", mappingObj);
         } else if (mappingObj instanceof String) {
             mapping = (String) mappingObj;
+            stepInfo.getInput().put("mapping", mapping);
         }
 
         String paginationConfig = null;
@@ -452,51 +514,86 @@ public class AutomationService {
             paginationConfig = paginationObj instanceof String
                     ? (String) paginationObj
                     : objectMapper.writeValueAsString(paginationObj);
+            stepInfo.getInput().put("paginationConfig", paginationObj);
         }
 
-        logger.info("Executing step {} (REST_API): source id {}", stepName, source.getId());
+        logger.info("Executing step {} ({}): source id {}", stepName, sourceType, source.getId());
         SyncService.FetchResult fetchResult = syncService.fetchDataWithStatus(source, query, method, body, rootPath, paginationConfig);
-        if (fetchResult.httpStatus != null) {
-            stepMeta.put("httpStatus", fetchResult.httpStatus);
-            accumulatedVariables.put("step" + stepNumber + ".httpStatus", fetchResult.httpStatus);
-            logger.info("Step {} HTTP status: {}", stepName, fetchResult.httpStatus);
+        Integer httpStatus = fetchResult.httpStatus;
+        List<Map<String, Object>> rawData = fetchResult.data != null ? fetchResult.data : new ArrayList<>();
+
+        if (httpStatus != null) {
+            stepInfo.getOutput().put("httpStatus", httpStatus);
+            accumulatedVariables.put("step" + stepNumber + ".httpStatus", httpStatus);
         }
-        List<Map<String, Object>> result = syncService.applyFieldMapping(fetchResult.data, mapping);
+
+        Object responseIndexObj = step.get("responseIndex");
+        if (responseIndexObj == null && step.get("index") != null) {
+            responseIndexObj = step.get("index");
+        }
+
+        String responseType = responseIndexObj != null ? "ArrayOfJSONObject" : (rawData.size() == 1 ? "JSONObject" : "ArrayOfJSONObject");
+        stepInfo.getOutput().put("responseType", responseType);
+        stepInfo.getOutput().put("resultCount", rawData.size());
+
         if (Boolean.TRUE.equals(step.get("includeResponseBody"))) {
-            accumulatedVariables.put("step" + stepNumber + ".response", fetchResult.data);
+            stepInfo.getOutput().put("responseBody", rawData);
+            accumulatedVariables.put("step" + stepNumber + ".response", rawData);
         }
-        if (mappingObj != null) {
-            stepMeta.put("mappingConfig", mappingObj);
+
+        Object primaryOutputData;
+        if (responseIndexObj instanceof Number) {
+            int idx = ((Number) responseIndexObj).intValue();
+            if (idx >= 0 && idx < rawData.size()) {
+                primaryOutputData = rawData.get(idx);
+            } else {
+                logger.warn("Step {} response index {} is out of bounds (size {})", stepName, idx, rawData.size());
+                primaryOutputData = new HashMap<String, Object>();
+            }
+        } else {
+            primaryOutputData = rawData;
         }
-        stepMeta.put("resultCount", result.size());
-        if (!result.isEmpty()) {
-            stepMeta.put("mappedValues", result.subList(0, Math.min(2, result.size())));
+        stepInfo.getOutput().put("data", primaryOutputData);
+
+        // Apply stepOutputFieldMapping based on StepInfo.output object
+        if (mapping != null) {
+            if (primaryOutputData instanceof List) {
+                List<Map<String, Object>> mappedList = syncService.applyFieldMapping((List<Map<String, Object>>) primaryOutputData, mapping);
+                stepInfo.setStepOutputFieldMapping(mappedList);
+            } else if (primaryOutputData instanceof Map) {
+                List<Map<String, Object>> singleList = new ArrayList<>();
+                singleList.add((Map<String, Object>) primaryOutputData);
+                List<Map<String, Object>> mappedList = syncService.applyFieldMapping(singleList, mapping);
+                stepInfo.setStepOutputFieldMapping(mappedList.isEmpty() ? new HashMap<String, Object>() : mappedList.get(0));
+            }
+        } else {
+            stepInfo.setStepOutputFieldMapping(primaryOutputData);
         }
-        return result;
-    }
 
-    private List<Map<String, Object>> executeSqlServerStep(
-            Map<String, Object> step, String stepName,
-            DataSource source, Map<String, Object> accumulatedVariables) throws Exception {
-        throw new UnsupportedOperationException("SQL_SERVER step execution not yet implemented");
-    }
+        // Evaluate Success Criteria
+        Object criteriaObj = step.get("successCriteria");
+        if (criteriaObj instanceof Map) {
+            Map<String, Object> criteria = (Map<String, Object>) criteriaObj;
+            String type = (String) criteria.get("type");
+            Object valObj = criteria.get("value");
+            if (type != null && valObj != null && !valObj.toString().trim().isEmpty()) {
+                if ("HTTP_STATUS_EQUALS".equalsIgnoreCase(type)) {
+                    int expectedStatus = Integer.parseInt(valObj.toString().trim());
+                    int actualStatus = httpStatus != null ? httpStatus : 200;
+                    if (expectedStatus != actualStatus) {
+                        throw new RuntimeException("Success criteria failed: expected HTTP status " + expectedStatus + " but got " + actualStatus);
+                    }
+                } else if ("RESULT_COUNT_EQ".equalsIgnoreCase(type)) {
+                    int expectedCount = Integer.parseInt(valObj.toString().trim());
+                    int actualCount = rawData.size();
+                    if (expectedCount != actualCount) {
+                        throw new RuntimeException("Success criteria failed: expected result count " + expectedCount + " but got " + actualCount);
+                    }
+                }
+            }
+        }
 
-    private List<Map<String, Object>> executeLdapStep(
-            Map<String, Object> step, String stepName,
-            DataSource source, Map<String, Object> accumulatedVariables) throws Exception {
-        throw new UnsupportedOperationException("LDAP step execution not yet implemented");
-    }
-
-    private List<Map<String, Object>> executeLocalCommandStep(
-            Map<String, Object> step, String stepName,
-            DataSource source, Map<String, Object> accumulatedVariables) throws Exception {
-        throw new UnsupportedOperationException("LOCAL_COMMAND step execution not yet implemented");
-    }
-
-    private List<Map<String, Object>> executeLocalFileStep(
-            Map<String, Object> step, String stepName,
-            DataSource source, Map<String, Object> accumulatedVariables) throws Exception {
-        throw new UnsupportedOperationException("LOCAL_FILE step execution not yet implemented");
+        return primaryOutputData;
     }
 
     private void updateTaskStatus(Long taskId, String status, LocalDateTime lastRunAt) {

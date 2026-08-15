@@ -117,13 +117,20 @@ export class AutomationListComponent implements OnInit {
     executionResult: any = null;
     parsedExecutionResult: any = null;
 
+    private normalizeExecutionResult(res: any): any {
+        if (res && res.steps && !Array.isArray(res.steps) && typeof res.steps === 'object') {
+            res.steps = Object.values(res.steps);
+        }
+        return res;
+    }
+
     executeTaskService(taskId: number, params: any) {
         this.messageService.add({ severity: 'info', summary: 'Running', detail: `Starting task...` });
         this.service.executeTask(taskId, params).subscribe({
             next: (execution) => {
                 this.executionResult = execution;
                 try {
-                    this.parsedExecutionResult = JSON.parse(execution.outputResult);
+                    this.parsedExecutionResult = this.normalizeExecutionResult(JSON.parse(execution.outputResult));
                 } catch { this.parsedExecutionResult = null; }
                 this.displayResultDialog = true;
                 this.messageService.add({
@@ -211,7 +218,7 @@ export class AutomationListComponent implements OnInit {
         this.service.getExecution(summary.id).subscribe({
             next: (exec) => {
                 this.historySelectedExecution = exec;
-                try { this.parsedHistoryResult = JSON.parse(exec.outputResult); }
+                try { this.parsedHistoryResult = this.normalizeExecutionResult(JSON.parse(exec.outputResult)); }
                 catch { this.parsedHistoryResult = null; }
                 this.loadingDetail = false;
             },
